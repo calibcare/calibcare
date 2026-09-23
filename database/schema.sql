@@ -27,6 +27,8 @@ DROP TABLE IF EXISTS notification_log;
 DROP TABLE IF EXISTS calibration_history;
 DROP TABLE IF EXISTS equipment_capability;
 DROP TABLE IF EXISTS equipment;
+DROP TABLE IF EXISTS calendar_note;
+DROP TABLE IF EXISTS reminder_rule;
 DROP TABLE IF EXISTS users;
 
 -- ---------------------------------------------------------------------
@@ -37,11 +39,28 @@ CREATE TABLE users (
     full_name      VARCHAR(150)    NOT NULL,
     email          VARCHAR(150)    NOT NULL,
     password_hash  VARCHAR(255)    NOT NULL,
-    role           ENUM('admin', 'engineer', 'qa', 'manager') NOT NULL DEFAULT 'engineer',
+    role           ENUM('deputy_manager', 'senior_specialist', 'specialist_1_pm', 'specialist_1', 'specialist_2')
+                                   NOT NULL DEFAULT 'specialist_2' COMMENT 'engineering position; doubles as the access level -- see backend/src/services/positions.js',
     line_user_id   VARCHAR(64)     NULL COMMENT 'LINE Messaging API user id, for targeted reminders',
+    email_verified TINYINT(1)      NOT NULL DEFAULT 0 COMMENT 'set true once the registration email-OTP is confirmed; login is blocked until then',
     created_at     TIMESTAMP       NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at     TIMESTAMP       NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     UNIQUE KEY uq_users_email (email)
+) ENGINE=InnoDB;
+
+-- ---------------------------------------------------------------------
+-- calendar_note: a shared, free-text annotation on a calendar day, shown
+-- on the Dashboard page's calendar widget. Independent of equipment data --
+-- e.g. "technician on leave" -- one note per date, visible to everyone.
+-- ---------------------------------------------------------------------
+CREATE TABLE calendar_note (
+    note_date   DATE          NOT NULL PRIMARY KEY COMMENT 'the calendar day this note is attached to',
+    note_text   TEXT          NOT NULL,
+    updated_by  INT UNSIGNED  NULL COMMENT 'user who last wrote this note',
+    updated_at  TIMESTAMP     NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    CONSTRAINT fk_calendar_note_user
+        FOREIGN KEY (updated_by) REFERENCES users(user_id)
+        ON DELETE SET NULL
 ) ENGINE=InnoDB;
 
 -- ---------------------------------------------------------------------
@@ -56,7 +75,8 @@ CREATE TABLE equipment (
     manufacturer     VARCHAR(100)    NULL     COMMENT 'not tracked in the source sheet yet; reserved per Objective 1',
     serial_number    VARCHAR(100)    NOT NULL COMMENT 'หมายเลขเครื่อง',
     category         VARCHAR(100)    NULL     COMMENT 'derived grouping for dashboard "by category" widget',
-    location         VARCHAR(150)    NULL     COMMENT 'สถานที่ (branch / custodian, as free text in source)',
+    location         VARCHAR(150)    NULL     COMMENT 'สถานที่ (branch / custodian, as free text in source) -- unchanged, kept exactly as sourced',
+    location_category VARCHAR(50)    NULL     COMMENT 'one of 7 real sites (Head office/Central/Chiang Mai Branch/Hat Yai Branch/KhonKaen Branch/QA Team/Workshop room), derived from `location` -- see database/add_location_category.sql. Powers the Equipment page location filter; `location` itself is untouched and still shown on the table/detail pages.',
     status           ENUM('active', 'under_maintenance', 'decommissioned', 'sent_for_calibration')
                                      NOT NULL DEFAULT 'active' COMMENT 'normalized from สถานะ',
     status_note      VARCHAR(255)    NULL     COMMENT 'original free-text สถานะ value, e.g. "ยกเลิกการใช้งาน 1/25"',
@@ -103,7 +123,10 @@ CREATE TABLE calibration_history (
     calibration_frequency   VARCHAR(50)   NULL COMMENT 'ความถี่ในการสอบเทียบ, e.g. "1 ปี"',
     calibration_date        DATE          NULL COMMENT 'สอบเทียบครั้งล่าสุด',
     next_calibration_date   DATE          NULL COMMENT 'สอบเทียบครั้งต่อไป',
-    certificate_path        VARCHAR(255)  NULL COMMENT 'uploaded calibration certificate file',
+    certificate_filename    VARCHAR(255)  NULL COMMENT 'original filename of the uploaded certificate PDF',
+    certificate_mime_type   VARCHAR(100)  NULL COMMENT 'always application/pdf today, kept for future formats',
+    certificate_size        INT UNSIGNED  NULL COMMENT 'bytes, for display without decoding the blob',
+    certificate_data        LONGBLOB      NULL COMMENT 'the certificate PDF itself, stored in MySQL -- no separate file storage service, survives Railway redeploys',
     notes                   VARCHAR(255)  NULL,
     created_at               TIMESTAMP    NOT NULL DEFAULT CURRENT_TIMESTAMP,
     CONSTRAINT fk_calibration_equipment
@@ -111,6 +134,33 @@ CREATE TABLE calibration_history (
         ON DELETE CASCADE,
     KEY idx_calibration_next_due (next_calibration_date)
 ) ENGINE=InnoDB;
+
+-- ---------------------------------------------------------------------
+-- reminder_rule: per-bucket on/off + channel switches for the reminder
+-- system, one row per bucket pickBucket() (reminderService.js) can
+-- produce. Deputy-Manager-editable; everything else reads it.
+-- ---------------------------------------------------------------------
+CREATE TABLE reminder_rule (
+    bucket      ENUM('30_days', '14_days', '7_days', 'due', 'overdue') NOT NULL PRIMARY KEY,
+    enabled     TINYINT(1)    NOT NULL DEFAULT 1,
+    send_line   TINYINT(1)    NOT NULL DEFAULT 1,
+    send_email  TINYINT(1)    NOT NULL DEFAULT 0,
+    updated_by  INT UNSIGNED  NULL COMMENT 'Deputy Manager who last changed this rule',
+    updated_at  TIMESTAMP     NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    CONSTRAINT fk_reminder_rule_user
+        FOREIGN KEY (updated_by) REFERENCES users(user_id)
+        ON DELETE SET NULL
+) ENGINE=InnoDB;
+
+-- Seed one row per bucket, matching the reminder system's real behavior
+-- before this table existed (every bucket on, LINE only) -- a fresh load
+-- of this schema should not silently change what gets sent.
+INSERT INTO reminder_rule (bucket, enabled, send_line, send_email) VALUES
+    ('30_days', 1, 1, 0),
+    ('14_days', 1, 1, 0),
+    ('7_days',  1, 1, 0),
+    ('due',     1, 1, 0),
+    ('overdue', 1, 1, 0);
 
 -- ---------------------------------------------------------------------
 -- notification_log: record of reminders sent via LINE OA

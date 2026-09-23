@@ -6,6 +6,8 @@ import { authRouter } from './routes/auth.js';
 import { remindersRouter } from './routes/reminders.js';
 import { equipmentRouter } from './routes/equipment.js';
 import { dashboardRouter } from './routes/dashboard.js';
+import { calendarNotesRouter } from './routes/calendarNotes.js';
+import { usersRouter } from './routes/users.js';
 import { lineWebhookRouter } from './routes/lineWebhook.js';
 import { lineRouter } from './routes/line.js';
 import { requireAuth } from './middleware/auth.js';
@@ -35,6 +37,8 @@ app.use('/api/dss', requireAuth, dssRouter);
 app.use('/api/reminders', requireAuth, remindersRouter);
 app.use('/api/equipment', requireAuth, equipmentRouter);
 app.use('/api/dashboard', requireAuth, dashboardRouter);
+app.use('/api/calendar-notes', requireAuth, calendarNotesRouter);
+app.use('/api/users', requireAuth, usersRouter);
 app.use('/api/line', requireAuth, lineRouter);
 
 app.use((err, req, res, next) => {

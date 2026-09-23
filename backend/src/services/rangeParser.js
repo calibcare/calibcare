@@ -46,7 +46,18 @@ export function parseRange(raw) {
   return { min, max, unit: unit || null, raw: str };
 }
 
+// Known spellings of the same physical unit that appear in the source data
+// (e.g. "AC Current"/"DC Current" use "amp" but "Equipment Current" uses
+// "a") -- without this, the matcher would treat them as genuinely different
+// units and silently miss real matches.
+const UNIT_SYNONYMS = {
+  a: 'amp',
+  amp: 'amp',
+  amps: 'amp',
+};
+
 export function normalizeUnit(unit) {
   if (!unit) return null;
-  return String(unit).trim().toLowerCase().replace(/\s+/g, '');
+  const stripped = String(unit).trim().toLowerCase().replace(/\s+/g, '');
+  return UNIT_SYNONYMS[stripped] || stripped;
 }

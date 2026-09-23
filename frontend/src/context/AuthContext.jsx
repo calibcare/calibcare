@@ -1,4 +1,4 @@
-import { createContext, useContext, useState, useCallback } from 'react';
+import { createContext, useContext, useState, useCallback, useEffect } from 'react';
 import client from '../api/client';
 
 const AuthContext = createContext(null);
@@ -8,6 +8,20 @@ export function AuthProvider({ children }) {
     const raw = localStorage.getItem('mcems_user');
     return raw ? JSON.parse(raw) : null;
   });
+
+  // Refresh the cached user on load: a Deputy Manager can change someone's
+  // position at any time, and the copy in localStorage was written when
+  // that person last logged in -- which with 30-day tokens can be weeks ago.
+  useEffect(() => {
+    if (!localStorage.getItem('mcems_token')) return;
+    client
+      .get('/api/users/me')
+      .then(({ data }) => {
+        localStorage.setItem('mcems_user', JSON.stringify(data));
+        setUser(data);
+      })
+      .catch(() => {}); // stale/invalid token is handled by ProtectedRoute on the next request
+  }, []);
 
   const persist = (data) => {
     localStorage.setItem('mcems_token', data.token);
@@ -21,8 +35,31 @@ export function AuthProvider({ children }) {
     return persist(data);
   }, []);
 
+  // Registration no longer logs the user in directly -- it creates an
+  // unverified account and emails an OTP; the caller (RegisterPage) sends
+  // the user to /verify-code next.
   const register = useCallback(async (payload) => {
     const { data } = await client.post('/api/auth/register', payload);
+    return data; // { message, email, emailDryRun }
+  }, []);
+
+  const verifyEmail = useCallback(async (email, code) => {
+    const { data } = await client.post('/api/auth/verify-email', { email, code });
+    return persist(data);
+  }, []);
+
+  const resendOtp = useCallback(async (email, purpose) => {
+    const { data } = await client.post('/api/auth/resend-otp', { email, purpose });
+    return data;
+  }, []);
+
+  const forgotPassword = useCallback(async (email) => {
+    const { data } = await client.post('/api/auth/forgot-password', { email });
+    return data;
+  }, []);
+
+  const resetPassword = useCallback(async (email, code, newPassword) => {
+    const { data } = await client.post('/api/auth/reset-password', { email, code, newPassword });
     return persist(data);
   }, []);
 
@@ -32,7 +69,11 @@ export function AuthProvider({ children }) {
     setUser(null);
   }, []);
 
-  return <AuthContext.Provider value={{ user, login, register, logout }}>{children}</AuthContext.Provider>;
+  return (
+    <AuthContext.Provider value={{ user, login, register, verifyEmail, resendOtp, forgotPassword, resetPassword, logout }}>
+      {children}
+    </AuthContext.Provider>
+  );
 }
 
 export function useAuth() {

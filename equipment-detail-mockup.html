@@ -1,0 +1,271 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  * { box-sizing: border-box; }
+  body { margin: 0; font-family: 'IBM Plex Sans', system-ui, -apple-system, 'Loma', sans-serif; }
+  a { color: #2952cc; text-decoration: none; }
+  a:hover { color: #1e3fa0; }
+  .cc-navitem { text-decoration: none; }
+  input, select { font-family: inherit; }
+</style>
+</head>
+<body>
+
+<div style="width:1440px; min-height:1300px; background:#f6f7fb; display:flex; color:#1b2a4b;">
+
+  <!-- SIDEBAR -->
+  <div style="width:240px; flex:0 0 240px; background:#eef1f8; border-right:1px solid #e2e6f0; display:flex; flex-direction:column; padding:24px 16px;">
+
+    <div style="display:flex; align-items:center; gap:10px; padding:4px 8px 28px 8px;">
+      <div style="width:36px; height:36px; border-radius:11px; background:linear-gradient(135deg,#24408f,#3357b8); display:flex; align-items:center; justify-content:center; flex:0 0 auto;">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#ffffff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12h4l2.5-7 4 14L15 9l2 3h5"/></svg>
+      </div>
+      <span style="font-size:19px; font-weight:700; color:#182448; letter-spacing:-0.01em;">Calibcare</span>
+    </div>
+
+    <div style="display:flex; flex-direction:column; gap:4px; flex:1;">
+      <div class="cc-navitem" style="display:flex; align-items:center; gap:11px; padding:10px 14px; border-radius:10px; color:#5b6478;">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 11.5 12 4l9 7.5"/><path d="M5.5 10v9a1 1 0 0 0 1 1h4.5v-6h2v6H17a1 1 0 0 0 1-1v-9"/></svg>
+        <span style="font-size:14px; font-weight:500;">Dashboard</span>
+      </div>
+      <div class="cc-navitem" style="display:flex; align-items:center; gap:11px; padding:10px 14px; border-radius:10px; background:#ffffff; box-shadow:0 1px 2px rgba(16,24,40,.06); color:#2952cc;">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3 21 7.5v9L12 21 3 16.5v-9Z"/><path d="M3 7.5 12 12l9-4.5"/><path d="M12 12v9"/></svg>
+        <span style="font-size:14px; font-weight:600;">Equipment</span>
+      </div>
+      <div class="cc-navitem" style="display:flex; align-items:center; gap:11px; padding:10px 14px; border-radius:10px; color:#5b6478;">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M20 14.2A8 8 0 1 1 9.8 4a6.3 6.3 0 0 0 10.2 10.2Z"/></svg>
+        <span style="font-size:14px; font-weight:500;">Decision Support</span>
+      </div>
+      <div class="cc-navitem" style="display:flex; align-items:center; gap:11px; padding:10px 14px; border-radius:10px; color:#5b6478;">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9a6 6 0 0 1 12 0c0 4 1.5 5.5 1.5 5.5h-15S6 13 6 9Z"/><path d="M9.5 17a2.5 2.5 0 0 0 5 0"/></svg>
+        <span style="font-size:14px; font-weight:500;">Reminders</span>
+      </div>
+    </div>
+
+    <div style="display:flex; flex-direction:column; gap:4px;">
+      <div class="cc-navitem" style="display:flex; align-items:center; gap:11px; padding:10px 14px; border-radius:10px; color:#5b6478;">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3.1"/><path d="M12 3v2.4M12 18.6V21M21 12h-2.4M5.4 12H3M18.4 5.6l-1.7 1.7M7.3 16.7l-1.7 1.7M18.4 18.4l-1.7-1.7M7.3 7.3 5.6 5.6"/></svg>
+        <span style="font-size:14px; font-weight:500;">Settings</span>
+      </div>
+      <div class="cc-navitem" style="display:flex; align-items:center; gap:11px; padding:10px 14px; border-radius:10px; color:#5b6478;">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><path d="M16 17l5-5-5-5"/><path d="M21 12H9"/></svg>
+        <span style="font-size:14px; font-weight:500;">Log out</span>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- MAIN -->
+  <div style="flex:1; display:flex; flex-direction:column; min-width:0;">
+
+    <!-- TOPBAR -->
+    <div style="height:72px; flex:0 0 72px; background:#ffffff; border-bottom:1px solid #eef0f5; display:flex; align-items:center; justify-content:flex-end; gap:16px; padding:0 32px;">
+      <div style="width:320px; background:#f3f5fa; border-radius:10px; padding:9px 14px; display:flex; align-items:center; gap:9px;">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#9aa2b4" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg>
+        <span style="font-size:13.5px; color:#9aa2b4;">Search equipment...</span>
+      </div>
+      <div style="width:36px; height:36px; border-radius:10px; background:#f3f5fa; display:flex; align-items:center; justify-content:center; color:#5b6478;">
+        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9a6 6 0 0 1 12 0c0 4 1.5 5.5 1.5 5.5h-15S6 13 6 9Z"/><path d="M9.5 17a2.5 2.5 0 0 0 5 0"/></svg>
+      </div>
+      <div style="width:36px; height:36px; border-radius:50%; background:#24408f; display:flex; align-items:center; justify-content:center; color:#fff; font-size:13px; font-weight:700;">W</div>
+    </div>
+
+    <!-- CONTENT -->
+    <div style="flex:1; padding:28px 32px; display:flex; flex-direction:column; gap:20px;">
+
+      <a href="#" style="display:flex; align-items:center; gap:7px; font-size:13.5px; font-weight:600; color:#5b6478;">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M11 18l-6-6 6-6"/></svg>
+        Back to equipment
+      </a>
+
+      <!-- MAIN FORM CARD -->
+      <div style="background:#fff; border:1px solid #eef0f5; border-radius:16px; padding:24px 28px; box-shadow:0 1px 2px rgba(16,24,40,.06),0 1px 3px rgba(16,24,40,.05);">
+
+        <div style="margin-bottom:20px;">
+          <h1 style="margin:0 0 6px 0; font-size:22px; font-weight:700; color:#151f38;">Electrical Safety Analyzer <span style="font-weight:500; color:#9aa2b4;">&mdash; ESA612</span></h1>
+          <p style="margin:0; font-size:13.5px; color:#7a8296;">S/N 4896023 &middot; No. 8</p>
+        </div>
+
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:18px 24px;">
+
+          <div>
+            <label style="display:block; font-size:12.5px; font-weight:600; color:#5b6478; margin-bottom:7px;">Name</label>
+            <input type="text" value="Electrical Safety Analyzer" style="width:100%; border:1px solid #d7dbe8; border-radius:9px; padding:10px 13px; font-size:14px; color:#1b2a4b;">
+          </div>
+
+          <div>
+            <label style="display:block; font-size:12.5px; font-weight:600; color:#5b6478; margin-bottom:7px;">Model</label>
+            <input type="text" value="ESA612" style="width:100%; border:1px solid #d7dbe8; border-radius:9px; padding:10px 13px; font-size:14px; color:#1b2a4b;">
+          </div>
+
+          <div>
+            <label style="display:block; font-size:12.5px; font-weight:600; color:#5b6478; margin-bottom:7px;">Location</label>
+            <input type="text" value="Head office" style="width:100%; border:1px solid #d7dbe8; border-radius:9px; padding:10px 13px; font-size:14px; color:#1b2a4b;">
+          </div>
+
+          <div>
+            <label style="display:block; font-size:12.5px; font-weight:600; color:#5b6478; margin-bottom:7px;">Status</label>
+            <div style="display:flex; align-items:center; justify-content:space-between; border:1px solid #d7dbe8; border-radius:9px; padding:8px 13px;">
+              <span style="font-size:12px; font-weight:700; color:#0a5ca8; background:#e7f1fc; border-radius:20px; padding:4px 12px;">Sent for calibration</span>
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#9aa2b4" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+            </div>
+          </div>
+
+          <div style="grid-column:1 / -1;">
+            <label style="display:block; font-size:12.5px; font-weight:600; color:#5b6478; margin-bottom:7px;">Remarks</label>
+            <input type="text" value="" style="width:100%; border:1px solid #d7dbe8; border-radius:9px; padding:10px 13px; font-size:14px; color:#1b2a4b;">
+          </div>
+
+        </div>
+
+        <div style="display:flex; align-items:center; justify-content:space-between; margin-top:20px;">
+          <button style="background:#182448; color:#fff; border:none; border-radius:9px; padding:10px 20px; font-size:13.5px; font-weight:600; cursor:pointer;">Save changes</button>
+          <a href="#" style="font-size:13px; font-weight:600; color:#d92d20;">Delete equipment</a>
+        </div>
+
+        <div style="display:flex; align-items:center; gap:10px; margin-top:16px;">
+          <p style="margin:0; font-size:13px; color:#7a8296;">Last calibrated 2025-07-01 &middot; Next due 2026-07-01</p>
+          <span style="font-size:11px; font-weight:700; color:#b42318; background:#fee4e2; border-radius:20px; padding:3px 10px;">Overdue &middot; 84 days</span>
+        </div>
+        <div style="display:flex; align-items:center; gap:6px; margin-top:8px;">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#9aa2b4" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 16v-5M12 8h.01"/></svg>
+          <span style="font-size:11.5px; color:#9aa2b4;">Overdue is computed from today's date vs. next due date, not from the Status field above &mdash; so this stays accurate even if Status is never updated by hand.</span>
+        </div>
+      </div>
+
+      <!-- CAPABILITIES CARD -->
+      <div style="background:#fff; border:1px solid #eef0f5; border-radius:16px; padding:24px 28px; box-shadow:0 1px 2px rgba(16,24,40,.06),0 1px 3px rgba(16,24,40,.05);">
+        <h2 style="margin:0 0 16px 0; font-size:16px; font-weight:700; color:#151f38;">Capabilities</h2>
+
+        <div style="display:flex; flex-direction:column; border:1px solid #eef0f5; border-radius:12px; overflow:hidden;">
+          <div style="display:flex; align-items:center; background:#fafbfd; padding:10px 16px;">
+            <span style="flex:1.3; font-size:11.5px; font-weight:700; color:#9aa2b4; text-transform:uppercase; letter-spacing:.03em;">Purpose</span>
+            <span style="flex:1.6; font-size:11.5px; font-weight:700; color:#9aa2b4; text-transform:uppercase; letter-spacing:.03em;">Measurement range</span>
+            <span style="flex:1.3; font-size:11.5px; font-weight:700; color:#9aa2b4; text-transform:uppercase; letter-spacing:.03em;">Accuracy</span>
+            <span style="flex:1.6; font-size:11.5px; font-weight:700; color:#9aa2b4; text-transform:uppercase; letter-spacing:.03em;">Product operating range</span>
+            <span style="flex:1.3; font-size:11.5px; font-weight:700; color:#9aa2b4; text-transform:uppercase; letter-spacing:.03em;">Acceptance criteria</span>
+            <span style="flex:0.6; font-size:11.5px; font-weight:700; color:#9aa2b4; text-transform:uppercase; letter-spacing:.03em;"></span>
+          </div>
+
+          <div style="display:flex; align-items:center; padding:13px 16px; border-top:1px solid #f2f3f7;">
+            <span style="flex:1.3; font-size:13.5px; font-weight:600; color:#1b2a4b;">Voltage</span>
+            <span style="flex:1.6; font-size:13px; color:#38415a;">0-300 V</span>
+            <span style="flex:1.3; font-size:13px; color:#38415a;">&plusmn;2 % of reading</span>
+            <span style="flex:1.6; font-size:13px; color:#38415a;">110-220V</span>
+            <span style="flex:1.3; font-size:13px; color:#38415a;">&plusmn;2V</span>
+            <a href="#" style="flex:0.6; display:flex; align-items:center; gap:5px; font-size:12px; font-weight:600; color:#9aa2b4;">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7h16M9 7V5a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2m2 0-1 12a1 1 0 0 1-1 1H8a1 1 0 0 1-1-1L6 7"/></svg>
+              Remove
+            </a>
+          </div>
+
+          <div style="display:flex; align-items:center; padding:13px 16px; border-top:1px solid #f2f3f7;">
+            <span style="flex:1.3; font-size:13.5px; font-weight:600; color:#1b2a4b;">Earth Resistance</span>
+            <span style="flex:1.6; font-size:13px; color:#38415a;">0-2&Omega;</span>
+            <span style="flex:1.3; font-size:13px; color:#38415a;">&plusmn;2 % of reading</span>
+            <span style="flex:1.6; font-size:13px; color:#38415a;">0.2&Omega;</span>
+            <span style="flex:1.3; font-size:13px; color:#38415a;">&plusmn;2 % of reading</span>
+            <a href="#" style="flex:0.6; display:flex; align-items:center; gap:5px; font-size:12px; font-weight:600; color:#9aa2b4;">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7h16M9 7V5a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2m2 0-1 12a1 1 0 0 1-1 1H8a1 1 0 0 1-1-1L6 7"/></svg>
+              Remove
+            </a>
+          </div>
+
+          <div style="display:flex; align-items:center; padding:13px 16px; border-top:1px solid #f2f3f7;">
+            <span style="flex:1.3; font-size:13.5px; font-weight:600; color:#1b2a4b;">Equipment Current</span>
+            <span style="flex:1.6; font-size:13px; color:#38415a;">0-20A</span>
+            <span style="flex:1.3; font-size:13px; color:#38415a;">&plusmn;5 % of reading</span>
+            <span style="flex:1.6; font-size:13px; color:#38415a;">0-18A</span>
+            <span style="flex:1.3; font-size:13px; color:#38415a;">&plusmn;2 % of reading</span>
+            <a href="#" style="flex:0.6; display:flex; align-items:center; gap:5px; font-size:12px; font-weight:600; color:#9aa2b4;">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7h16M9 7V5a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2m2 0-1 12a1 1 0 0 1-1 1H8a1 1 0 0 1-1-1L6 7"/></svg>
+              Remove
+            </a>
+          </div>
+
+          <div style="display:flex; align-items:center; padding:13px 16px; border-top:1px solid #f2f3f7;">
+            <span style="flex:1.3; font-size:13.5px; font-weight:600; color:#1b2a4b;">Leakage current</span>
+            <span style="flex:1.6; font-size:13px; color:#38415a;">0&mu;A-10mA</span>
+            <span style="flex:1.3; font-size:13px; color:#38415a;">&plusmn;2 % of reading</span>
+            <span style="flex:1.6; font-size:13px; color:#38415a;">0 &mu;A-10mA</span>
+            <span style="flex:1.3; font-size:13px; color:#38415a;">&plusmn;2 % of reading</span>
+            <a href="#" style="flex:0.6; display:flex; align-items:center; gap:5px; font-size:12px; font-weight:600; color:#9aa2b4;">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7h16M9 7V5a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2m2 0-1 12a1 1 0 0 1-1 1H8a1 1 0 0 1-1-1L6 7"/></svg>
+              Remove
+            </a>
+          </div>
+        </div>
+
+        <div style="display:flex; align-items:center; gap:10px; margin-top:16px;">
+          <button style="display:flex; align-items:center; gap:7px; background:#fff; border:1px solid #d7dbe8; color:#38415a; border-radius:9px; padding:9px 16px; font-size:13px; font-weight:600; cursor:pointer;">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"/></svg>
+            Add capability
+          </button>
+          <span style="font-size:11.5px; color:#9aa2b4;">Opens the 5-field form only when needed, instead of sitting empty on the page.</span>
+        </div>
+      </div>
+
+      <!-- CALIBRATION HISTORY CARD -->
+      <div style="background:#fff; border:1px solid #eef0f5; border-radius:16px; padding:24px 28px; box-shadow:0 1px 2px rgba(16,24,40,.06),0 1px 3px rgba(16,24,40,.05);">
+        <h2 style="margin:0 0 16px 0; font-size:16px; font-weight:700; color:#151f38;">Calibration history</h2>
+
+        <div style="display:flex; flex-direction:column; border:1px solid #eef0f5; border-radius:12px; overflow:hidden;">
+          <div style="display:flex; align-items:center; background:#fafbfd; padding:10px 16px;">
+            <span style="flex:1.2; font-size:11.5px; font-weight:700; color:#9aa2b4; text-transform:uppercase; letter-spacing:.03em;">Calibration date</span>
+            <span style="flex:1; font-size:11.5px; font-weight:700; color:#9aa2b4; text-transform:uppercase; letter-spacing:.03em;">Next due</span>
+            <span style="flex:0.9; font-size:11.5px; font-weight:700; color:#9aa2b4; text-transform:uppercase; letter-spacing:.03em;">Frequency</span>
+            <span style="flex:1.1; font-size:11.5px; font-weight:700; color:#9aa2b4; text-transform:uppercase; letter-spacing:.03em;">Responsible</span>
+            <span style="flex:0.9; font-size:11.5px; font-weight:700; color:#9aa2b4; text-transform:uppercase; letter-spacing:.03em;">Certificate</span>
+            <span style="flex:0.9; font-size:11.5px; font-weight:700; color:#9aa2b4; text-transform:uppercase; letter-spacing:.03em;">Notes</span>
+            <span style="flex:0.6;"></span>
+          </div>
+          <div style="display:flex; align-items:center; padding:13px 16px; border-top:1px solid #f2f3f7;">
+            <span style="flex:1.2; font-size:13.5px; font-weight:600; color:#1b2a4b;">2025-07-01</span>
+            <span style="flex:1; font-size:13px; color:#38415a;">2026-07-01</span>
+            <span style="flex:0.9; font-size:13px; color:#38415a;">1 <span style="font-family:'Loma';">&#3611;&#3637;</span></span>
+            <span style="flex:1.1; font-size:13px; color:#38415a;">Service admin</span>
+            <span style="flex:0.9; font-size:13px; color:#9aa2b4;">&mdash;</span>
+            <span style="flex:0.9; font-size:13px; color:#9aa2b4;">&mdash;</span>
+            <a href="#" style="flex:0.6; display:flex; align-items:center; gap:5px; font-size:12px; font-weight:600; color:#9aa2b4;">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7h16M9 7V5a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2m2 0-1 12a1 1 0 0 1-1 1H8a1 1 0 0 1-1-1L6 7"/></svg>
+              Remove
+            </a>
+          </div>
+        </div>
+
+        <div style="border:1px dashed #d7dbe8; border-radius:12px; padding:16px; margin-top:16px;">
+          <div style="display:grid; grid-template-columns:1.2fr 1fr 0.9fr 1.1fr 1.1fr 0.9fr; gap:10px;">
+            <div><label style="display:block; font-size:11.5px; color:#9aa2b4; margin-bottom:5px;">Calibration date</label><input type="text" placeholder="2026-09-23" style="width:100%; border:1px solid #d7dbe8; border-radius:8px; padding:9px 11px; font-size:13px;"></div>
+            <div><label style="display:block; font-size:11.5px; color:#9aa2b4; margin-bottom:5px;">Next due date</label><input type="text" placeholder="2027-09-23" style="width:100%; border:1px solid #d7dbe8; border-radius:8px; padding:9px 11px; font-size:13px;"></div>
+            <div><label style="display:block; font-size:11.5px; color:#9aa2b4; margin-bottom:5px;">Frequency</label><input type="text" placeholder="e.g. 1 ปี" style="width:100%; border:1px solid #d7dbe8; border-radius:8px; padding:9px 11px; font-size:13px; font-family:'Loma','IBM Plex Sans',sans-serif;"></div>
+            <div><label style="display:block; font-size:11.5px; color:#9aa2b4; margin-bottom:5px;">Responsible person</label><input type="text" style="width:100%; border:1px solid #d7dbe8; border-radius:8px; padding:9px 11px; font-size:13px;"></div>
+            <div>
+              <label style="display:block; font-size:11.5px; color:#9aa2b4; margin-bottom:5px;">Certificate</label>
+              <div style="display:flex; align-items:center; gap:8px; border:1px solid #d7dbe8; border-radius:8px; padding:8px 11px;">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#5b6478" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12m0 0-4-4m4 4 4-4"/><path d="M4 17v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2"/></svg>
+                <span style="font-size:12.5px; color:#9aa2b4;">Upload PDF...</span>
+              </div>
+            </div>
+            <div><label style="display:block; font-size:11.5px; color:#9aa2b4; margin-bottom:5px;">Notes</label><input type="text" style="width:100%; border:1px solid #d7dbe8; border-radius:8px; padding:9px 11px; font-size:13px;"></div>
+          </div>
+          <button style="margin-top:14px; background:#0a7a45; color:#fff; border:none; border-radius:9px; padding:9px 18px; font-size:13px; font-weight:600; cursor:pointer;">+ Record calibration</button>
+        </div>
+        <div style="display:flex; align-items:center; gap:6px; margin-top:10px;">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#9aa2b4" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 16v-5M12 8h.01"/></svg>
+          <span style="font-size:11.5px; color:#9aa2b4;">Shown expanded here to illustrate the fixes &mdash; in the real page this panel stays collapsed behind a "+ Record calibration" button until clicked. Dates now match the YYYY-MM-DD format used everywhere else, and Certificate is a real file upload instead of a typed-in path.</span>
+        </div>
+      </div>
+
+    </div>
+
+  </div>
+
+</div>
+
+</body>
+</html>

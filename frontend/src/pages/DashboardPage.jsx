@@ -1,202 +1,365 @@
-import { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
+import { useState, useEffect, useMemo, useRef } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
 import client from '../api/client';
+import { theme } from '../theme';
+import { useAuth } from '../context/AuthContext';
+import {
+  ChevronLeftIcon,
+  ChevronRightIcon,
+  ChevronDownIcon,
+  ArrowUpRightIcon,
+  FilterIcon,
+  AlertTriangleIcon,
+  LayersIcon,
+  CheckCircleIcon,
+  SendIcon,
+} from '../components/icons';
 
-// Reserved status colors (never used for anything but state) and the fixed
-// categorical order -- see the dataviz skill's palette.md. Same hexes already
-// used elsewhere in the app (RemindersPage, etc.) for consistency.
-const COLOR = {
-  good: '#0ca30c',
-  warning: '#fab219',
-  critical: '#d03b3b',
-  muted: '#898781',
-  info: '#2a78d6',
-};
+const PAGE_SIZE = 6;
+const WEEKDAY_LABELS = ['S', 'M', 'T', 'W', 'T', 'F', 'S'];
 
-const CATEGORICAL = ['#2a78d6', '#1baf7a', '#eda100', '#008300', '#4a3aa7', '#e34948', '#e87ba4', '#eb6834'];
-
-const BUCKET_PILL = {
-  overdue: 'bg-red-50 text-red-700',
-  due: 'bg-orange-50 text-orange-700',
-  '7_days': 'bg-amber-50 text-amber-700',
-  '14_days': 'bg-yellow-50 text-yellow-700',
-  '30_days': 'bg-blue-50 text-blue-700',
-};
-
-function StatTile({ label, value, accent }) {
+function KpiCard({ label, value, Icon, iconColor, iconBg, onClick }) {
   return (
-    <div className="bg-white rounded-lg border border-slate-200 p-4">
-      <div className="flex items-center gap-2 mb-1">
-        {accent && <span className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: accent }} />}
-        <span className="text-xs text-slate-500">{label}</span>
+    <div
+      onClick={onClick}
+      className="bg-white rounded-2xl p-[18px] flex flex-col gap-3"
+      style={{ border: `1px solid ${theme.border}`, boxShadow: theme.cardShadow, cursor: onClick ? 'pointer' : 'default' }}
+    >
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-2.5">
+          <div className="w-8 h-8 rounded-[9px] flex items-center justify-center" style={{ backgroundColor: iconBg, color: iconColor }}>
+            <Icon color={iconColor} />
+          </div>
+          <span className="text-[11.5px] font-bold uppercase tracking-wide" style={{ color: '#7a8296' }}>
+            {label}
+          </span>
+        </div>
+        <ArrowUpRightIcon color="#c7cbd8" />
       </div>
-      <div className="text-2xl font-semibold text-slate-900">{value}</div>
-    </div>
-  );
-}
-
-function HeroStat({ label, value, accent, footnote }) {
-  return (
-    <div className="bg-white rounded-lg border border-slate-200 p-5 flex-1">
-      <div className="text-xs text-slate-500 mb-2">{label}</div>
-      <div className="text-3xl font-semibold" style={{ color: accent }}>
+      <div className="text-[27px] font-bold leading-none" style={{ color: theme.ink }}>
         {value}
       </div>
-      {footnote && <div className="text-xs text-slate-500 mt-2">{footnote}</div>}
     </div>
   );
 }
 
-// Area chart over the real next-6-months calibration-due distribution
-// (summary.monthlySchedule) -- not a fabricated trend line, the same numbers
-// behind the "Due within 30 days" / "Overdue" stats, just bucketed by month.
-function ScheduleChart({ data }) {
-  const [hoverIdx, setHoverIdx] = useState(null);
-  const width = 600;
-  const height = 200;
-  const padding = { top: 16, right: 8, bottom: 24, left: 26 };
-  const innerW = width - padding.left - padding.right;
-  const innerH = height - padding.top - padding.bottom;
-  const maxCount = Math.max(0, ...data.map((d) => d.count));
-  const yMax = Math.max(5, Math.ceil((maxCount || 1) / 5) * 5);
-  const stepX = data.length > 1 ? innerW / (data.length - 1) : 0;
+function Donut({ segments, total }) {
+  // Real, mutually-exclusive breakdown so the ring's arcs actually sum to
+  // 100% of `total` -- see the comment where these are computed below for
+  // why "available" excludes overdue equipment rather than mirroring the
+  // raw equipment.status column.
+  let offset = 0;
+  const r = 15.5;
+  const circumference = 100; // pathLength=100 lets stroke-dasharray be a plain percentage
+  return (
+    <div className="relative w-[110px] h-[110px] shrink-0">
+      <svg width="110" height="110" viewBox="0 0 36 36">
+        <g transform="rotate(-90 18 18)">
+          <circle cx="18" cy="18" r={r} fill="none" stroke="#e7e9f0" strokeWidth="5" />
+          {segments.map((s) => {
+            const pct = total ? (s.value / total) * circumference : 0;
+            const el = (
+              <circle
+                key={s.key}
+                cx="18"
+                cy="18"
+                r={r}
+                fill="none"
+                stroke={s.color}
+                strokeWidth="5"
+                pathLength={circumference}
+                strokeDasharray={`${pct} ${circumference - pct}`}
+                strokeDashoffset={-offset}
+                strokeLinecap="round"
+              />
+            );
+            offset += pct;
+            return el;
+          })}
+        </g>
+      </svg>
+      <div className="absolute inset-0 flex flex-col items-center justify-center">
+        <span className="text-[19px] font-bold leading-none" style={{ color: theme.ink }}>
+          {total}
+        </span>
+        <span className="text-[9.5px] mt-0.5" style={{ color: theme.textFaint }}>
+          total
+        </span>
+      </div>
+    </div>
+  );
+}
 
-  const points = data.map((d, i) => ({
-    ...d,
-    x: padding.left + i * stepX,
-    y: padding.top + innerH - (d.count / yMax) * innerH,
-  }));
+function DatePill({ dateStr }) {
+  const d = new Date(dateStr);
+  const label = d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+  return (
+    <span className="text-[11.5px] font-bold rounded-full px-2.5 py-1" style={{ color: theme.warning, backgroundColor: theme.warningBg }}>
+      {label}
+    </span>
+  );
+}
 
-  const linePath = points.map((p, i) => `${i === 0 ? 'M' : 'L'} ${p.x.toFixed(1)} ${p.y.toFixed(1)}`).join(' ');
-  const baseline = padding.top + innerH;
-  const areaPath = `${linePath} L ${points[points.length - 1].x.toFixed(1)} ${baseline} L ${points[0].x.toFixed(1)} ${baseline} Z`;
+function StatusBadge({ bucket }) {
+  const isOverdue = bucket === 'overdue';
+  return (
+    <span
+      className="text-[11.5px] font-bold rounded-full px-[11px] py-1 inline-block"
+      style={{
+        color: isOverdue ? theme.criticalStrong : theme.warning,
+        backgroundColor: isOverdue ? theme.criticalBgStrong : theme.warningBg,
+      }}
+    >
+      {isOverdue ? 'Overdue' : 'Due Soon'}
+    </span>
+  );
+}
 
-  const activeIdx = hoverIdx ?? 0;
-  const active = points[activeIdx];
-  const ticks = [0, yMax / 2, yMax];
+function formatDateKey(year, month, day) {
+  return `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+}
 
-  function handleMove(e) {
-    const rect = e.currentTarget.getBoundingClientRect();
-    const ratio = (e.clientX - rect.left) / rect.width;
-    const idx = Math.round(ratio * (data.length - 1));
-    setHoverIdx(Math.min(data.length - 1, Math.max(0, idx)));
+function CalendarCard({ dueDates }) {
+  const { user } = useAuth();
+  const canManage = Boolean(user?.can_edit);
+
+  const [viewedMonth, setViewedMonth] = useState(() => {
+    const now = new Date();
+    return new Date(now.getFullYear(), now.getMonth(), 1);
+  });
+  const [notes, setNotes] = useState({});
+  const [selectedDate, setSelectedDate] = useState(null);
+  const [noteDraft, setNoteDraft] = useState('');
+  const [noteError, setNoteError] = useState('');
+  const [saving, setSaving] = useState(false);
+  const today = new Date();
+  const isCurrentMonth = viewedMonth.getFullYear() === today.getFullYear() && viewedMonth.getMonth() === today.getMonth();
+
+  useEffect(() => {
+    client
+      .get('/api/calendar-notes')
+      .then(({ data }) => {
+        const map = {};
+        for (const row of data) map[row.note_date] = row.note_text;
+        setNotes(map);
+      })
+      .catch(() => {}); // non-critical widget data -- the calendar still works without notes
+  }, []);
+
+  // Marks any day that has a queue-eligible calibration date on record --
+  // whether that date is still ahead (due soon) or already past (overdue),
+  // both are real dates pulled from calibration_history, not estimates.
+  const dueDaysInMonth = useMemo(() => {
+    const set = new Set();
+    for (const item of dueDates) {
+      const d = new Date(item.next_calibration_date);
+      if (d.getFullYear() === viewedMonth.getFullYear() && d.getMonth() === viewedMonth.getMonth()) {
+        set.add(d.getDate());
+      }
+    }
+    return set;
+  }, [dueDates, viewedMonth]);
+
+  const year = viewedMonth.getFullYear();
+  const month = viewedMonth.getMonth();
+  const daysInMonth = new Date(year, month + 1, 0).getDate();
+  const firstWeekday = new Date(year, month, 1).getDay();
+  const cells = [...Array(firstWeekday).fill(null), ...Array.from({ length: daysInMonth }, (_, i) => i + 1)];
+  const monthLabel = viewedMonth.toLocaleString('en-US', { month: 'long', year: 'numeric' });
+
+  function shiftMonth(delta) {
+    setViewedMonth(new Date(year, month + delta, 1));
+  }
+
+  function handleDayClick(day) {
+    const dateKey = formatDateKey(year, month, day);
+    const existing = notes[dateKey];
+    if (!canManage && !existing) return; // nothing to show a read-only role for an empty day
+    setSelectedDate(dateKey);
+    setNoteDraft(existing || '');
+    setNoteError('');
+  }
+
+  async function handleSaveNote() {
+    setSaving(true);
+    setNoteError('');
+    try {
+      await client.put(`/api/calendar-notes/${selectedDate}`, { note_text: noteDraft });
+      setNotes((prev) => ({ ...prev, [selectedDate]: noteDraft.trim() }));
+      setSelectedDate(null);
+    } catch (err) {
+      setNoteError(err.response?.data?.error || 'Failed to save note');
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  async function handleDeleteNote() {
+    setSaving(true);
+    setNoteError('');
+    try {
+      await client.delete(`/api/calendar-notes/${selectedDate}`);
+      setNotes((prev) => {
+        const next = { ...prev };
+        delete next[selectedDate];
+        return next;
+      });
+      setSelectedDate(null);
+    } catch (err) {
+      setNoteError(err.response?.data?.error || 'Failed to delete note');
+    } finally {
+      setSaving(false);
+    }
   }
 
   return (
-    <div className="relative w-full" style={{ aspectRatio: '3 / 1' }} onMouseMove={handleMove} onMouseLeave={() => setHoverIdx(null)}>
-      <svg viewBox={`0 0 ${width} ${height}`} className="w-full h-full">
-        {ticks.map((t) => {
-          const y = padding.top + innerH - (t / yMax) * innerH;
+    <div className="bg-white rounded-2xl p-[18px]" style={{ border: `1px solid ${theme.border}`, boxShadow: theme.cardShadow }}>
+      <div className="flex items-center justify-between mb-3">
+        <span className="text-sm font-bold" style={{ color: theme.ink }}>
+          {monthLabel}
+        </span>
+        <div className="flex gap-1.5">
+          <button
+            onClick={() => shiftMonth(-1)}
+            className="w-[22px] h-[22px] rounded-[7px] flex items-center justify-center"
+            style={{ border: `1px solid ${theme.borderStrong}`, color: theme.textFaint }}
+          >
+            <ChevronLeftIcon color={theme.textFaint} />
+          </button>
+          <button
+            onClick={() => shiftMonth(1)}
+            className="w-[22px] h-[22px] rounded-[7px] flex items-center justify-center"
+            style={{ border: `1px solid ${theme.borderStrong}`, color: theme.textFaint }}
+          >
+            <ChevronRightIcon color={theme.textFaint} />
+          </button>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-7 gap-[3px] mb-1.5">
+        {WEEKDAY_LABELS.map((d, i) => (
+          <span key={i} className="text-center text-[10.5px] font-bold" style={{ color: theme.textFainter }}>
+            {d}
+          </span>
+        ))}
+      </div>
+      <div className="grid grid-cols-7 gap-[3px]" style={{ gridAutoRows: '24px' }}>
+        {cells.map((day, i) => {
+          if (day === null) return <span key={i} />;
+          const isDue = dueDaysInMonth.has(day);
+          const isToday = isCurrentMonth && day === today.getDate();
+          const hasNote = Boolean(notes[formatDateKey(year, month, day)]);
           return (
-            <g key={t}>
-              <line x1={padding.left} x2={width - padding.right} y1={y} y2={y} stroke="#e1e0d9" strokeWidth="1" />
-              <text x={padding.left - 6} y={y + 3} textAnchor="end" fontSize="9" fill="#898781">
-                {t}
-              </text>
-            </g>
+            <button
+              key={i}
+              type="button"
+              onClick={() => handleDayClick(day)}
+              className="relative flex items-center justify-center text-[11.5px] rounded-[7px]"
+              style={{
+                fontWeight: isDue || isToday ? 700 : 400,
+                color: isDue ? theme.warning : isToday ? theme.brand : '#38415a',
+                backgroundColor: isDue ? theme.warningBg : 'transparent',
+                boxShadow: isToday ? `inset 0 0 0 1.5px ${theme.brand}` : 'none',
+                border: 'none',
+                padding: 0,
+                fontFamily: 'inherit',
+                cursor: canManage || hasNote ? 'pointer' : 'default',
+              }}
+            >
+              {day}
+              {hasNote && (
+                <span
+                  className="absolute bottom-[2px] w-[4px] h-[4px] rounded-full"
+                  style={{ backgroundColor: theme.brand }}
+                />
+              )}
+            </button>
           );
         })}
-        <path d={areaPath} fill={COLOR.info} opacity="0.1" stroke="none" />
-        <path d={linePath} fill="none" stroke={COLOR.info} strokeWidth="2" strokeLinejoin="round" strokeLinecap="round" />
-        {hoverIdx !== null && (
-          <line x1={active.x} x2={active.x} y1={padding.top} y2={baseline} stroke="#c3c2b7" strokeWidth="1" strokeDasharray="3 3" />
-        )}
-        {points.map((p, i) => (
-          <g key={p.month}>
-            <circle cx={p.x} cy={p.y} r={i === activeIdx ? 5 : 3} fill={COLOR.info} stroke="#fff" strokeWidth="2" />
-            <text x={p.x} y={height - 6} textAnchor="middle" fontSize="10" fill="#898781">
-              {p.month}
-            </text>
-          </g>
-        ))}
-      </svg>
-      {hoverIdx !== null && active && (
-        <div
-          className="absolute bg-slate-900 text-white text-xs rounded-md px-2.5 py-1.5 pointer-events-none shadow-lg whitespace-nowrap z-10"
-          style={{
-            left: `${(activeIdx / Math.max(1, data.length - 1)) * 100}%`,
-            top: `${(active.y / height) * 100}%`,
-            transform: 'translate(-50%, calc(-100% - 10px))',
-          }}
-        >
-          <span className="font-semibold">{active.count}</span> due in {active.month}
+      </div>
+
+      <div className="flex items-center gap-4 mt-3 pt-3" style={{ borderTop: `1px solid ${theme.divider}` }}>
+        <span className="flex items-center gap-1.5 text-[11px]" style={{ color: '#7a8296' }}>
+          <span className="w-[9px] h-[9px] rounded-[3px] inline-block" style={{ backgroundColor: theme.warningBg, border: `1px solid ${theme.warningBorderSoft}` }} />
+          Calibration due
+        </span>
+        <span className="flex items-center gap-1.5 text-[11px]" style={{ color: '#7a8296' }}>
+          <span className="w-[9px] h-[9px] rounded-[3px] inline-block" style={{ border: `1.5px solid ${theme.brand}` }} />
+          Today
+        </span>
+        <span className="flex items-center gap-1.5 text-[11px]" style={{ color: '#7a8296' }}>
+          <span className="w-[6px] h-[6px] rounded-full inline-block" style={{ backgroundColor: theme.brand }} />
+          Has note
+        </span>
+      </div>
+
+      {selectedDate && (
+        <div className="mt-3 pt-3" style={{ borderTop: `1px solid ${theme.divider}` }}>
+          <div className="flex items-center justify-between mb-2">
+            <span className="text-[12px] font-bold" style={{ color: theme.ink }}>
+              {new Date(`${selectedDate}T00:00:00`).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
+            </span>
+            <button type="button" onClick={() => setSelectedDate(null)} className="text-[11px]" style={{ color: theme.textFaint, border: 'none', background: 'none' }}>
+              Close
+            </button>
+          </div>
+          {canManage ? (
+            <>
+              <textarea
+                value={noteDraft}
+                onChange={(e) => setNoteDraft(e.target.value)}
+                rows={2}
+                placeholder="Add a note for this day…"
+                className="w-full rounded-[8px] text-[12px] p-2 resize-none"
+                style={{ border: `1px solid ${theme.borderStrong}`, color: theme.ink }}
+              />
+              {noteError && (
+                <div className="text-[11px] mt-1" style={{ color: theme.critical }}>
+                  {noteError}
+                </div>
+              )}
+              <div className="flex items-center gap-2 mt-2">
+                <button
+                  type="button"
+                  onClick={handleSaveNote}
+                  disabled={saving || !noteDraft.trim()}
+                  className="text-[11.5px] font-bold rounded-[8px] px-3 py-1.5"
+                  style={{ backgroundColor: theme.brand, color: '#fff', border: 'none', opacity: saving || !noteDraft.trim() ? 0.6 : 1 }}
+                >
+                  Save
+                </button>
+                {notes[selectedDate] && (
+                  <button
+                    type="button"
+                    onClick={handleDeleteNote}
+                    disabled={saving}
+                    className="text-[11.5px] font-bold rounded-[8px] px-3 py-1.5"
+                    style={{ backgroundColor: theme.criticalBg, color: theme.criticalStrong, border: 'none', opacity: saving ? 0.6 : 1 }}
+                  >
+                    Delete
+                  </button>
+                )}
+              </div>
+            </>
+          ) : (
+            <p className="text-[12px]" style={{ color: theme.textMuted }}>
+              {notes[selectedDate]}
+            </p>
+          )}
         </div>
       )}
     </div>
   );
 }
 
-function CategoryCard({ category, count, total, color }) {
-  const pct = total ? Math.round((count / total) * 100) : 0;
-  return (
-    <div className="flex items-center gap-3">
-      <span className="w-2.5 h-2.5 rounded-full shrink-0" style={{ backgroundColor: color }} />
-      <div className="flex-1 min-w-0">
-        <div className="flex items-center justify-between gap-2 text-sm">
-          <span className="truncate text-slate-700" title={category}>
-            {category}
-          </span>
-          <span className="text-slate-500 tabular-nums shrink-0">{count}</span>
-        </div>
-        <div className="h-1.5 rounded-full bg-slate-100 mt-1 overflow-hidden">
-          <div className="h-full rounded-full" style={{ width: `${pct}%`, backgroundColor: color }} />
-        </div>
-      </div>
-    </div>
-  );
-}
-
-function QueueTable({ rows }) {
-  return (
-    <div className="overflow-x-auto">
-      <table className="w-full text-sm">
-        <thead className="text-slate-500 text-left">
-          <tr>
-            <th className="py-1 pr-2">Equipment</th>
-            <th className="py-1 pr-2">Serial</th>
-            <th className="py-1 pr-2">Next due</th>
-            <th className="py-1 pr-2">Status</th>
-          </tr>
-        </thead>
-        <tbody>
-          {rows.map((r) => (
-            <tr key={r.equipment_id} className="border-t border-slate-100">
-              <td className="py-1.5 pr-2">
-                <Link to={`/equipment/${r.equipment_id}`} className="font-medium hover:underline">
-                  {r.name}
-                </Link>{' '}
-                <span className="text-slate-400">— {r.model}</span>
-              </td>
-              <td className="py-1.5 pr-2 text-slate-600">{r.serial_number}</td>
-              <td className="py-1.5 pr-2 text-slate-600">{String(r.next_calibration_date).slice(0, 10)}</td>
-              <td className="py-1.5 pr-2">
-                <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${BUCKET_PILL[r.bucket] || ''}`}>
-                  {r.days_until_due < 0
-                    ? `${Math.abs(r.days_until_due)}d overdue`
-                    : r.days_until_due === 0
-                      ? 'Due today'
-                      : `${r.days_until_due}d left`}
-                </span>
-              </td>
-            </tr>
-          ))}
-          {rows.length === 0 && (
-            <tr>
-              <td colSpan={4} className="py-4 text-center text-slate-400">
-                Nothing due within 30 days
-              </td>
-            </tr>
-          )}
-        </tbody>
-      </table>
-    </div>
-  );
-}
-
 export function DashboardPage() {
+  const navigate = useNavigate();
   const [summary, setSummary] = useState(null);
   const [error, setError] = useState('');
-  const [sortBy, setSortBy] = useState('soonest');
+  const [filter, setFilter] = useState('all');
+  const [page, setPage] = useState(0);
+  const [alertDismissed, setAlertDismissed] = useState(false);
+  const queueRef = useRef(null);
 
   useEffect(() => {
     client
@@ -206,80 +369,262 @@ export function DashboardPage() {
   }, []);
 
   if (error) return <div className="text-red-700">{error}</div>;
-  if (!summary) return <div className="text-slate-400">Loading…</div>;
+  if (!summary) return <div style={{ color: theme.textMuted }}>Loading…</div>;
 
   const statusCount = (status) => summary.byStatus.find((s) => s.status === status)?.count || 0;
 
-  const queue = [...summary.overdue, ...summary.dueSoon];
-  const sortedQueue = [...queue].sort((a, b) =>
-    sortBy === 'name' ? a.name.localeCompare(b.name) : a.days_until_due - b.days_until_due
-  );
+  // Mutually-exclusive breakdown for the donut + KPI row: "available" is
+  // active equipment that is NOT currently overdue, so the four slices sum
+  // exactly to totalEquipment instead of double-counting active-and-overdue
+  // equipment under two different labels.
+  const overdueCount = summary.overdueCount;
+  const availableCount = Math.max(0, statusCount('active') - overdueCount);
+  const sentCount = statusCount('sent_for_calibration');
+  const unavailableCount = statusCount('decommissioned') + statusCount('under_maintenance');
+
+  const donutSegments = [
+    { key: 'available', value: availableCount, color: theme.good },
+    { key: 'overdue', value: overdueCount, color: theme.critical },
+    { key: 'sent', value: sentCount, color: theme.warning },
+    { key: 'unavailable', value: unavailableCount, color: theme.neutralMuted },
+  ];
+
+  const fullQueue = [...summary.overdue, ...summary.dueSoon].map((r) => ({
+    ...r,
+    bucket: r.bucket === 'overdue' ? 'overdue' : 'due_soon',
+  }));
+  const filteredQueue = filter === 'all' ? fullQueue : fullQueue.filter((r) => r.bucket === filter);
+  const pageCount = Math.max(1, Math.ceil(filteredQueue.length / PAGE_SIZE));
+  const currentPage = Math.min(page, pageCount - 1);
+  const pageItems = filteredQueue.slice(currentPage * PAGE_SIZE, currentPage * PAGE_SIZE + PAGE_SIZE);
+  const upcomingDueDates = summary.dueSoon.slice(0, 3);
+
+  function handleFilterChange(e) {
+    setFilter(e.target.value);
+    setPage(0);
+  }
+
+  function handleViewOverdue() {
+    setFilter('overdue');
+    setPage(0);
+    queueRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
 
   return (
-    <div className="space-y-6">
-      <div>
-        <h1 className="text-xl font-semibold text-slate-900">Dashboard</h1>
-        <p className="text-sm text-slate-500">Equipment overview and calibration monitoring.</p>
+    <div className="flex flex-col gap-5">
+      <h1 className="text-[23px] font-bold" style={{ color: '#151f38' }}>
+        System Dashboard
+      </h1>
+
+      <div className="grid grid-cols-4 gap-[18px]">
+        <KpiCard
+          label="Total Equipment"
+          value={summary.totalEquipment}
+          Icon={LayersIcon}
+          iconColor={theme.brand}
+          iconBg="#eaf0ff"
+          onClick={() => navigate('/equipment')}
+        />
+        <KpiCard
+          label="Available"
+          value={availableCount}
+          Icon={CheckCircleIcon}
+          iconColor={theme.good}
+          iconBg={theme.goodBg}
+          onClick={() => navigate('/equipment?status=active&view=available')}
+        />
+        <KpiCard label="Overdue" value={overdueCount} Icon={AlertTriangleIcon} iconColor={theme.critical} iconBg={theme.criticalBg} onClick={handleViewOverdue} />
+        <KpiCard
+          label="Sent for Calibration"
+          value={sentCount}
+          Icon={SendIcon}
+          iconColor={theme.warning}
+          iconBg={theme.warningBg}
+          onClick={() => navigate('/equipment?status=sent_for_calibration')}
+        />
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-        <div className="flex flex-col gap-4">
-          <HeroStat
-            label="Total equipment"
-            value={summary.totalEquipment}
-            accent={COLOR.info}
-            footnote={`${statusCount('active')} available now`}
-          />
-          <HeroStat
-            label="Overdue"
-            value={summary.overdueCount}
-            accent={COLOR.critical}
-            footnote={summary.overdue[0] ? `Oldest: ${Math.abs(summary.overdue[0].days_until_due)}d overdue` : 'Nothing overdue'}
-          />
-        </div>
-        <div className="lg:col-span-2 bg-white rounded-lg border border-slate-200 p-4">
-          <div className="flex items-center justify-between mb-3">
-            <h2 className="font-semibold">Calibration schedule</h2>
-            <span className="text-xs text-slate-400">Next 6 months</span>
+      {!alertDismissed && overdueCount > 0 && (
+        <div className="rounded-[14px] px-5 py-3.5 flex items-center justify-between" style={{ backgroundColor: theme.alertBg, border: `1px solid ${theme.alertBorder}` }}>
+          <div className="flex items-center gap-3">
+            <div className="w-[30px] h-[30px] rounded-[9px] flex items-center justify-center shrink-0" style={{ backgroundColor: theme.criticalBgStrong, color: theme.critical }}>
+              <AlertTriangleIcon color={theme.critical} />
+            </div>
+            <span className="text-[13.5px] font-semibold" style={{ color: '#7a271a' }}>
+              {overdueCount} device{overdueCount === 1 ? ' is' : 's are'} overdue for calibration
+            </span>
           </div>
-          <ScheduleChart data={summary.monthlySchedule} />
-        </div>
-      </div>
-
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-        <StatTile label="Available" value={statusCount('active')} accent={COLOR.good} />
-        <StatTile label="Under maintenance" value={statusCount('under_maintenance')} accent={COLOR.warning} />
-        <StatTile label="Sent for calibration" value={statusCount('sent_for_calibration')} accent={COLOR.info} />
-        <StatTile label="Decommissioned" value={statusCount('decommissioned')} accent={COLOR.muted} />
-      </div>
-
-      <div className="grid lg:grid-cols-3 gap-4">
-        <div className="lg:col-span-2 bg-white rounded-lg border border-slate-200 p-4">
-          <div className="flex items-center justify-between mb-3">
-            <h2 className="font-semibold">Calibration queue ({queue.length})</h2>
-            <select
-              value={sortBy}
-              onChange={(e) => setSortBy(e.target.value)}
-              className="text-xs border border-slate-200 rounded-md px-2 py-1 text-slate-600"
+          <div className="flex items-center gap-4">
+            <button
+              onClick={handleViewOverdue}
+              className="text-white rounded-[9px] px-4 py-2 text-[12.5px] font-semibold"
+              style={{ backgroundColor: theme.critical }}
             >
-              <option value="soonest">Sort: Soonest first</option>
-              <option value="name">Sort: Name</option>
-            </select>
+              View overdue
+            </button>
+            <button onClick={() => setAlertDismissed(true)} className="text-lg leading-none" style={{ color: '#c98289' }} aria-label="Dismiss">
+              &times;
+            </button>
           </div>
-          <QueueTable rows={sortedQueue} />
         </div>
-        <div className="bg-white rounded-lg border border-slate-200 p-4">
-          <h2 className="font-semibold mb-3">By category</h2>
-          <div className="space-y-3">
-            {summary.byCategory.map((c, i) => (
-              <CategoryCard
-                key={c.category}
-                category={c.category}
-                count={c.count}
-                total={summary.totalEquipment}
-                color={CATEGORICAL[i % CATEGORICAL.length]}
-              />
-            ))}
+      )}
+
+      <div className="flex gap-5 items-stretch">
+        <div className="flex flex-col gap-[18px]" style={{ flex: '0 0 388px' }}>
+          <div className="bg-white rounded-2xl p-[18px]" style={{ border: `1px solid ${theme.border}`, boxShadow: theme.cardShadow }}>
+            <div className="text-sm font-bold mb-3.5" style={{ color: theme.ink }}>
+              Equipment Status
+            </div>
+            <div className="flex items-center gap-5">
+              <Donut segments={donutSegments} total={summary.totalEquipment} />
+              <div className="flex flex-col gap-2.5 flex-1">
+                {[
+                  { label: 'Available', value: availableCount, color: theme.good },
+                  { label: 'Overdue', value: overdueCount, color: theme.critical },
+                  { label: 'Sent out', value: sentCount, color: theme.warning },
+                  { label: 'Unavailable', value: unavailableCount, color: theme.neutralMuted },
+                ].map((row) => (
+                  <div key={row.label} className="flex items-center justify-between text-[12.5px]">
+                    <span className="flex items-center gap-[7px]" style={{ color: '#4a5268' }}>
+                      <span className="w-2 h-2 rounded-full inline-block" style={{ backgroundColor: row.color }} />
+                      {row.label}
+                    </span>
+                    <span className="font-bold" style={{ color: theme.ink }}>
+                      {row.value}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+
+          <CalendarCard dueDates={fullQueue} />
+
+          <div className="bg-white rounded-2xl p-[18px] flex-1 flex flex-col" style={{ border: `1px solid ${theme.border}`, boxShadow: theme.cardShadow }}>
+            <div className="text-sm font-bold mb-2.5" style={{ color: theme.ink }}>
+              Upcoming Due Dates
+            </div>
+            <div className="flex flex-col flex-1">
+              {upcomingDueDates.map((item, i) => (
+                <div
+                  key={item.equipment_id}
+                  className="flex items-center justify-between py-2.5"
+                  style={{ borderBottom: i < upcomingDueDates.length - 1 ? `1px solid ${theme.divider}` : 'none' }}
+                >
+                  <div className="flex flex-col gap-0.5">
+                    <span className="text-[12.5px] font-semibold" style={{ color: theme.inkAlt }}>
+                      {item.name}
+                    </span>
+                    <span className="text-[11px]" style={{ color: theme.textFaint }}>
+                      {item.model}
+                    </span>
+                  </div>
+                  <DatePill dateStr={item.next_calibration_date} />
+                </div>
+              ))}
+              {upcomingDueDates.length === 0 && (
+                <div className="flex-1 flex items-center justify-center text-sm py-4" style={{ color: theme.textFaint }}>
+                  Nothing due soon
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+
+        <div ref={queueRef} className="flex-1 bg-white rounded-2xl flex flex-col overflow-hidden min-w-0" style={{ border: `1px solid ${theme.border}`, boxShadow: theme.cardShadow }}>
+          <div className="flex items-center justify-between px-5 pt-5 pb-4">
+            <span className="text-[15.5px] font-bold" style={{ color: theme.ink }}>
+              Calibration Queue
+            </span>
+            <div className="relative">
+              <select
+                value={filter}
+                onChange={handleFilterChange}
+                className="appearance-none rounded-[9px] pl-3 pr-8 py-[7px] text-[12.5px] font-semibold"
+                style={{ backgroundColor: theme.chipBg, border: `1px solid ${theme.borderStrong}`, color: '#38415a' }}
+              >
+                <option value="all">All statuses</option>
+                <option value="overdue">Overdue</option>
+                <option value="due_soon">Due Soon</option>
+              </select>
+              <span className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none">
+                <ChevronDownIcon color="#38415a" />
+              </span>
+            </div>
+          </div>
+
+          <div className="flex-1 overflow-auto px-5">
+            <table className="w-full border-collapse">
+              <thead>
+                <tr>
+                  {['Equipment', 'Model', 'Serial Number', 'Next Due', 'Status'].map((h) => (
+                    <th
+                      key={h}
+                      className="text-left text-[10.5px] font-bold uppercase tracking-wide pb-2.5"
+                      style={{ color: theme.textFaint, borderBottom: `1px solid ${theme.border}` }}
+                    >
+                      {h}
+                    </th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody>
+                {pageItems.map((r, i) => (
+                  <tr key={`${r.equipment_id}-${r.bucket}`}>
+                    <td className="py-[13px] text-[13px] font-semibold" style={{ color: theme.inkAlt, borderBottom: i < pageItems.length - 1 ? `1px solid ${theme.divider}` : 'none' }}>
+                      <Link to={`/equipment/${r.equipment_id}`} className="hover:underline">
+                        {r.name}
+                      </Link>
+                    </td>
+                    <td className="py-[13px] text-[13px]" style={{ color: theme.textMuted, borderBottom: i < pageItems.length - 1 ? `1px solid ${theme.divider}` : 'none' }}>
+                      {r.model || '—'}
+                    </td>
+                    <td className="py-[13px] text-[13px]" style={{ color: theme.textMuted, borderBottom: i < pageItems.length - 1 ? `1px solid ${theme.divider}` : 'none' }}>
+                      {r.serial_number}
+                    </td>
+                    <td className="py-[13px] text-[13px]" style={{ color: theme.textMuted, borderBottom: i < pageItems.length - 1 ? `1px solid ${theme.divider}` : 'none' }}>
+                      {String(r.next_calibration_date).slice(0, 10)}
+                    </td>
+                    <td className="py-[13px]" style={{ borderBottom: i < pageItems.length - 1 ? `1px solid ${theme.divider}` : 'none' }}>
+                      <StatusBadge bucket={r.bucket} />
+                    </td>
+                  </tr>
+                ))}
+                {pageItems.length === 0 && (
+                  <tr>
+                    <td colSpan={5} className="text-center py-8 text-sm" style={{ color: theme.textFaint }}>
+                      Nothing due right now
+                    </td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
+          </div>
+
+          <div className="flex items-center justify-between px-5 py-3.5" style={{ borderTop: `1px solid ${theme.divider}` }}>
+            <span className="text-[12.5px]" style={{ color: theme.textFaint }}>
+              {filteredQueue.length === 0
+                ? 'Showing 0 of 0 items'
+                : `Showing ${currentPage * PAGE_SIZE + 1}–${Math.min(filteredQueue.length, currentPage * PAGE_SIZE + PAGE_SIZE)} of ${filteredQueue.length} items`}
+            </span>
+            <div className="flex gap-2">
+              <button
+                onClick={() => setPage((p) => Math.max(0, p - 1))}
+                disabled={currentPage === 0}
+                className="text-[12.5px] font-semibold rounded-lg px-[15px] py-[7px] disabled:opacity-60"
+                style={{ border: `1px solid ${theme.border}`, color: currentPage === 0 ? '#c2c8d6' : '#38415a' }}
+              >
+                Previous
+              </button>
+              <button
+                onClick={() => setPage((p) => Math.min(pageCount - 1, p + 1))}
+                disabled={currentPage >= pageCount - 1}
+                className="text-[12.5px] font-semibold rounded-lg px-[15px] py-[7px] disabled:opacity-40"
+                style={{ border: `1px solid #d6ddf2`, color: theme.brand }}
+              >
+                Next
+              </button>
+            </div>
           </div>
         </div>
       </div>

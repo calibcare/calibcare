@@ -1,6 +1,7 @@
 import { Router } from 'express';
 import { pool } from '../db.js';
 import { runDssMatch } from '../services/dssMatcher.js';
+import { parseRange, normalizeUnit } from '../services/rangeParser.js';
 
 export const dssRouter = Router();
 
@@ -12,6 +13,36 @@ dssRouter.get('/purposes', async (req, res, next) => {
       'SELECT DISTINCT measurement_purpose FROM equipment_capability ORDER BY measurement_purpose'
     );
     res.json(rows.map((r) => r.measurement_purpose));
+  } catch (err) {
+    next(err);
+  }
+});
+
+// GET /api/dss/units?purpose=<purpose> -- the real, synonym-deduped set of
+// units equipment actually use for that purpose (derived from
+// measurement_range at request time -- there's no separate unit column),
+// so the requirement form's unit dropdown can't be typo'd into a mismatch.
+dssRouter.get('/units', async (req, res, next) => {
+  try {
+    const { purpose } = req.query;
+    if (!purpose) {
+      return res.status(400).json({ error: 'purpose is required' });
+    }
+
+    const [rows] = await pool.query(
+      'SELECT measurement_range FROM equipment_capability WHERE measurement_purpose = ?',
+      [purpose]
+    );
+
+    const seen = new Map();
+    for (const row of rows) {
+      const range = parseRange(row.measurement_range);
+      if (!range || !range.unit) continue;
+      const key = normalizeUnit(range.unit);
+      if (!seen.has(key)) seen.set(key, range.unit);
+    }
+
+    res.json([...seen.entries()].map(([value, label]) => ({ value, label })));
   } catch (err) {
     next(err);
   }

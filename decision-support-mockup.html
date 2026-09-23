@@ -1,0 +1,234 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  * { box-sizing: border-box; }
+  body { margin: 0; font-family: 'IBM Plex Sans', system-ui, -apple-system, sans-serif; }
+  a { color: #2952cc; }
+  a:hover { color: #1e3fa0; }
+  .cc-navitem { text-decoration: none; }
+  .cc-actionbtn { display:flex; align-items:center; justify-content:center; width:28px; height:28px; border-radius:7px; color:#9aa2b4; }
+  .cc-row:hover { background: #fafbfd; }
+</style>
+</head>
+<body>
+
+<div style="width:1440px; min-height:1200px; background:#f6f7fb; display:flex; color:#1b2a4b;">
+
+  <!-- SIDEBAR -->
+  <div style="width:240px; flex:0 0 240px; background:#eef1f8; border-right:1px solid #e2e6f0; display:flex; flex-direction:column; padding:24px 16px;">
+
+    <div style="display:flex; align-items:center; gap:10px; padding:4px 8px 28px 8px;">
+      <div style="width:36px; height:36px; border-radius:11px; background:linear-gradient(135deg,#24408f,#3357b8); display:flex; align-items:center; justify-content:center; flex:0 0 auto;">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#ffffff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12h4l2.5-7 4 14L15 9l2 3h5"/></svg>
+      </div>
+      <span style="font-size:19px; font-weight:700; color:#182448; letter-spacing:-0.01em;">Calibcare</span>
+    </div>
+
+    <div style="display:flex; flex-direction:column; gap:4px; flex:1;">
+      <div class="cc-navitem" style="display:flex; align-items:center; gap:11px; padding:10px 14px; border-radius:10px; color:#5b6478;">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 11.5 12 4l9 7.5"/><path d="M5.5 10v9a1 1 0 0 0 1 1h4.5v-6h2v6H17a1 1 0 0 0 1-1v-9"/></svg>
+        <span style="font-size:14px; font-weight:500;">Dashboard</span>
+      </div>
+      <div class="cc-navitem" style="display:flex; align-items:center; gap:11px; padding:10px 14px; border-radius:10px; color:#5b6478;">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3 21 7.5v9L12 21 3 16.5v-9Z"/><path d="M3 7.5 12 12l9-4.5"/><path d="M12 12v9"/></svg>
+        <span style="font-size:14px; font-weight:500;">Equipment</span>
+      </div>
+      <div class="cc-navitem" style="display:flex; align-items:center; gap:11px; padding:10px 14px; border-radius:10px; background:#ffffff; box-shadow:0 1px 2px rgba(16,24,40,.06); color:#2952cc;">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M20 14.2A8 8 0 1 1 9.8 4a6.3 6.3 0 0 0 10.2 10.2Z"/></svg>
+        <span style="font-size:14px; font-weight:600;">Decision Support</span>
+      </div>
+      <div class="cc-navitem" style="display:flex; align-items:center; gap:11px; padding:10px 14px; border-radius:10px; color:#5b6478;">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9a6 6 0 0 1 12 0c0 4 1.5 5.5 1.5 5.5h-15S6 13 6 9Z"/><path d="M9.5 17a2.5 2.5 0 0 0 5 0"/></svg>
+        <span style="font-size:14px; font-weight:500;">Reminders</span>
+      </div>
+    </div>
+
+    <div style="display:flex; flex-direction:column; gap:4px;">
+      <div class="cc-navitem" style="display:flex; align-items:center; gap:11px; padding:10px 14px; border-radius:10px; color:#5b6478;">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3.1"/><path d="M12 3v2.4M12 18.6V21M21 12h-2.4M5.4 12H3M18.4 5.6l-1.7 1.7M7.3 16.7l-1.7 1.7M18.4 18.4l-1.7-1.7M7.3 7.3 5.6 5.6"/></svg>
+        <span style="font-size:14px; font-weight:500;">Settings</span>
+      </div>
+      <div class="cc-navitem" style="display:flex; align-items:center; gap:11px; padding:10px 14px; border-radius:10px; color:#5b6478;">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><path d="M16 17l5-5-5-5"/><path d="M21 12H9"/></svg>
+        <span style="font-size:14px; font-weight:500;">Log out</span>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- MAIN -->
+  <div style="flex:1; display:flex; flex-direction:column; min-width:0;">
+
+    <!-- TOPBAR -->
+    <div style="height:72px; flex:0 0 72px; background:#ffffff; border-bottom:1px solid #eef0f5; display:flex; align-items:center; justify-content:flex-end; gap:16px; padding:0 32px;">
+      <div style="width:320px; background:#f3f5fa; border-radius:10px; padding:9px 14px; display:flex; align-items:center; gap:9px;">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#9aa2b4" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg>
+        <span style="font-size:13.5px; color:#9aa2b4;">Search equipment...</span>
+      </div>
+      <div style="width:36px; height:36px; border-radius:10px; background:#f3f5fa; display:flex; align-items:center; justify-content:center; color:#5b6478;">
+        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9a6 6 0 0 1 12 0c0 4 1.5 5.5 1.5 5.5h-15S6 13 6 9Z"/><path d="M9.5 17a2.5 2.5 0 0 0 5 0"/></svg>
+      </div>
+      <div style="width:36px; height:36px; border-radius:50%; background:#24408f; display:flex; align-items:center; justify-content:center; color:#fff; font-size:13px; font-weight:700;">W</div>
+    </div>
+
+    <!-- CONTENT -->
+    <div style="flex:1; padding:28px 32px; display:flex; flex-direction:column; gap:20px;">
+
+      <div>
+        <h1 style="margin:0 0 6px 0; font-size:23px; font-weight:700; color:#151f38;">Decision Support System</h1>
+        <p style="margin:0; font-size:14px; color:#7a8296;">Enter the calibration requirements for this job and find suitable equipment.</p>
+      </div>
+
+      <!-- FORM CARD -->
+      <div style="background:#fff; border:1px solid #eef0f5; border-radius:16px; padding:22px 24px; box-shadow:0 1px 2px rgba(16,24,40,.06),0 1px 3px rgba(16,24,40,.05);">
+        <div style="display:grid; grid-template-columns:1.4fr 0.7fr 0.7fr 1fr; gap:16px;">
+
+          <div>
+            <label style="display:block; font-size:12px; font-weight:600; color:#5b6478; margin-bottom:7px;">Measurement purpose</label>
+            <div style="display:flex; align-items:center; justify-content:space-between; border:1px solid #d7dbe8; border-radius:9px; padding:10px 13px; background:#fff;">
+              <span style="font-size:14px; color:#1b2a4b; font-weight:500;">AC Current</span>
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#9aa2b4" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+            </div>
+          </div>
+
+          <div>
+            <label style="display:block; font-size:12px; font-weight:600; color:#5b6478; margin-bottom:7px;">Min</label>
+            <div style="border:1px solid #d7dbe8; border-radius:9px; padding:10px 13px;">
+              <span style="font-size:14px; color:#1b2a4b;">10</span>
+            </div>
+          </div>
+
+          <div>
+            <label style="display:block; font-size:12px; font-weight:600; color:#5b6478; margin-bottom:7px;">Max</label>
+            <div style="border:1px solid #d7dbe8; border-radius:9px; padding:10px 13px;">
+              <span style="font-size:14px; color:#1b2a4b;">100</span>
+            </div>
+          </div>
+
+          <div>
+            <label style="display:block; font-size:12px; font-weight:600; color:#5b6478; margin-bottom:7px;">Unit</label>
+            <div style="display:flex; align-items:center; justify-content:space-between; border:1px solid #d7dbe8; border-radius:9px; padding:10px 13px; background:#fafbfd;">
+              <span style="font-size:14px; color:#1b2a4b; font-weight:500;">amp (A)</span>
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#9aa2b4" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+            </div>
+          </div>
+
+        </div>
+
+        <div style="display:flex; align-items:center; gap:6px; margin-top:9px;">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#9aa2b4" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 16v-5M12 8h.01"/></svg>
+          <span style="font-size:12px; color:#9aa2b4;">Unit options are limited to what's valid for "AC Current" &mdash; no more free-typed units, so a typo can't silently break the match.</span>
+        </div>
+
+        <div style="display:flex; gap:10px; margin-top:16px;">
+          <button style="display:flex; align-items:center; gap:7px; background:#fff; border:1px solid #d7dbe8; color:#38415a; border-radius:9px; padding:9px 16px; font-size:13px; font-weight:600; cursor:pointer;">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"/></svg>
+            Add requirement
+          </button>
+          <button style="background:#182448; color:#fff; border:none; border-radius:9px; padding:9px 20px; font-size:13px; font-weight:600; cursor:pointer;">Find suitable equipment</button>
+        </div>
+      </div>
+
+      <!-- RESULTS -->
+      <div style="display:flex; gap:20px; align-items:flex-start;">
+
+        <!-- SUITABLE (empty, helpful state) -->
+        <div style="flex:0 0 388px; background:#fff; border:1px solid #eef0f5; border-radius:16px; padding:20px; box-shadow:0 1px 2px rgba(16,24,40,.06),0 1px 3px rgba(16,24,40,.05);">
+          <div style="display:flex; align-items:center; gap:8px; margin-bottom:14px;">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#0a7a45" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>
+            <span style="font-size:14.5px; font-weight:700; color:#151f38;">Suitable equipment (0)</span>
+          </div>
+
+          <div style="background:#fafbfd; border:1px solid #eef0f5; border-radius:12px; padding:16px; display:flex; flex-direction:column; gap:10px;">
+            <span style="font-size:13px; color:#5b6478; line-height:1.5;">No equipment currently covers 10&ndash;100 amp for AC Current.</span>
+
+            <div style="background:#fff; border:1px solid #eef0f5; border-radius:10px; padding:12px;">
+              <div style="font-size:11px; font-weight:700; letter-spacing:.04em; text-transform:uppercase; color:#9aa2b4; margin-bottom:6px;">Closest match</div>
+              <div style="font-size:13px; font-weight:600; color:#1b2a4b;">True RMS Multimeter <span style="font-weight:500; color:#9aa2b4;">&middot; Fluke-116</span></div>
+              <div style="font-size:12.5px; color:#5b6478; margin-top:3px;">Covers up to 10 amp &mdash; short by 90 amp of the 100 amp required.</div>
+            </div>
+
+            <span style="font-size:12px; color:#7a8296; line-height:1.5;">Try lowering Max, or check with procurement about equipment rated above 10 amp.</span>
+          </div>
+        </div>
+
+        <!-- NOT SUITABLE (grouped) -->
+        <div style="flex:1; background:#fff; border:1px solid #eef0f5; border-radius:16px; padding:20px; box-shadow:0 1px 2px rgba(16,24,40,.06),0 1px 3px rgba(16,24,40,.05);">
+          <div style="display:flex; align-items:center; gap:8px; margin-bottom:14px;">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#d92d20" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18M6 6l12 12"/></svg>
+            <span style="font-size:14.5px; font-weight:700; color:#151f38;">Not suitable (32)</span>
+          </div>
+
+          <!-- grouped reason row (expanded) -->
+          <div style="border:1px solid #f2c4be; border-radius:12px; overflow:hidden;">
+            <div style="display:flex; align-items:center; justify-content:space-between; background:#fef3f2; padding:12px 16px;">
+              <div style="display:flex; align-items:center; gap:10px;">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#b42318" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+                <span style="font-size:13.5px; font-weight:700; color:#7a271a;">Max range below 100 amp required</span>
+                <span style="font-size:11px; font-weight:700; color:#b42318; background:#fee4e2; border-radius:20px; padding:3px 10px;">32 equipment</span>
+              </div>
+              <span style="font-size:12px; font-weight:600; color:#7a8296; cursor:pointer;">Collapse</span>
+            </div>
+
+            <div style="display:flex; flex-direction:column;">
+
+              <div class="cc-row" style="display:flex; align-items:center; justify-content:space-between; padding:11px 16px; border-top:1px solid #f2f3f7;">
+                <div>
+                  <span style="font-size:13px; font-weight:600; color:#2952cc;">True RMS Multimeter</span>
+                  <span style="font-size:12px; color:#9aa2b4;"> &middot; Fluke-116 &middot; S/N 58911057WS</span>
+                </div>
+                <span style="font-size:12px; color:#b42318;">Max 10 amp &mdash; need 100 amp</span>
+              </div>
+
+              <div class="cc-row" style="display:flex; align-items:center; justify-content:space-between; padding:11px 16px; border-top:1px solid #f2f3f7;">
+                <div>
+                  <span style="font-size:13px; font-weight:600; color:#2952cc;">True RMS Multimeter</span>
+                  <span style="font-size:12px; color:#9aa2b4;"> &middot; Fluke-115 &middot; S/N 37432905WS</span>
+                </div>
+                <span style="font-size:12px; color:#b42318;">Max 10 amp &mdash; need 100 amp</span>
+              </div>
+
+              <div class="cc-row" style="display:flex; align-items:center; justify-content:space-between; padding:11px 16px; border-top:1px solid #f2f3f7;">
+                <div>
+                  <span style="font-size:13px; font-weight:600; color:#2952cc;">True RMS Multimeter</span>
+                  <span style="font-size:12px; color:#9aa2b4;"> &middot; Fluke-115 &middot; S/N 30702180WS</span>
+                </div>
+                <span style="font-size:12px; color:#b42318;">Max 10 amp &mdash; need 100 amp</span>
+              </div>
+
+              <div class="cc-row" style="display:flex; align-items:center; justify-content:space-between; padding:11px 16px; border-top:1px solid #f2f3f7;">
+                <div>
+                  <span style="font-size:13px; font-weight:600; color:#2952cc;">True RMS Multimeter</span>
+                  <span style="font-size:12px; color:#9aa2b4;"> &middot; Fluke-115 &middot; S/N 39672295WS</span>
+                </div>
+                <span style="font-size:12px; color:#b42318;">Max 10 amp &mdash; need 100 amp</span>
+              </div>
+
+              <div style="padding:11px 16px; border-top:1px solid #f2f3f7; text-align:center;">
+                <span style="font-size:12.5px; font-weight:600; color:#2952cc; cursor:pointer;">Show 28 more</span>
+              </div>
+
+            </div>
+          </div>
+
+          <div style="display:flex; align-items:center; gap:6px; margin-top:12px;">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#9aa2b4" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 16v-5M12 8h.01"/></svg>
+            <span style="font-size:12px; color:#9aa2b4;">All 32 items fail for the same reason, so they're grouped into one row instead of 32 separate cards.</span>
+          </div>
+        </div>
+
+      </div>
+
+    </div>
+
+  </div>
+
+</div>
+
+</body>
+</html>

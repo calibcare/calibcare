@@ -1,0 +1,302 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  * { box-sizing: border-box; }
+  body { margin: 0; font-family: 'IBM Plex Sans', system-ui, -apple-system, sans-serif; }
+  a { color: #2952cc; }
+  a:hover { color: #1e3fa0; }
+  .cc-navitem { text-decoration: none; }
+  .cc-row:hover { background: #fafbfd; }
+  .cc-toggle-on { width:38px; height:22px; border-radius:20px; background:#2952cc; position:relative; flex:0 0 auto; }
+  .cc-toggle-on::after { content:""; position:absolute; top:2px; right:2px; width:18px; height:18px; border-radius:50%; background:#fff; }
+  .cc-toggle-off { width:38px; height:22px; border-radius:20px; background:#d7dbe8; position:relative; flex:0 0 auto; }
+  .cc-toggle-off::after { content:""; position:absolute; top:2px; left:2px; width:18px; height:18px; border-radius:50%; background:#fff; }
+</style>
+</head>
+<body>
+
+<div style="width:1440px; min-height:1300px; background:#f6f7fb; display:flex; color:#1b2a4b;">
+
+  <!-- SIDEBAR -->
+  <div style="width:240px; flex:0 0 240px; background:#eef1f8; border-right:1px solid #e2e6f0; display:flex; flex-direction:column; padding:24px 16px;">
+
+    <div style="display:flex; align-items:center; gap:10px; padding:4px 8px 28px 8px;">
+      <div style="width:36px; height:36px; border-radius:11px; background:linear-gradient(135deg,#24408f,#3357b8); display:flex; align-items:center; justify-content:center; flex:0 0 auto;">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#ffffff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12h4l2.5-7 4 14L15 9l2 3h5"/></svg>
+      </div>
+      <span style="font-size:19px; font-weight:700; color:#182448; letter-spacing:-0.01em;">Calibcare</span>
+    </div>
+
+    <div style="display:flex; flex-direction:column; gap:4px; flex:1;">
+      <div class="cc-navitem" style="display:flex; align-items:center; gap:11px; padding:10px 14px; border-radius:10px; color:#5b6478;">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 11.5 12 4l9 7.5"/><path d="M5.5 10v9a1 1 0 0 0 1 1h4.5v-6h2v6H17a1 1 0 0 0 1-1v-9"/></svg>
+        <span style="font-size:14px; font-weight:500;">Dashboard</span>
+      </div>
+      <div class="cc-navitem" style="display:flex; align-items:center; gap:11px; padding:10px 14px; border-radius:10px; color:#5b6478;">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3 21 7.5v9L12 21 3 16.5v-9Z"/><path d="M3 7.5 12 12l9-4.5"/><path d="M12 12v9"/></svg>
+        <span style="font-size:14px; font-weight:500;">Equipment</span>
+      </div>
+      <div class="cc-navitem" style="display:flex; align-items:center; gap:11px; padding:10px 14px; border-radius:10px; color:#5b6478;">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M20 14.2A8 8 0 1 1 9.8 4a6.3 6.3 0 0 0 10.2 10.2Z"/></svg>
+        <span style="font-size:14px; font-weight:500;">Decision Support</span>
+      </div>
+      <div class="cc-navitem" style="display:flex; align-items:center; gap:11px; padding:10px 14px; border-radius:10px; background:#ffffff; box-shadow:0 1px 2px rgba(16,24,40,.06); color:#2952cc;">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9a6 6 0 0 1 12 0c0 4 1.5 5.5 1.5 5.5h-15S6 13 6 9Z"/><path d="M9.5 17a2.5 2.5 0 0 0 5 0"/></svg>
+        <span style="font-size:14px; font-weight:600;">Reminders</span>
+      </div>
+    </div>
+
+    <div style="display:flex; flex-direction:column; gap:4px;">
+      <div class="cc-navitem" style="display:flex; align-items:center; gap:11px; padding:10px 14px; border-radius:10px; color:#5b6478;">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3.1"/><path d="M12 3v2.4M12 18.6V21M21 12h-2.4M5.4 12H3M18.4 5.6l-1.7 1.7M7.3 16.7l-1.7 1.7M18.4 18.4l-1.7-1.7M7.3 7.3 5.6 5.6"/></svg>
+        <span style="font-size:14px; font-weight:500;">Settings</span>
+      </div>
+      <div class="cc-navitem" style="display:flex; align-items:center; gap:11px; padding:10px 14px; border-radius:10px; color:#5b6478;">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><path d="M16 17l5-5-5-5"/><path d="M21 12H9"/></svg>
+        <span style="font-size:14px; font-weight:500;">Log out</span>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- MAIN -->
+  <div style="flex:1; display:flex; flex-direction:column; min-width:0;">
+
+    <!-- TOPBAR -->
+    <div style="height:72px; flex:0 0 72px; background:#ffffff; border-bottom:1px solid #eef0f5; display:flex; align-items:center; justify-content:flex-end; gap:16px; padding:0 32px;">
+      <div style="width:320px; background:#f3f5fa; border-radius:10px; padding:9px 14px; display:flex; align-items:center; gap:9px;">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#9aa2b4" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg>
+        <span style="font-size:13.5px; color:#9aa2b4;">Search equipment...</span>
+      </div>
+      <div style="width:36px; height:36px; border-radius:10px; background:#f3f5fa; display:flex; align-items:center; justify-content:center; color:#5b6478;">
+        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9a6 6 0 0 1 12 0c0 4 1.5 5.5 1.5 5.5h-15S6 13 6 9Z"/><path d="M9.5 17a2.5 2.5 0 0 0 5 0"/></svg>
+      </div>
+      <div style="width:36px; height:36px; border-radius:50%; background:#24408f; display:flex; align-items:center; justify-content:center; color:#fff; font-size:13px; font-weight:700;">W</div>
+    </div>
+
+    <!-- CONTENT -->
+    <div style="flex:1; padding:28px 32px; display:flex; flex-direction:column; gap:20px;">
+
+      <div>
+        <h1 style="margin:0 0 6px 0; font-size:23px; font-weight:700; color:#151f38;">Calibration Reminders</h1>
+        <p style="margin:0; font-size:14px; color:#7a8296;">Connect LINE, set reminder rules, and review what's been sent.</p>
+      </div>
+
+      <!-- ROW 1: LINE connection + Due-date check -->
+      <div style="display:flex; gap:20px; align-items:stretch;">
+
+        <!-- LINE CONNECTION CARD (connected state) -->
+        <div style="flex:1; background:#fff; border:1px solid #eef0f5; border-radius:16px; padding:22px 24px; box-shadow:0 1px 2px rgba(16,24,40,.06),0 1px 3px rgba(16,24,40,.05); display:flex; flex-direction:column; gap:14px;">
+          <div style="display:flex; align-items:center; justify-content:space-between;">
+            <div style="display:flex; align-items:center; gap:10px;">
+              <div style="width:34px; height:34px; border-radius:10px; background:#e6f6ea; display:flex; align-items:center; justify-content:center;">
+                <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#0a7a45" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>
+              </div>
+              <span style="font-size:15px; font-weight:700; color:#151f38;">LINE notifications</span>
+            </div>
+            <span style="font-size:11.5px; font-weight:700; color:#0a7a45; background:#e6f6ea; border-radius:20px; padding:4px 12px;">Connected</span>
+          </div>
+
+          <div style="background:#fafbfd; border:1px solid #eef0f5; border-radius:12px; padding:14px 16px; display:flex; align-items:center; justify-content:space-between;">
+            <div>
+              <div style="font-size:13.5px; font-weight:600; color:#1b2a4b;">Calibcare Metrology Group</div>
+              <div style="font-size:12px; color:#7a8296; margin-top:2px;">Linked on 2026-07-02 &middot; 6 members receiving alerts</div>
+            </div>
+            <button style="background:#fff; border:1px solid #d7dbe8; color:#38415a; border-radius:9px; padding:8px 14px; font-size:12.5px; font-weight:600; cursor:pointer;">Manage / Disconnect</button>
+          </div>
+
+          <div style="display:flex; align-items:center; gap:6px;">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#9aa2b4" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 16v-5M12 8h.01"/></svg>
+            <span style="font-size:12px; color:#9aa2b4;">When not connected, this card shows a "Get linking code" button and a short numbered guide (open LINE &rarr; add bot &rarr; paste code) instead of leaving the user to guess the next step.</span>
+          </div>
+        </div>
+
+        <!-- DUE-DATE CHECK + RUN NOW -->
+        <div style="flex:1; background:#fff; border:1px solid #eef0f5; border-radius:16px; padding:22px 24px; box-shadow:0 1px 2px rgba(16,24,40,.06),0 1px 3px rgba(16,24,40,.05); display:flex; flex-direction:column; gap:14px;">
+          <div style="display:flex; align-items:center; gap:10px;">
+            <div style="width:34px; height:34px; border-radius:10px; background:#eef1f8; display:flex; align-items:center; justify-content:center;">
+              <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#2952cc" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M12 6v6l4 2"/><circle cx="12" cy="12" r="9"/></svg>
+            </div>
+            <span style="font-size:15px; font-weight:700; color:#151f38;">Due-date check</span>
+          </div>
+
+          <div style="display:flex; gap:10px;">
+            <div style="flex:1; background:#fafbfd; border:1px solid #eef0f5; border-radius:12px; padding:12px 14px;">
+              <div style="font-size:11px; font-weight:700; letter-spacing:.03em; text-transform:uppercase; color:#9aa2b4; margin-bottom:5px;">Last run</div>
+              <div style="font-size:13.5px; font-weight:600; color:#1b2a4b;">Today, 06:00</div>
+              <div style="font-size:12px; color:#0a7a45; margin-top:2px;">Success &middot; 4 reminders sent</div>
+            </div>
+            <div style="flex:1; background:#fafbfd; border:1px solid #eef0f5; border-radius:12px; padding:12px 14px;">
+              <div style="font-size:11px; font-weight:700; letter-spacing:.03em; text-transform:uppercase; color:#9aa2b4; margin-bottom:5px;">Next run</div>
+              <div style="font-size:13.5px; font-weight:600; color:#1b2a4b;">Tomorrow, 06:00</div>
+              <div style="font-size:12px; color:#7a8296; margin-top:2px;">Runs automatically every day</div>
+            </div>
+          </div>
+
+          <div style="display:flex; align-items:center; justify-content:space-between; margin-top:2px; gap:12px;">
+            <span style="font-size:12px; color:#7a8296;">Need it sooner? Run the check now instead of waiting for 06:00.</span>
+            <button style="background:#e9ebf1; color:#9aa2b4; border:none; border-radius:9px; padding:9px 18px; font-size:13px; font-weight:600; cursor:not-allowed; flex:0 0 auto;" disabled>Run now</button>
+          </div>
+          <div style="display:flex; align-items:center; gap:6px; justify-content:flex-end;">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#c99a3a" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 8v5M12 16h.01"/></svg>
+            <span style="font-size:11.5px; color:#9a7a2e;">Only Admins can trigger a manual check &mdash; button stays visible but disabled for other roles.</span>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- ROW 2: REMINDER RULES -->
+      <div style="background:#fff; border:1px solid #eef0f5; border-radius:16px; padding:22px 24px; box-shadow:0 1px 2px rgba(16,24,40,.06),0 1px 3px rgba(16,24,40,.05);">
+        <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:16px;">
+          <span style="font-size:15px; font-weight:700; color:#151f38;">Reminder rules</span>
+          <button style="display:flex; align-items:center; gap:7px; background:#182448; color:#fff; border:none; border-radius:9px; padding:8px 16px; font-size:12.5px; font-weight:600; cursor:pointer;">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"/></svg>
+            Add rule
+          </button>
+        </div>
+
+        <div style="display:flex; flex-direction:column; border:1px solid #eef0f5; border-radius:12px; overflow:hidden;">
+
+          <div style="display:flex; align-items:center; background:#fafbfd; padding:10px 16px;">
+            <span style="flex:2.2; font-size:11.5px; font-weight:700; color:#9aa2b4; text-transform:uppercase; letter-spacing:.03em;">Trigger</span>
+            <span style="flex:1.6; font-size:11.5px; font-weight:700; color:#9aa2b4; text-transform:uppercase; letter-spacing:.03em;">Channels</span>
+            <span style="flex:2; font-size:11.5px; font-weight:700; color:#9aa2b4; text-transform:uppercase; letter-spacing:.03em;">Recipients</span>
+            <span style="flex:0.8; font-size:11.5px; font-weight:700; color:#9aa2b4; text-transform:uppercase; letter-spacing:.03em;">Active</span>
+          </div>
+
+          <div class="cc-row" style="display:flex; align-items:center; padding:13px 16px; border-top:1px solid #f2f3f7;">
+            <div style="flex:2.2;">
+              <span style="font-size:13.5px; font-weight:600; color:#1b2a4b;">30 days before due date</span>
+              <div style="font-size:12px; color:#9aa2b4; margin-top:2px;">Early heads-up for planning &amp; procurement</div>
+            </div>
+            <div style="flex:1.6; display:flex; gap:6px;">
+              <span style="font-size:11.5px; font-weight:600; color:#2952cc; background:#eef1f8; border-radius:6px; padding:4px 9px;">LINE</span>
+              <span style="font-size:11.5px; font-weight:600; color:#5b6478; background:#f3f5fa; border-radius:6px; padding:4px 9px;">Email</span>
+            </div>
+            <div style="flex:2; font-size:13px; color:#38415a;">Calibration Team</div>
+            <div style="flex:0.8;"><div class="cc-toggle-on"></div></div>
+          </div>
+
+          <div class="cc-row" style="display:flex; align-items:center; padding:13px 16px; border-top:1px solid #f2f3f7;">
+            <div style="flex:2.2;">
+              <span style="font-size:13.5px; font-weight:600; color:#1b2a4b;">7 days before due date</span>
+              <div style="font-size:12px; color:#9aa2b4; margin-top:2px;">Reminder to book calibration slot</div>
+            </div>
+            <div style="flex:1.6; display:flex; gap:6px;">
+              <span style="font-size:11.5px; font-weight:600; color:#2952cc; background:#eef1f8; border-radius:6px; padding:4px 9px;">LINE</span>
+            </div>
+            <div style="flex:2; font-size:13px; color:#38415a;">Calibration Team</div>
+            <div style="flex:0.8;"><div class="cc-toggle-on"></div></div>
+          </div>
+
+          <div class="cc-row" style="display:flex; align-items:center; padding:13px 16px; border-top:1px solid #f2f3f7;">
+            <div style="flex:2.2;">
+              <span style="font-size:13.5px; font-weight:600; color:#b42318;">Overdue (daily until resolved)</span>
+              <div style="font-size:12px; color:#9aa2b4; margin-top:2px;">Escalation once due date has passed</div>
+            </div>
+            <div style="flex:1.6; display:flex; gap:6px;">
+              <span style="font-size:11.5px; font-weight:600; color:#2952cc; background:#eef1f8; border-radius:6px; padding:4px 9px;">LINE</span>
+              <span style="font-size:11.5px; font-weight:600; color:#5b6478; background:#f3f5fa; border-radius:6px; padding:4px 9px;">Email</span>
+            </div>
+            <div style="flex:2; font-size:13px; color:#38415a;">Calibration Team, Managers</div>
+            <div style="flex:0.8;"><div class="cc-toggle-on"></div></div>
+          </div>
+
+          <div class="cc-row" style="display:flex; align-items:center; padding:13px 16px; border-top:1px solid #f2f3f7;">
+            <div style="flex:2.2;">
+              <span style="font-size:13.5px; font-weight:600; color:#9aa2b4;">1 day before due date</span>
+              <div style="font-size:12px; color:#9aa2b4; margin-top:2px;">Final reminder before due</div>
+            </div>
+            <div style="flex:1.6; display:flex; gap:6px;">
+              <span style="font-size:11.5px; font-weight:600; color:#9aa2b4; background:#f3f5fa; border-radius:6px; padding:4px 9px;">LINE</span>
+            </div>
+            <div style="flex:2; font-size:13px; color:#9aa2b4;">Calibration Team</div>
+            <div style="flex:0.8;"><div class="cc-toggle-off"></div></div>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- ROW 3: HISTORY LOG -->
+      <div style="background:#fff; border:1px solid #eef0f5; border-radius:16px; padding:22px 24px; box-shadow:0 1px 2px rgba(16,24,40,.06),0 1px 3px rgba(16,24,40,.05);">
+        <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:16px;">
+          <span style="font-size:15px; font-weight:700; color:#151f38;">Reminder history</span>
+          <div style="display:flex; align-items:center; gap:9px; border:1px solid #d7dbe8; border-radius:9px; padding:8px 13px;">
+            <span style="font-size:12.5px; color:#5b6478;">Last 7 days</span>
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#9aa2b4" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+          </div>
+        </div>
+
+        <div style="display:flex; flex-direction:column; border:1px solid #eef0f5; border-radius:12px; overflow:hidden;">
+          <div style="display:flex; align-items:center; background:#fafbfd; padding:10px 16px;">
+            <span style="flex:1.3; font-size:11.5px; font-weight:700; color:#9aa2b4; text-transform:uppercase; letter-spacing:.03em;">Sent</span>
+            <span style="flex:2.4; font-size:11.5px; font-weight:700; color:#9aa2b4; text-transform:uppercase; letter-spacing:.03em;">Equipment</span>
+            <span style="flex:1.6; font-size:11.5px; font-weight:700; color:#9aa2b4; text-transform:uppercase; letter-spacing:.03em;">Rule</span>
+            <span style="flex:1.2; font-size:11.5px; font-weight:700; color:#9aa2b4; text-transform:uppercase; letter-spacing:.03em;">Channel</span>
+            <span style="flex:1; font-size:11.5px; font-weight:700; color:#9aa2b4; text-transform:uppercase; letter-spacing:.03em;">Status</span>
+          </div>
+
+          <div class="cc-row" style="display:flex; align-items:center; padding:12px 16px; border-top:1px solid #f2f3f7;">
+            <span style="flex:1.3; font-size:13px; color:#5b6478;">Today, 06:00</span>
+            <div style="flex:2.4;">
+              <span style="font-size:13px; font-weight:600; color:#2952cc;">Electrical Safety Analyzer</span>
+              <span style="font-size:12px; color:#9aa2b4;"> &middot; S/N 5040062</span>
+            </div>
+            <span style="flex:1.6; font-size:12.5px; color:#38415a;">Overdue escalation</span>
+            <span style="flex:1.2; font-size:11.5px; font-weight:600; color:#2952cc; background:#eef1f8; border-radius:6px; padding:3px 9px; width:fit-content;">LINE</span>
+            <span style="flex:1; font-size:11.5px; font-weight:700; color:#0a7a45; background:#e6f6ea; border-radius:20px; padding:3px 10px; width:fit-content;">Sent</span>
+          </div>
+
+          <div class="cc-row" style="display:flex; align-items:center; padding:12px 16px; border-top:1px solid #f2f3f7;">
+            <span style="flex:1.3; font-size:13px; color:#5b6478;">Today, 06:00</span>
+            <div style="flex:2.4;">
+              <span style="font-size:13px; font-weight:600; color:#2952cc;">Pressure Calibrator</span>
+              <span style="font-size:12px; color:#9aa2b4;"> &middot; S/N 71029340</span>
+            </div>
+            <span style="flex:1.6; font-size:12.5px; color:#38415a;">7 days before due</span>
+            <span style="flex:1.2; font-size:11.5px; font-weight:600; color:#2952cc; background:#eef1f8; border-radius:6px; padding:3px 9px; width:fit-content;">LINE</span>
+            <span style="flex:1; font-size:11.5px; font-weight:700; color:#0a7a45; background:#e6f6ea; border-radius:20px; padding:3px 10px; width:fit-content;">Sent</span>
+          </div>
+
+          <div class="cc-row" style="display:flex; align-items:center; padding:12px 16px; border-top:1px solid #f2f3f7;">
+            <span style="flex:1.3; font-size:13px; color:#5b6478;">Today, 06:00</span>
+            <div style="flex:2.4;">
+              <span style="font-size:13px; font-weight:600; color:#2952cc;">kVp Meter</span>
+              <span style="font-size:12px; color:#9aa2b4;"> &middot; S/N 22910481</span>
+            </div>
+            <span style="flex:1.6; font-size:12.5px; color:#38415a;">30 days before due</span>
+            <span style="flex:1.2; font-size:11.5px; font-weight:600; color:#5b6478; background:#f3f5fa; border-radius:6px; padding:3px 9px; width:fit-content;">Email</span>
+            <span style="flex:1; font-size:11.5px; font-weight:700; color:#b42318; background:#fee4e2; border-radius:20px; padding:3px 10px; width:fit-content;">Failed</span>
+          </div>
+
+          <div class="cc-row" style="display:flex; align-items:center; padding:12px 16px; border-top:1px solid #f2f3f7;">
+            <span style="flex:1.3; font-size:13px; color:#5b6478;">Yesterday, 06:00</span>
+            <div style="flex:2.4;">
+              <span style="font-size:13px; font-weight:600; color:#2952cc;">Electrical Safety Analyzer</span>
+              <span style="font-size:12px; color:#9aa2b4;"> &middot; S/N 5040062</span>
+            </div>
+            <span style="flex:1.6; font-size:12.5px; color:#38415a;">Overdue escalation</span>
+            <span style="flex:1.2; font-size:11.5px; font-weight:600; color:#2952cc; background:#eef1f8; border-radius:6px; padding:3px 9px; width:fit-content;">LINE</span>
+            <span style="flex:1; font-size:11.5px; font-weight:700; color:#0a7a45; background:#e6f6ea; border-radius:20px; padding:3px 10px; width:fit-content;">Sent</span>
+          </div>
+
+          <div style="padding:11px 16px; border-top:1px solid #f2f3f7; text-align:center;">
+            <span style="font-size:12.5px; font-weight:600; color:#2952cc; cursor:pointer;">View full history</span>
+          </div>
+
+        </div>
+      </div>
+
+    </div>
+
+  </div>
+
+</div>
+
+</body>
+</html>

@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { runDssMatch } from '../src/services/dssMatcher.js';
+import { runDssMatch, findClosestMatch, describeClosestMatch, groupNotSuitable } from '../src/services/dssMatcher.js';
 
 // Real rows from the seeded mcems database.
 const vt650 = {
@@ -71,4 +71,82 @@ test('ranking prefers the tighter-fitting equipment among multiple suitable opti
   const { suitable } = runDssMatch([wideRange, tightRange], requirements);
   assert.equal(suitable.length, 2);
   assert.equal(suitable[0].equipment.model, 'T'); // tighter fit ranked first
+});
+
+test('unit synonyms (amp/a) are treated as the same unit, not a mismatch', () => {
+  const equipmentCurrent = {
+    equipment: { name: 'Current Probe', model: 'CP1', serial_number: 'C1' },
+    capabilities: [{ measurement_purpose: 'Equipment Current', measurement_range: '0-20a' }],
+  };
+  const requirements = [{ measurement_purpose: 'Equipment Current', min: 0, max: 15, unit: 'amp' }];
+  const { suitable, notSuitable } = runDssMatch([equipmentCurrent], requirements);
+  assert.equal(suitable.length, 1);
+  assert.equal(notSuitable.length, 0);
+});
+
+test('each failure type carries the matching machine-readable reasonCode', () => {
+  const requirements = [{ measurement_purpose: 'Oxygen', min: 0, max: 100, unit: '%' }];
+  const { notSuitable: missing } = runDssMatch([pressureCalibrator], requirements);
+  assert.equal(missing[0].results[0].reasonCode, 'missing_capability');
+
+  const { notSuitable: unitMismatch } = runDssMatch([citrexH5], [{ measurement_purpose: 'Flow', min: 0, max: 180, unit: 'slpm' }]);
+  assert.equal(unitMismatch[0].results[0].reasonCode, 'unit_mismatch');
+
+  const { notSuitable: tooNarrow } = runDssMatch([pressureCalibrator], [{ measurement_purpose: 'Pressure', min: 0, max: 45, unit: 'psi' }]);
+  const result = tooNarrow[0].results[0];
+  assert.equal(result.reasonCode, 'range_too_narrow');
+  assert.equal(result.shortfall.max, 15); // required 45, equipment maxes at 30
+  assert.equal(result.shortfall.min, null);
+});
+
+test('findClosestMatch picks the smallest-shortfall equipment and ignores missing-capability/unit-mismatch failures', () => {
+  const closeButNarrow = {
+    equipment: { name: 'Close', model: 'C', serial_number: 'C1' },
+    capabilities: [{ measurement_purpose: 'Pressure', measurement_range: '0-90 psi' }],
+  };
+  const farNarrow = {
+    equipment: { name: 'Far', model: 'F', serial_number: 'F1' },
+    capabilities: [{ measurement_purpose: 'Pressure', measurement_range: '0-10 psi' }],
+  };
+  const noCapability = {
+    equipment: { name: 'NoCap', model: 'N', serial_number: 'N1' },
+    capabilities: [],
+  };
+  const requirements = [{ measurement_purpose: 'Pressure', min: 0, max: 100, unit: 'psi' }];
+  const { notSuitable, closestMatch } = runDssMatch([closeButNarrow, farNarrow, noCapability], requirements);
+  assert.equal(notSuitable.length, 3);
+  assert.equal(closestMatch.equipment.model, 'C'); // short by 10, not 90 -- and not the no-capability equipment
+
+  const summary = describeClosestMatch(closestMatch);
+  assert.match(summary, /Covers up to 90 psi/);
+  assert.match(summary, /short by 10psi/);
+});
+
+test('findClosestMatch returns null when nothing fails purely on range', () => {
+  const closestMatch = findClosestMatch([{ results: [{ pass: false, reasonCode: 'unit_mismatch' }], suitable: false }]);
+  assert.equal(closestMatch, null);
+});
+
+test('groupNotSuitable groups equipment by shared failure reason, largest group first', () => {
+  const narrowA = {
+    equipment: { name: 'A', model: 'A', serial_number: 'A1' },
+    capabilities: [{ measurement_purpose: 'Pressure', measurement_range: '0-10 psi' }],
+  };
+  const narrowB = {
+    equipment: { name: 'B', model: 'B', serial_number: 'B1' },
+    capabilities: [{ measurement_purpose: 'Pressure', measurement_range: '0-10 psi' }],
+  };
+  const missingCap = {
+    equipment: { name: 'C', model: 'C', serial_number: 'C1' },
+    capabilities: [],
+  };
+  const requirements = [{ measurement_purpose: 'Pressure', min: 0, max: 100, unit: 'psi' }];
+  const { notSuitableGrouped } = runDssMatch([narrowA, narrowB, missingCap], requirements);
+
+  assert.equal(notSuitableGrouped.length, 2);
+  assert.equal(notSuitableGrouped[0].equipment.length, 2); // the two range_too_narrow equipment, grouped together
+  assert.equal(notSuitableGrouped[0].reasonCode, 'range_too_narrow');
+  assert.match(notSuitableGrouped[0].label, /Max range below 100psi required/);
+  assert.equal(notSuitableGrouped[1].equipment.length, 1);
+  assert.equal(notSuitableGrouped[1].reasonCode, 'missing_capability');
 });
