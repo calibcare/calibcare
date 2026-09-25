@@ -600,6 +600,13 @@ coopproject/
 - Promoted via the real `PATCH /api/users/2/position` API (as the existing Deputy Manager demo account), not a direct DB edit — confirmed via the response: `role: deputy_manager`, `can_edit: true`, `can_run_reminders: true`.
 - The `admin@mcems.local` demo account is still also Deputy Manager — two full-control accounts exist now. Flagged to the user; not changed unless asked.
 
+## Site-wide font switched to Inter (2026-09-25)
+
+- User provided the Google Fonts embed snippet for Inter and asked to change the site's font.
+- Turned out the real app (`frontend/index.html`/`index.css`) never actually set a custom font at all — `IBM Plex Sans` only ever existed in the standalone static mockup HTML files (never part of the live React app), so this was a genuinely new addition, not a swap.
+- Added the `<link rel="preconnect">` + stylesheet tags to `index.html`'s `<head>`, and `font-family: "Inter", sans-serif;` (+ `font-optical-sizing: auto;`) on `body` in `index.css`. Didn't add the per-weight `.inter-<uniquifier>` classes from Google's snippet — Inter is a variable font, and every page already uses Tailwind's font-weight utilities (`font-bold`/`font-semibold`/etc.), which apply correctly against a variable font's weight axis once the base `font-family` is set once, no per-instance class needed.
+- Verified: `npm run build`/`npm run lint` clean; confirmed via the dev server that the font `<link>` tags are actually being served.
+
 ## Next up
 
 - Verify the inferred manufacturer values against physical nameplates/purchase records during the next calibration cycle — they're confident inferences, not sourced from purchase documentation.
