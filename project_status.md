@@ -635,7 +635,10 @@ coopproject/
 - Whole register is loaded once (`limit=200`) and filtered client-side; pagination removed. **If the register passes 200 rows this needs real paging or a higher API cap.**
 - Dashboard links still work: `?status=X` → that status filter; `?view=available` → Status {Active, Due soon}; top-bar `?q=` syncs into the search box even when already on the page.
 - Verified with headless Chromium against local DB: 163 rows, overdue filter → 37, available view → 89 (=126 active − 37 overdue), grouped view, drawer, no console errors; a real "Send for calibration" click updated `equipment.status` in MySQL (test record id 27 reverted to `active` afterwards). Lint/build clean.
-- Not done: **uncommitted and not deployed** to Netlify yet. Phone-width layout is cramped because the shared `Layout.jsx` sidebar isn't responsive (pre-existing, all pages).
+- **Committed (`20c1036` font, `afa2fe6` page) and deployed to Netlify 2026-10-01.** Verified live: deployed bundle contains the new page + Railway URL; logged in via the production API and the live `/equipment` page showed 163 devices, no JS errors. Backend unchanged (Railway redeploy from the push is a no-op).
+- **Pre-existing bug found + fixed during the deploy**: the live site had no SPA fallback rule, so loading/refreshing any deep link (`/dashboard`, `/equipment/27`, …) returned Netlify's 404. Added `frontend/public/_redirects` (`/*  /index.html  200`); verified all routes now return 200 and JS assets still serve as `application/javascript`.
+- Netlify CLI is now logged in on this Mac via `netlify login` (browser OAuth, not a Personal Access Token) — `netlify logout` if you don't want it to stay signed in.
+- Phone-width layout is cramped because the shared `Layout.jsx` sidebar isn't responsive (pre-existing, all pages).
 
 ## Next up
 
