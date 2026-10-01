@@ -2,7 +2,9 @@
 
 body {
   margin: 0;
-  font-family: "Inter", sans-serif;
+  /* "Inter Variable" is the family name @fontsource-variable/inter
+     registers (imported in main.jsx) -- self-hosted, not Google's CDN. */
+  font-family: "Inter Variable", sans-serif;
   font-optical-sizing: auto;
 }
 
