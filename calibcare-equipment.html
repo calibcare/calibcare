@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Calibcare equipment page</title>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);
+--bg:#f4f5f9;--card:#fff;--ink:#141a33;--mut:#66708c;--line:#e3e6ef;--brand:#2b47c9;--brandsoft:#e8ecfc;--warn:#c2410c;--warnsoft:#fdeee2;--ok:#2f6f8f;--oksoft:#e3f1f7;--gray:#8b93a7}
+@media(prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#0f1220;--card:#181c30;--ink:#eceffa;--mut:#9aa3c0;--line:#2a3050;--brand:#8ea2ff;--brandsoft:#232a55;--warn:#ff9a5c;--warnsoft:#3a2418;--ok:#6cc0e4;--oksoft:#16303d;--gray:#7f88a3}}
+:root[data-theme="dark"]{--bg:#0f1220;--card:#181c30;--ink:#eceffa;--mut:#9aa3c0;--line:#2a3050;--brand:#8ea2ff;--brandsoft:#232a55;--warn:#ff9a5c;--warnsoft:#3a2418;--ok:#6cc0e4;--oksoft:#16303d;--gray:#7f88a3}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font:14px/1.45 "IBM Plex Sans",system-ui,sans-serif;display:flex;min-height:100vh}
+nav{width:210px;padding:20px 12px;border-right:1px solid var(--line);background:var(--card);flex:none}
+nav h1{font-size:18px;margin:0 8px 20px}nav button{display:block;width:100%;text-align:left;border:0;background:none;color:var(--mut);padding:9px 10px;border-radius:8px;font:inherit;font-weight:500;cursor:pointer;margin-bottom:2px}
+nav button.on{background:var(--brandsoft);color:var(--brand)}nav button:focus-visible,button:focus-visible,select:focus-visible,input:focus-visible{outline:2px solid var(--brand);outline-offset:2px}
+main{flex:1;padding:24px 28px;min-width:0;max-width:1200px}
+h2{font-size:24px;margin:0}.sub{color:var(--mut);margin:2px 0 18px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:16px}
+.ch{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px}.ch h3{margin:0;font-size:15px}
+.kpis{display:grid;grid-template-columns:1.5fr 1fr 1fr 1fr;gap:12px;margin-bottom:16px}
+.kpi{cursor:pointer;text-align:left;font:inherit;color:inherit}.kpi:hover{border-color:var(--brand)}
+.kpi b{display:block;font-size:34px;line-height:1.1;margin:4px 0}.kpi small{color:var(--mut)}
+.kpi.hero{background:var(--warnsoft);border-color:var(--warn)}.kpi.hero b{font-size:52px;color:var(--warn)}
+.delta{font-weight:600;font-size:12px}.up{color:var(--warn)}.dn{color:var(--ok)}
+.grid{display:grid;grid-template-columns:1fr 1.7fr;gap:12px}
+.tabs{display:flex;gap:4px}.tabs button,.chip,.btn{border:1px solid var(--line);background:var(--card);color:var(--ink);border-radius:8px;padding:6px 11px;font:inherit;cursor:pointer}
+.tabs button.on,.btn.pri{background:var(--brand);color:#fff;border-color:var(--brand)}:root[data-theme=dark] .btn.pri{color:#0f1220}
+@media(prefers-color-scheme:dark){.btn.pri,.tabs button.on{color:#0f1220}}
+table{width:100%;border-collapse:collapse}th{text-align:left;font-weight:600;color:var(--mut);font-size:12px;padding:8px;border-bottom:1px solid var(--line)}
+td{padding:9px 8px;border-bottom:1px solid var(--line)}tbody tr{cursor:pointer}tbody tr:hover{background:var(--bg)}tr.dim td{opacity:.55}
+.badge{display:inline-flex;align-items:center;gap:5px;padding:2px 9px;border-radius:99px;font-size:12px;font-weight:600;white-space:nowrap}
+.b-overdue{background:var(--warnsoft);color:var(--warn)}.b-soon{background:var(--brandsoft);color:var(--brand);border:1px dashed var(--brand)}.b-active{background:var(--oksoft);color:var(--ok)}
+.b-sent{background:var(--brandsoft);color:var(--brand)}.b-unavailable,.b-decommissioned{background:var(--line);color:var(--mut)}
+.legend{list-style:none;margin:0;padding:0}.legend li{display:flex;align-items:center;gap:8px;padding:4px 0;cursor:help}.legend i{width:12px;height:12px;border-radius:3px;display:inline-block}.legend b{margin-left:auto}
+.donutwrap{display:flex;gap:16px;align-items:center;flex-wrap:wrap}
+.bar{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-bottom:10px}
+.bar input[type=search]{flex:1;min-width:200px;padding:8px 10px;border:1px solid var(--line);border-radius:8px;background:var(--card);color:var(--ink);font:inherit}
+.dd{position:relative}.dd .chip.act{background:var(--brandsoft);border-color:var(--brand);color:var(--brand);font-weight:700}
+.menu{position:absolute;top:110%;left:0;z-index:20;background:var(--card);border:1px solid var(--line);border-radius:10px;padding:8px;min-width:210px;box-shadow:0 8px 24px rgba(0,0,0,.18);display:none}
+.menu.open{display:block}.menu label{display:flex;gap:8px;padding:5px 6px;border-radius:6px;cursor:pointer;align-items:center}.menu label:hover{background:var(--bg)}.menu label span{margin-left:auto;color:var(--mut)}
+.menu input.s{width:100%;padding:6px 8px;margin-bottom:6px;border:1px solid var(--line);border-radius:6px;background:var(--bg);color:var(--ink);font:inherit}
+.chips{display:flex;gap:6px;flex-wrap:wrap;align-items:center;margin-bottom:10px;min-height:28px}
+.pill{background:var(--brandsoft);color:var(--brand);border-radius:99px;padding:3px 6px 3px 11px;font-weight:600;font-size:12px;display:inline-flex;gap:6px;align-items:center}
+.pill button{border:0;background:none;color:inherit;cursor:pointer;font-size:14px;padding:0 4px}
+.link{border:0;background:none;color:var(--brand);cursor:pointer;font:inherit;font-weight:600}
+.count{color:var(--mut);margin:0 0 8px}.bulk{background:var(--ink);color:var(--bg);border-radius:10px;padding:8px 12px;display:flex;gap:10px;align-items:center;margin-bottom:10px}
+.bulk .btn{padding:4px 10px}
+.grp td{background:var(--bg);font-weight:600;cursor:pointer}
+#drawer{position:fixed;top:0;right:0;bottom:0;width:min(380px,100%);background:var(--card);border-left:1px solid var(--line);padding:calc(20px + env(safe-area-inset-top,0px)) 20px 20px;transform:translateX(100%);transition:transform .2s;z-index:30;box-shadow:-8px 0 30px rgba(0,0,0,.2);overflow:auto}
+#drawer.open{transform:none}#drawer dl{display:grid;grid-template-columns:110px 1fr;gap:8px;margin:16px 0}#drawer dt{color:var(--mut)}#drawer dd{margin:0}
+#toast{position:fixed;bottom:calc(20px + env(safe-area-inset-bottom,0px));left:50%;transform:translateX(-50%);background:var(--ink);color:var(--bg);padding:9px 16px;border-radius:10px;opacity:0;transition:opacity .2s;pointer-events:none;z-index:40}
+.wrap{overflow-x:auto}.empty{text-align:center;padding:30px;color:var(--mut)}
+@media(max-width:820px){body{flex-direction:column}nav{width:100%;display:flex;flex-wrap:wrap;gap:4px;border-right:0;border-bottom:1px solid var(--line)}nav h1{width:100%;margin-bottom:6px}nav button{width:auto}.kpis,.grid{grid-template-columns:1fr 1fr}.grid{grid-template-columns:1fr}main{padding:16px}}
+@media(prefers-reduced-motion:reduce){#drawer,#toast{transition:none}}
+.mf{display:flex;justify-content:space-between;align-items:center;border-top:1px solid var(--line);margin-top:6px;padding-top:8px}
+.hero2{background:#26357f;color:#fff;border-radius:14px;padding:22px 24px;margin-bottom:12px}.hero2 h2{color:#fff}.hero2 p{margin:4px 0 14px;color:#cdd5ff;max-width:60ch}
+.fa{display:flex;gap:8px;flex-wrap:wrap;align-items:center;font-size:12px;color:#cdd5ff}.hp{background:#fff;color:#26357f;border-radius:99px;padding:2px 4px 2px 10px;font-weight:600}
+.hp button{border:0;background:none;color:inherit;cursor:pointer}.hl{border:0;background:none;color:#fff;text-decoration:underline;cursor:pointer;font:inherit}
+.info{color:var(--mut);cursor:help;margin-left:4px;font-weight:400}
+.sk{background:linear-gradient(90deg,var(--line),var(--bg),var(--line));background-size:200% 100%;animation:sh 1.2s linear infinite;border:0}@keyframes sh{to{background-position:-200% 0}}
+@media(prefers-reduced-motion:reduce){.sk{animation:none}}
+</style></head><body>
+<nav><h1>Calibcare</h1>
+<button data-p="x">Dashboard</button><button data-p="eq" class="on">Equipment</button><button data-p="x">Decision Support</button><button data-p="x">Reminders</button><button data-p="x">Team</button></nav>
+<main id="main"></main>
+<aside id="drawer" aria-label="Equipment details"></aside><div id="toast" role="status"></div>
+<script>
+const TODAY=new Date("2026-09-30"),DAY=864e5;
+const types=[["Electrical Safety Analyzer","ESA612"],["Vital Signs Simulator","Prosim8"],["Gas Flow Analyzer","VT650"],["Steel Weight","Class M1"],["Pressure Meter","DPM4"]];
+const locs=["Biomed Lab","QA Team","Warehouse","Service Van"];
+const D=[];let seed=7;const r=n=>(seed=(seed*9301+49297)%233280)/233280*n|0;
+for(let i=0;i<48;i++){const t=types[i%5],off=[-102,-54,-20,12,25,60,140,300,-8,180][r(10)];let st;
+const due=new Date(TODAY.getTime()+off*DAY);let s=off<0?"overdue":off<=30?"soon":"active";
+const x=r(12);if(x==0)s="sent";else if(x==1)s="unavailable";else if(x==2){s="decommissioned"}
+D.push({id:i,name:t[0],model:t[1],serial:String(1000000+r(8999999)),loc:locs[r(4)],due,off,status:s,type:t[0]})}
+const SO=["overdue","soon","sent","active","unavailable","decommissioned"],SL={overdue:"Overdue",soon:"Due soon",sent:"Sent out",active:"Active",unavailable:"Unavailable",decommissioned:"Decommissioned"};
+const $=(s,e=document)=>e.querySelector(s),fmt=d=>d.toISOString().slice(0,10);
+const badge=s=>`<span class="badge b-${s}">${s=="overdue"?"▲ ":s=="soon"?"◔ ":""}${SL[s]}</span>`;
+const dueTxt=d=>d.status=="decommissioned"?fmt(d.due):d.off<0?`${fmt(d.due)} · <b style="color:var(--warn)">${-d.off} days overdue</b>`:`${fmt(d.due)} · in ${d.off} days`;
+function toast(m){const t=$("#toast");t.textContent=m;t.style.opacity=1;setTimeout(()=>t.style.opacity=0,1800)}
+function drawer(d){const el=$("#drawer");el.innerHTML=`<button class="link" onclick="$('#drawer').classList.remove('open')">Close</button><h2 style="margin-top:10px">${d.name}</h2><div>${badge(d.status)}</div>
+<dl><dt>Serial</dt><dd>${d.serial}</dd><dt>Model</dt><dd>${d.model}</dd><dt>Location</dt><dd>${d.loc}</dd><dt>Next due</dt><dd>${dueTxt(d)}</dd></dl>
+<div style="display:flex;gap:8px"><button class="btn pri" onclick="toast('Marked as sent for calibration')">Send for calibration</button><button class="btn" onclick="toast('Edit form opens here')">Edit</button></div>
+<p class="sub" style="margin-top:18px">Delete and history live in the ⋯ menu on the full page.</p>`;el.classList.add("open")}
+const cnt=s=>D.filter(d=>d.status==s).length,tot=D.length;
+let cur="eq";const ST=()=>F,RR=()=>eq();let DR={};
+/* ---------- Equipment ---------- */
+const F={q:"",status:new Set(),loc:new Set(),type:new Set(),due:""};let grouped=false,sel=new Set(),openMenu=null;
+const DUE={"":"Any time",overdue:"Overdue",7:"Next 7 days",30:"Next 30 days",90:"Next 90 days"};
+const match=(d,skip)=>(!F.q||(d.name+d.serial+d.model).toLowerCase().includes(F.q.toLowerCase()))&&(skip=="status"||!F.status.size||F.status.has(d.status))&&(skip=="loc"||!F.loc.size||F.loc.has(d.loc))&&(skip=="type"||!F.type.size||F.type.has(d.type))&&(skip=="due"||!F.due||(F.due=="overdue"?d.off<0&&d.status!="decommissioned":d.off>=0&&d.off<=+F.due));
+function commit(){const k=openMenu;openMenu=null;if(k&&DR[k])ST()[k]=DR[k];DR={}}
+function wire(){
+document.querySelectorAll("[data-m]").forEach(b=>b.onclick=e=>{e.stopPropagation();const k=b.dataset.m,was=openMenu;if(was)commit();if(was!=k){openMenu=k;if(ST()[k] instanceof Set)DR[k]=new Set(ST()[k])}RR();const i=$(`#m-${openMenu} .s`);if(i)i.focus()});
+document.querySelectorAll("[data-apply]").forEach(b=>b.onclick=()=>{commit();RR()});
+document.querySelectorAll("[data-clear]").forEach(b=>b.onclick=()=>{DR[b.dataset.clear]=new Set();commit();RR()});
+document.querySelectorAll(".menu").forEach(m=>m.onclick=e=>e.stopPropagation());
+document.querySelectorAll("input[data-k]").forEach(c=>c.onchange=()=>{c.checked?DR[c.dataset.k].add(c.value):DR[c.dataset.k].delete(c.value)});
+document.querySelectorAll("input[data-s]").forEach(i=>i.oninput=()=>document.querySelectorAll(`#m-${i.dataset.s} label`).forEach(l=>l.style.display=l.dataset.v.toLowerCase().includes(i.value.toLowerCase())?"":"none"))}
+function menu(key,label,vals,alpha){const arr=alpha?[...vals].sort():vals,set=ST()[key],open=openMenu==key,cs=(open&&DR[key])||set;
+return `<div class="dd"><button class="chip ${set.size?"act":""}" data-m="${key}">${label}${set.size?` (${set.size})`:""} ▾</button><div class="menu ${open?"open":""}" id="m-${key}">
+${arr.length>5?`<input class="s" placeholder="Search ${label.toLowerCase()}…" data-s="${key}">`:""}
+${arr.map(v=>{const n=D.filter(d=>(cur=="eq"?match(d,key):true)&&d[key]==v).length;return `<label data-v="${v}"><input type="checkbox" data-k="${key}" value="${v}" ${cs.has(v)?"checked":""}>${key=="status"?SL[v]:v}<span>${n}</span></label>`}).join("")}
+<div class="mf"><button class="link" data-clear="${key}">Clear</button><button class="btn pri" data-apply="${key}">Apply</button></div></div></div>`}
+function eq(){const rows=D.filter(d=>match(d)).sort((a,b)=>SO.indexOf(a.status)-SO.indexOf(b.status)||a.off-b.off);
+const pills=[...[...F.status].map(v=>["status",v,"Status: "+SL[v]]),...[...F.loc].map(v=>["loc",v,"Location: "+v]),...[...F.type].map(v=>["type",v,"Type: "+v])];if(F.due)pills.push(["due",F.due,"Due: "+DUE[F.due]]);if(F.q)pills.push(["q",F.q,"Search: "+F.q]);
+const row=d=>`<tr class="${d.status=="decommissioned"?"dim":""}" data-id="${d.id}"><td><input type="checkbox" class="rc" data-id="${d.id}" ${sel.has(d.id)?"checked":""} aria-label="Select ${d.name}"></td><td><b style="color:var(--brand)">${d.name}</b></td><td>${d.model}</td><td>${d.serial}</td><td>${d.loc}</td><td>${dueTxt(d)}</td><td>${badge(d.status)}</td><td><button class="link" data-more="${d.id}" aria-label="More actions">⋯</button></td></tr>`;
+let body="";if(grouped){[...new Set(rows.map(d=>d.type))].forEach(t=>{const g=rows.filter(d=>d.type==t);body+=`<tr class="grp"><td colspan="8">${t} · ${g.length}</td></tr>`+g.map(row).join("")})}else body=rows.map(row).join("");
+$("#main").innerHTML=`<div class="ch"><div><h2>Equipment</h2><p class="sub" style="margin-bottom:0">Find, filter and act on any device. Filters mirror the table columns.</p></div><button class="btn pri" onclick="toast('Add equipment form opens here')">+ Add equipment</button></div>
+<div class="bar" style="margin-top:14px"><input type="search" id="q" placeholder="Search name, model or serial" value="${F.q}">
+${menu("status","Status",SO)}${menu("type","Type",types.map(t=>t[0]),1)}${menu("loc","Location",locs,1)}
+<div class="dd"><button class="chip ${F.due?"act":""}" data-m="due">Next due${F.due?": "+DUE[F.due]:""} ▾</button><div class="menu ${openMenu=="due"?"open":""}" id="m-due">${Object.entries(DUE).map(([k,v])=>`<label><input type="radio" name="due" data-due="${k}" ${F.due==k?"checked":""}>${v}</label>`).join("")}<label><input type="radio" disabled>Custom range…</label></div></div>
+<label class="chip"><input type="checkbox" id="grp" ${grouped?"checked":""}> Group by type</label>
+<button class="chip" id="saved">★ Saved views</button></div>
+<div class="chips">${pills.map(p=>`<span class="pill">${p[2]}<button data-x="${p[0]}|${p[1]}" aria-label="Remove filter">✕</button></span>`).join("")}${pills.length?`<button class="link" id="clr">Clear all</button>`:""}</div>
+${sel.size?`<div class="bulk"><b>${sel.size} selected</b><button class="btn" onclick="toast('${sel.size} sent for calibration')">Send for calibration</button><button class="btn" onclick="toast('Selection exported')">Export</button><button class="link" style="color:inherit;margin-left:auto" id="desel">Deselect</button></div>`:""}
+<p class="count">Showing <b>${rows.length}</b> of ${tot} devices</p>
+<div class="card wrap" style="padding:4px 8px"><table><thead><tr><th></th><th>Name</th><th>Model</th><th>Serial</th><th>Location</th><th>Next due</th><th>Status</th><th></th></tr></thead><tbody>${body||`<tr><td colspan="8" class="empty">No devices match these filters. <button class="link" id="clr2">Clear all filters</button></td></tr>`}</tbody></table></div>`;
+$("#q").oninput=e=>{F.q=e.target.value;const p=e.target.selectionStart;eq();const n=$("#q");n.focus();n.setSelectionRange(p,p)};
+wire();
+document.querySelectorAll("[data-due]").forEach(r=>r.onchange=()=>{F.due=r.dataset.due;openMenu=null;eq()});
+document.querySelectorAll("[data-x]").forEach(b=>b.onclick=()=>{const[k,v]=b.dataset.x.split("|");k=="q"||k=="due"?F[k]="":F[k].delete(v);eq()});
+const clr=()=>{F.q="";F.due="";F.status.clear();F.loc.clear();F.type.clear();eq()};[$("#clr"),$("#clr2")].forEach(b=>b&&(b.onclick=clr));
+$("#grp").onchange=e=>{grouped=e.target.checked;eq()};
+$("#saved").onclick=()=>{F.status=new Set(["overdue"]);F.loc.clear();F.type.clear();F.q="";F.due="";toast("Loaded view: Overdue now");eq()};
+document.querySelectorAll(".rc").forEach(c=>{c.onclick=e=>e.stopPropagation();c.onchange=()=>{c.checked?sel.add(+c.dataset.id):sel.delete(+c.dataset.id);eq()}});
+document.querySelectorAll("[data-more]").forEach(b=>b.onclick=e=>{e.stopPropagation();toast("⋯ menu: View history · Edit · Decommission · Delete")});
+const ds=$("#desel");if(ds)ds.onclick=()=>{sel.clear();eq()};
+document.querySelectorAll("tbody tr[data-id]").forEach(tr=>tr.onclick=()=>drawer(D[tr.dataset.id]))}
+document.addEventListener("click",()=>{if(openMenu){commit();RR()}});
+document.addEventListener("keydown",e=>{if(e.key=="Escape"){$("#drawer").classList.remove("open");if(openMenu){openMenu=null;DR={};RR()}}});
+function go(p){cur=p;openMenu=null;DR={};document.querySelectorAll("nav button").forEach(b=>b.classList.toggle("on",b.dataset.p==p));$("#drawer").classList.remove("open");if(p=="eq")eq();else{$("#main").innerHTML=`<h2>Not part of this mockup</h2><p class="sub">Only Dashboard and Equipment were redesigned.</p>`}}
+document.querySelectorAll("nav button").forEach(b=>b.onclick=()=>go(b.dataset.p));go("eq");
+</script></body></html>

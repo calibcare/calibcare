@@ -3,7 +3,7 @@
 > Living log of what's been built. Updated after every completed unit of work.
 > Read this first when resuming a session on this project.
 
-Last updated: 2026-09-23 (equipment detail page redesign + real PDF certificate upload)
+Last updated: 2026-10-01 (Equipment list page rebuilt from calibcare-equipment.html mockup)
 
 ---
 
@@ -606,6 +606,36 @@ coopproject/
 - Turned out the real app (`frontend/index.html`/`index.css`) never actually set a custom font at all — `IBM Plex Sans` only ever existed in the standalone static mockup HTML files (never part of the live React app), so this was a genuinely new addition, not a swap.
 - Added the `<link rel="preconnect">` + stylesheet tags to `index.html`'s `<head>`, and `font-family: "Inter", sans-serif;` (+ `font-optical-sizing: auto;`) on `body` in `index.css`. Didn't add the per-weight `.inter-<uniquifier>` classes from Google's snippet — Inter is a variable font, and every page already uses Tailwind's font-weight utilities (`font-bold`/`font-semibold`/etc.), which apply correctly against a variable font's weight axis once the base `font-family` is set once, no per-instance class needed.
 - Verified: `npm run build`/`npm run lint` clean; confirmed via the dev server that the font `<link>` tags are actually being served.
+
+## Full production deployment completed and verified (2026-09-25)
+
+- Resumed the deployment plan from earlier in the week. Applied all 7 pending migrations to the real Railway MySQL database (backed up first via `mysqldump`), verifying row counts/schema after each one — production now matches local exactly (163 equipment, 403 capabilities, 166 calibrations, all 7 tables present, position-based roles, reminder rules seeded to safe defaults).
+- Committed all of this session's work (2 commits: the main feature batch, then the Inter font change) and pushed to `origin main` — explicitly excluded personal documents (Data.docx, google form.docx, ranking list.xlsx, etc.) that had accumulated untracked in the project folder, staging only real project files.
+- **Backend**: Railway auto-deployed from the GitHub push (turned out to already be git-connected). Verified live, not just "build succeeded" — `/api/users` went from `404` to requiring auth, and a real login returned the new position-based user shape.
+- **Frontend**: rebuilt with the correct production `VITE_API_URL` and deployed to Netlify via CLI. Verified the live bundle is genuinely the new one (fetched the actual deployed JS file and confirmed the Railway hostname + Inter font link are baked in, not just checked the deploy log). Re-confirmed CORS is still correctly locked to the real frontend origin and the Netlify "Edge Access" gate (the same issue hit during the original 2026-08-07 deploy) is still off.
+- **Full chain verified**: logged in through the real public API and pulled real data back (163 equipment, all 5 reminder rules) — proving public internet → Netlify → Railway → MySQL genuinely works together end to end.
+- **A real gap found immediately after**: `ninedenim0@gmail.com` (Weerada) — promoted to Deputy Manager locally earlier this session — didn't exist on the production database at all; it had only ever been created locally during testing. Production's domain restriction (`@idsmed.com` only) also meant she couldn't have self-registered there even if she'd tried. Fixed by inserting her account directly into production (same password hash as her local account, Deputy Manager role, pre-verified, her real LINE user ID carried over) — confirmed with the user's own live login test that it works.
+- Two Railway tokens were used and discarded across this session (the first one given stopped working partway through, apparently already rotated) — same housekeeping reminder as always: rotate/delete the current Railway Project Token and Netlify Personal Access Token from their dashboards now that the deploy is confirmed done.
+- One user-reported "font not changing" turned out to be ordinary browser caching, not a deployment issue — confirmed by fetching the live HTML/CSS directly and finding the Inter font correctly present; resolved once the user did a full close-and-reopen of the tab.
+- **Deployment is now fully caught up with local** — the live site reflects everything built this session.
+
+## Inter font self-hosted instead of loaded from Google Fonts (2026-09-25)
+
+- User reported the font still looked like "a plain system font" on the live site after the earlier Inter change. Verified the server-side was 100% correct at every layer (no CSP headers, the Google Fonts CSS returned `200`, a real Inter `.ttf` downloaded successfully directly from Google's CDN) — the code was never the problem.
+- Real root cause: **ad blockers and privacy-focused browser extensions/networks commonly block `fonts.googleapis.com`/`fonts.gstatic.com` by name** specifically because font loading can be used for tracking/fingerprinting — silently falling back to a generic system font with no visible error, which matches exactly what the user described.
+- Rather than keep asking the user to debug their own browser, fixed it at the source: installed `@fontsource-variable/inter` (self-hosted Inter, bundled into the build like any other asset) — removed the Google Fonts `<link>` tags from `index.html` entirely, imported the package in `main.jsx`, and pointed `index.css`'s `font-family` at `"Inter Variable"` (the family name that package registers). The actual `.woff2` files now ship as part of the site's own build output and are served from `calibcare.netlify.app` itself — same origin as everything else, so no blocklist rule targeting Google's font domains can affect it anymore.
+- Verified on the live site directly (not just locally): zero references to `fonts.googleapis.com`/`fonts.gstatic.com` anywhere in the deployed HTML/CSS/JS, the font file loads successfully from CalibCare's own domain, and the production API URL is still correctly baked into this rebuild. `npm run build`/`npm run lint` both clean.
+
+## Equipment list page rebuilt from the `calibcare-equipment.html` mockup (2026-10-01)
+
+- Rewrote `frontend/src/pages/EquipmentPage.jsx` to follow the new mockup's layout and behavior, keeping the app's own `theme.js` colors and Inter font (the mockup's IBM Plex/palette weren't carried over).
+- **Filters**: multi-select Status / Type (= equipment `name`, 18 values) / Location (= `location_category`, 7 sites) menus with live per-option counts, in-menu search, Apply/Clear (draft state, commits on Apply or click-away); single-choice "Next due" (overdue / 7 / 30 / 90 days); removable filter pills + "Clear all"; "Saved views" presets (Overdue now, Due in 30 days, Currently sent out, Available to use) — fixed presets, not user-saved yet.
+- **New derived status "Due soon"**: active + due within 30 days (alongside the existing derived "Overdue"). Due column now reads `2026-08-07 · 55 days overdue` / `in 23 days`. Days computed from the *local* date, not UTC `toISOString()`.
+- **Actions**: row checkboxes + select-all → bulk bar (Send for calibration [canEdit only], Export CSV [everyone; UTF-8 BOM so Thai opens in Excel]); row click opens a side drawer with details; row ⋯ menu (open full page, edit, send for calibration, decommission, delete). Send/decommission are `PUT /api/equipment/:id {status}` — no backend change needed.
+- Whole register is loaded once (`limit=200`) and filtered client-side; pagination removed. **If the register passes 200 rows this needs real paging or a higher API cap.**
+- Dashboard links still work: `?status=X` → that status filter; `?view=available` → Status {Active, Due soon}; top-bar `?q=` syncs into the search box even when already on the page.
+- Verified with headless Chromium against local DB: 163 rows, overdue filter → 37, available view → 89 (=126 active − 37 overdue), grouped view, drawer, no console errors; a real "Send for calibration" click updated `equipment.status` in MySQL (test record id 27 reverted to `active` afterwards). Lint/build clean.
+- Not done: **uncommitted and not deployed** to Netlify yet. Phone-width layout is cramped because the shared `Layout.jsx` sidebar isn't responsive (pre-existing, all pages).
 
 ## Next up
 
