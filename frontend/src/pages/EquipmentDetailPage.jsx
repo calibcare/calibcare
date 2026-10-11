@@ -234,7 +234,7 @@ export function EquipmentDetailPage() {
 
   if (error && !equipment) {
     return (
-      <div className="rounded-[10px] px-4 py-2.5 text-sm" style={{ backgroundColor: theme.criticalBg, color: theme.criticalStrong }}>
+      <div className="rounded-md px-4 py-2.5 text-sm" style={{ backgroundColor: theme.criticalBg, color: theme.criticalStrong }}>
         {error}
       </div>
     );
@@ -255,7 +255,7 @@ export function EquipmentDetailPage() {
       </Link>
 
       {error && (
-        <div className="rounded-[10px] px-4 py-2.5 text-sm" style={{ backgroundColor: theme.criticalBg, color: theme.criticalStrong }}>
+        <div className="rounded-md px-4 py-2.5 text-sm" style={{ backgroundColor: theme.criticalBg, color: theme.criticalStrong }}>
           {error}
         </div>
       )}
@@ -334,7 +334,7 @@ export function EquipmentDetailPage() {
             <div className="col-span-2 flex items-center justify-between mt-1">
               <button
                 disabled={saving}
-                className="rounded-[9px] px-5 py-2.5 text-[13.5px] font-semibold text-white disabled:opacity-50"
+                className="rounded-md px-5 py-2.5 text-[13.5px] font-semibold text-white disabled:opacity-50"
                 style={{ backgroundColor: '#182448', border: 'none' }}
               >
                 {saving ? 'Saving…' : 'Save changes'}
@@ -422,7 +422,7 @@ export function EquipmentDetailPage() {
                   <button
                     type="button"
                     onClick={() => handleDeleteCapability(c.capability_id)}
-                    className="w-7 h-7 rounded-[7px] inline-flex items-center justify-center"
+                    className="w-7 h-7 rounded-md inline-flex items-center justify-center"
                     style={{ color: theme.textFaint, border: 'none', background: 'none' }}
                   >
                     <TrashIcon size={14} />
@@ -439,7 +439,7 @@ export function EquipmentDetailPage() {
               <button
                 type="button"
                 onClick={() => setShowCapForm(true)}
-                className="flex items-center gap-2 rounded-[9px] px-4 py-2.5 text-[13px] font-semibold"
+                className="flex items-center gap-2 rounded-md px-4 py-2.5 text-[13px] font-semibold"
                 style={{ backgroundColor: '#fff', border: `1px solid ${theme.borderStrong}`, color: '#38415a' }}
               >
                 <PlusIcon size={13} />
@@ -472,7 +472,7 @@ export function EquipmentDetailPage() {
                 <div className="flex items-center gap-3">
                   <button
                     disabled={savingCap}
-                    className="rounded-[9px] px-4 py-2 text-[13px] font-semibold text-white disabled:opacity-50"
+                    className="rounded-md px-4 py-2 text-[13px] font-semibold text-white disabled:opacity-50"
                     style={{ backgroundColor: theme.good, border: 'none' }}
                   >
                     {savingCap ? 'Adding…' : '+ Add capability'}
@@ -543,7 +543,7 @@ export function EquipmentDetailPage() {
                   <button
                     type="button"
                     onClick={() => handleDeleteCalibration(c.calibration_id)}
-                    className="w-7 h-7 rounded-[7px] inline-flex items-center justify-center"
+                    className="w-7 h-7 rounded-md inline-flex items-center justify-center"
                     style={{ color: theme.textFaint, border: 'none', background: 'none' }}
                   >
                     <TrashIcon size={14} />
@@ -560,7 +560,7 @@ export function EquipmentDetailPage() {
               <button
                 type="button"
                 onClick={() => setShowCalForm(true)}
-                className="flex items-center gap-2 rounded-[9px] px-4 py-2.5 text-[13px] font-semibold"
+                className="flex items-center gap-2 rounded-md px-4 py-2.5 text-[13px] font-semibold"
                 style={{ backgroundColor: '#fff', border: `1px solid ${theme.borderStrong}`, color: '#38415a' }}
               >
                 <PlusIcon size={13} />
@@ -597,7 +597,7 @@ export function EquipmentDetailPage() {
                 <div className="flex items-center gap-3">
                   <button
                     disabled={savingCal}
-                    className="rounded-[9px] px-4 py-2 text-[13px] font-semibold text-white disabled:opacity-50"
+                    className="rounded-md px-4 py-2 text-[13px] font-semibold text-white disabled:opacity-50"
                     style={{ backgroundColor: theme.good, border: 'none' }}
                   >
                     {savingCal ? 'Recording…' : '+ Record calibration'}

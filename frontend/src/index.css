@@ -1,5 +1,16 @@
 @import "tailwindcss";
 
+/* SPARKS-style restyle (2026-10-12): squarer corners app-wide. Only the
+   named radius steps are tightened here; arbitrary values like
+   rounded-[10px] in individual pages are unaffected. */
+@theme {
+  --radius-md: 0.25rem;
+  --radius-lg: 0.3125rem;
+  --radius-xl: 0.375rem;
+  --radius-2xl: 0.375rem;
+  --radius-3xl: 0.5rem;
+}
+
 body {
   margin: 0;
   /* "Inter Variable" is the family name @fontsource-variable/inter

@@ -22,9 +22,6 @@ export function SettingsPage() {
 
   return (
     <div>
-      <h1 className="text-2xl font-extrabold mb-1" style={{ color: INK }}>
-        Settings
-      </h1>
       <p className="text-sm mb-6" style={{ color: MUTED }}>
         Your account details.
       </p>

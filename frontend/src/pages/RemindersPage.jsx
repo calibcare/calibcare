@@ -27,7 +27,7 @@ function Card({ children, style, ...rest }) {
 function CardHeader({ icon, iconBg, title }) {
   return (
     <div className="flex items-center gap-2.5">
-      <div className="w-[34px] h-[34px] rounded-[10px] flex items-center justify-center shrink-0" style={{ backgroundColor: iconBg }}>
+      <div className="w-[34px] h-[34px] rounded-md flex items-center justify-center shrink-0" style={{ backgroundColor: iconBg }}>
         {icon}
       </div>
       <span className="text-[15px] font-bold" style={{ color: theme.ink }}>
@@ -91,7 +91,7 @@ function FilterSelect({ value, onChange, children }) {
       <select
         value={value}
         onChange={onChange}
-        className="appearance-none rounded-[9px] pl-3 pr-8 py-2 text-[12.5px] font-medium"
+        className="appearance-none rounded-md pl-3 pr-8 py-2 text-[12.5px] font-medium"
         style={{ border: `1px solid ${theme.borderStrong}`, color: '#5b6478', backgroundColor: '#fff' }}
       >
         {children}
@@ -170,7 +170,7 @@ function ConnectLineCard({ user, summary }) {
                 type="button"
                 onClick={getCode}
                 disabled={loading}
-                className="self-start rounded-[9px] px-4 py-2 text-[12.5px] font-semibold text-white disabled:opacity-50"
+                className="self-start rounded-md px-4 py-2 text-[12.5px] font-semibold text-white disabled:opacity-50"
                 style={{ backgroundColor: '#182448', border: 'none' }}
               >
                 {loading ? 'Generating…' : 'Get linking code'}
@@ -192,7 +192,7 @@ function ConnectLineCard({ user, summary }) {
                 <li>Send it the code below as a message.</li>
               </ol>
               <div className="flex items-center gap-3">
-                <span className="text-[22px] font-bold tracking-widest rounded-[10px] px-4 py-2" style={{ backgroundColor: '#fff', border: `1px solid ${theme.border}`, color: theme.ink }}>
+                <span className="text-[22px] font-bold tracking-widest rounded-md px-4 py-2" style={{ backgroundColor: '#fff', border: `1px solid ${theme.border}`, color: theme.ink }}>
                   {link.code}
                 </span>
                 <span className="text-[11.5px]" style={{ color: theme.textFaint }}>
@@ -271,7 +271,7 @@ function DueDateCheckCard({ user, summary, onRun }) {
           type="button"
           onClick={handleRun}
           disabled={!canRun || running}
-          className="rounded-[9px] px-[18px] py-2.5 text-[13px] font-semibold shrink-0 disabled:cursor-not-allowed"
+          className="rounded-md px-[18px] py-2.5 text-[13px] font-semibold shrink-0 disabled:cursor-not-allowed"
           style={{
             backgroundColor: canRun ? '#182448' : '#e9ebf1',
             color: canRun ? '#fff' : theme.textFaint,
@@ -524,17 +524,12 @@ export function RemindersPage() {
 
   return (
     <div className="flex flex-col gap-5">
-      <div>
-        <h1 className="text-[23px] font-bold mb-1.5" style={{ color: theme.ink }}>
-          Calibration Reminders
-        </h1>
-        <p className="text-sm" style={{ color: '#7a8296' }}>
-          Connect LINE, set reminder rules, and review what's been sent.
-        </p>
-      </div>
+      <p className="text-sm" style={{ color: '#7a8296' }}>
+        Connect LINE, set reminder rules, and review what's been sent.
+      </p>
 
       {error && (
-        <div className="rounded-[10px] px-4 py-2.5 text-sm" style={{ backgroundColor: theme.criticalBg, color: theme.criticalStrong }}>
+        <div className="rounded-md px-4 py-2.5 text-sm" style={{ backgroundColor: theme.criticalBg, color: theme.criticalStrong }}>
           {error}
         </div>
       )}

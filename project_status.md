@@ -3,7 +3,7 @@
 > Living log of what's been built. Updated after every completed unit of work.
 > Read this first when resuming a session on this project.
 
-Last updated: 2026-10-12 (Decision Support System removed)
+Last updated: 2026-10-12 (SPARKS-style restyle, local only)
 
 ---
 
@@ -651,6 +651,15 @@ coopproject/
 - **Kept**: `equipment_capability` table/data and the capability CRUD on the equipment detail page — it's equipment data in its own right, not DSS-only.
 - Not changed: `README.md` (original project spec/objectives still lists the DSS), `decision-support-mockup.html`, `docs/07-er-diagram.md` wording.
 - Verified locally: backend 44/44 tests pass, `/api/dss/*` → 404, equipment/detail/dashboard APIs 200, frontend lint/build clean.
+
+## SPARKS-style restyle (2026-10-12) — committed locally, NOT deployed yet
+
+- User shared photos of IdsMed SPARKS (company system) and asked for "the overall look", with the old design backed up.
+- **Backup of the old design**: git tag `old-design-2026-10-12` + branch `backup/old-design` (both pushed to GitHub, = commit `743ac41`). Live Netlify deploy at that point: `6acbd480dd77be2134fc610d` — can be re-published instantly from the Netlify dashboard (Deploys → that deploy → "Publish deploy"). To restore in code: `git checkout old-design-2026-10-12 -- frontend/src`.
+- **Shell (`Layout.jsx`)**: solid blue sidebar (`theme.sidebarBlue`), upper-case nav labels, active item darker with white left bar; ☰ collapses it to icons (remembered in localStorage `calibcare_sidebar_collapsed`). White header row: logo + "CALIBCARE", ☰, page title upper-case with icon (from a route→title table `PAGE_TITLES`), compact equipment search, bell, "NAME, Position ▾" user menu.
+- Pages' own big `<h1>` titles removed (Dashboard, Equipment, Reminders, Team, Settings) — header shows them now. Grey page background (`theme.shellBg`); squarer corners app-wide via `@theme` radius overrides in `index.css` + arbitrary `rounded-[7-18px]` → `rounded-md` in app pages (auth pages untouched).
+- **Equipment page as SPARKS grid**: "Selected N devices" line, grey toolbar (view menu labelled with active saved view / "All Equipment Listing", + Equipment, Send for calibration [disabled until selection], Export [selection or all filtered], Group by type, Clear filters), column headers with ⇅ sort (asc→desc→off) + funnel filters (Name→Type, Location, Next due, Status), striped rows, "Show [10/20/50/100] per page of N entries" + numbered paging (select-all = current page). Filter/⋯ menus now `position: fixed` (anchored via getBoundingClientRect, close on outside scroll) so the table's scroll container can't clip them.
+- Verified locally with headless Chromium: 163 entries / 20 per page, Overdue funnel → 37, serial sort asc, page 2, row ⋯ menu, all 6 pages render, collapse works, no console errors. Lint/build clean.
 
 ## Next up
 
