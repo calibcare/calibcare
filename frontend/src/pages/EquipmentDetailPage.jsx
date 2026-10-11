@@ -487,10 +487,10 @@ export function EquipmentDetailPage() {
                 <div className="flex items-center gap-3">
                   <button
                     disabled={savingCap}
-                    className="rounded-md px-4 py-2 text-[13px] font-semibold text-white disabled:opacity-50"
-                    style={{ backgroundColor: theme.good, border: 'none' }}
+                    className="rounded-md px-5 py-2 text-[13px] font-semibold text-white disabled:opacity-50"
+                    style={{ backgroundColor: '#182448', border: 'none' }}
                   >
-                    {savingCap ? 'Adding…' : '+ Add capability'}
+                    {savingCap ? 'Saving…' : 'Save'}
                   </button>
                   <button
                     type="button"
@@ -611,10 +611,10 @@ export function EquipmentDetailPage() {
                 <div className="flex items-center gap-3">
                   <button
                     disabled={savingCal}
-                    className="rounded-md px-4 py-2 text-[13px] font-semibold text-white disabled:opacity-50"
-                    style={{ backgroundColor: theme.good, border: 'none' }}
+                    className="rounded-md px-5 py-2 text-[13px] font-semibold text-white disabled:opacity-50"
+                    style={{ backgroundColor: '#182448', border: 'none' }}
                   >
-                    {savingCal ? 'Recording…' : '+ Record calibration'}
+                    {savingCal ? 'Saving…' : 'Save'}
                   </button>
                   <button
                     type="button"

@@ -675,6 +675,8 @@ coopproject/
 - Verified locally: form shows "Pick a calibration date first" → 2027-10-12 after picking 2026-10-12; saved row = 2026-10-12 / 2027-10-12 / 1 ปี; API fallback 2027-03-15→2028-03-15, 2028-02-29→2029-02-28. Test rows (ids 172–174) deleted afterwards. Backend 44/44 tests, lint/build clean.
 - **Deployed 2026-10-12**: pushed `143b2d7` (Railway auto-redeploys backend), Netlify deploy `6acbe3bedd77be9a07fc654b`. Verified on the live site without saving anything: no Frequency column/field, picking 2026-10-12 shows next due 2027-10-12, backend responding 200, no JS errors. The server-side DATE_ADD fallback wasn't exercised in production (would need writing a real record); the web form always sends the date itself, so it doesn't depend on that fallback.
 
+- **Form submit buttons say "Save"** (user request, 2026-10-12): the green submit buttons in the "Record calibration" and "Add capability" forms repeated the opener's label ("+ Record calibration" / "+ Add capability"), which was confusing. Both now read "Save" ("Saving…" while busy) in the same navy (#182448) as the page's "Save changes". Verified locally (forms opened, nothing saved). **Committed locally, not deployed.**
+
 ## Next up
 
 - Verify the inferred manufacturer values against physical nameplates/purchase records during the next calibration cycle — they're confident inferences, not sourced from purchase documentation.
