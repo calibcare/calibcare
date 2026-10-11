@@ -151,14 +151,6 @@ function anchorStyle(el, align) {
     : { position: 'fixed', top: r.bottom + 6, left: Math.min(r.left, window.innerWidth - 250) };
 }
 
-function FunnelIcon({ color = 'currentColor', size = 12 }) {
-  return (
-    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2.2" strokeLinejoin="round">
-      <path d="M3 4h18l-7 8.5V19l-4 2v-8.5Z" />
-    </svg>
-  );
-}
-
 function SortIcon({ dir }) {
   const up = dir === 1 ? theme.brand : theme.textFainter;
   const down = dir === -1 ? theme.brand : theme.textFainter;
@@ -183,7 +175,7 @@ const menuStyle = { border: `1px solid ${theme.borderStrong}`, boxShadow: '0 10p
 // (or clicking away), so the table doesn't re-filter on every tick.
 // `counts` is how many rows each option would show given the *other* active
 // filters -- the same facet-count behavior as the mockup.
-function MultiFilter({ label, options, selected, counts, renderOption = (v) => v, onApply, variant = 'chip' }) {
+function MultiFilter({ label, options, selected, counts, renderOption = (v) => v, onApply }) {
   const [open, setOpen] = useState(false);
   const [draft, setDraft] = useState(selected);
   const [search, setSearch] = useState('');
@@ -208,25 +200,11 @@ function MultiFilter({ label, options, selected, counts, renderOption = (v) => v
 
   return (
     <div className="relative" ref={ref}>
-      {variant === 'funnel' ? (
-        <button
-          type="button"
-          onClick={toggleOpen}
-          aria-expanded={open}
-          aria-label={`Filter by ${label.toLowerCase()}`}
-          title={`Filter by ${label.toLowerCase()}`}
-          className="w-5 h-5 flex items-center justify-center rounded"
-          style={{ border: 'none', background: selected.size ? '#eaf0ff' : 'none' }}
-        >
-          <FunnelIcon color={selected.size ? theme.brand : theme.textFaint} />
-        </button>
-      ) : (
-        <button type="button" onClick={toggleOpen} className={chipBase} style={chipStyle(selected.size > 0)} aria-expanded={open}>
-          {label}
-          {selected.size > 0 && ` (${selected.size})`}
-          <ChevronDownIcon size={11} />
-        </button>
-      )}
+      <button type="button" onClick={toggleOpen} className={chipBase} style={chipStyle(selected.size > 0)} aria-expanded={open}>
+        {label}
+        {selected.size > 0 && ` (${selected.size})`}
+        <ChevronDownIcon size={11} />
+      </button>
       {open && (
         <div className={menuBox} style={{ ...menuStyle, ...pos }}>
           {options.length > 5 && (
@@ -333,12 +311,12 @@ function MenuItem({ onClick, children, danger, to }) {
 }
 
 const COLUMNS = [
-  { label: 'Name', sortKey: 'name', filter: 'type' },
+  { label: 'Name', sortKey: 'name' },
   { label: 'Model', sortKey: 'model' },
   { label: 'Serial', sortKey: 'serial_number' },
-  { label: 'Location', sortKey: 'location_category', filter: 'loc' },
-  { label: 'Next due', sortKey: 'days_until_due', filter: 'due' },
-  { label: 'Status', sortKey: 'displayStatus', filter: 'status' },
+  { label: 'Location', sortKey: 'location_category' },
+  { label: 'Next due', sortKey: 'days_until_due' },
+  { label: 'Status', sortKey: 'displayStatus' },
 ];
 
 function ToolbarButton({ children, onClick, disabled, active, title }) {
@@ -693,25 +671,14 @@ export function EquipmentPage() {
 
   return (
     <div className="flex flex-col gap-3.5">
-      <div className="flex items-center justify-between gap-4 flex-wrap">
-        <span className="text-[12.5px]" style={{ color: theme.textMuted }}>
-          Selected {selected.size} device{selected.size === 1 ? '' : 's'}
-          {selected.size > 0 && (
-            <button
-              type="button"
-              onClick={() => setSelected(new Set())}
-              className="ml-2 font-semibold"
-              style={{ color: theme.brand, border: 'none', background: 'none' }}
-            >
-              Deselect
-            </button>
-          )}
-        </span>
+      {/* Filter bar (the pre-SPARKS layout, restored at the user's request):
+          search + one dropdown button per filter, above the grid. */}
+      <div className="flex items-center gap-2 flex-wrap">
         <div
-          className="flex items-center gap-2 rounded-md px-3 py-[7px] bg-white"
-          style={{ border: `1px solid ${theme.borderStrong}`, width: 300, maxWidth: '100%' }}
+          className="flex items-center gap-2 rounded-md px-3.5 py-[9px] bg-white"
+          style={{ border: `1px solid ${theme.borderStrong}`, flex: '1 1 240px', maxWidth: 340 }}
         >
-          <SearchIcon size={14} color={theme.textFaint} />
+          <SearchIcon size={15} color={theme.textFaint} />
           <input
             type="search"
             value={q}
@@ -721,7 +688,89 @@ export function EquipmentPage() {
             style={{ color: theme.ink, border: 'none' }}
           />
         </div>
+
+        <MultiFilter
+          label="Status"
+          options={STATUS_ORDER}
+          selected={filters.status}
+          counts={facetCounts('status', 'displayStatus')}
+          renderOption={(v) => STATUS_META[v].label}
+          onApply={(v) => setFilter('status', v)}
+        />
+        <MultiFilter label="Type" options={typeOptions} selected={filters.type} counts={facetCounts('type', 'name')} onApply={(v) => setFilter('type', v)} />
+        <MultiFilter
+          label="Location"
+          options={locOptions}
+          selected={filters.loc}
+          counts={facetCounts('loc', 'location_category')}
+          onApply={(v) => setFilter('loc', v)}
+        />
+        <Popover
+          button={({ toggle }) => (
+            <button type="button" onClick={toggle} className={chipBase} style={chipStyle(Boolean(filters.due))}>
+              Next due{filters.due ? `: ${DUE_OPTIONS[filters.due]}` : ''}
+              <ChevronDownIcon size={11} />
+            </button>
+          )}
+        >
+          {(close) =>
+            Object.entries(DUE_OPTIONS).map(([k, v]) => (
+              <label key={k} className="flex items-center gap-2 px-1.5 py-[5px] rounded-md cursor-pointer text-[13px] hover:bg-[#f6f7fb]">
+                <input
+                  type="radio"
+                  name="due"
+                  checked={filters.due === k}
+                  onChange={() => {
+                    setFilter('due', k);
+                    close();
+                  }}
+                />
+                {v}
+              </label>
+            ))
+          }
+        </Popover>
       </div>
+
+      {pills.length > 0 && (
+        <div className="flex items-center gap-1.5 flex-wrap">
+          {pills.map((p) => (
+            <span
+              key={`${p.key}|${p.value}`}
+              className="inline-flex items-center gap-1 rounded-full pl-[11px] pr-1 py-[3px] text-[12px] font-semibold"
+              style={{ backgroundColor: '#eaf0ff', color: theme.brand }}
+            >
+              {p.label}
+              <button
+                type="button"
+                onClick={() => removePill(p)}
+                aria-label={`Remove filter ${p.label}`}
+                className="px-1 text-[13px]"
+                style={{ color: 'inherit', border: 'none', background: 'none' }}
+              >
+                ✕
+              </button>
+            </span>
+          ))}
+          <button type="button" onClick={clearAll} className="text-[12.5px] font-semibold ml-1" style={{ color: theme.brand, border: 'none', background: 'none' }}>
+            Clear all
+          </button>
+        </div>
+      )}
+
+      <span className="text-[12.5px]" style={{ color: theme.textMuted }}>
+        Selected {selected.size} device{selected.size === 1 ? '' : 's'}
+        {selected.size > 0 && (
+          <button
+            type="button"
+            onClick={() => setSelected(new Set())}
+            className="ml-2 font-semibold"
+            style={{ color: theme.brand, border: 'none', background: 'none' }}
+          >
+            Deselect
+          </button>
+        )}
+      </span>
 
       {error && (
         <div className="rounded-md px-4 py-2.5 text-sm" style={{ backgroundColor: theme.criticalBg, color: theme.criticalStrong }}>
@@ -821,35 +870,7 @@ export function EquipmentPage() {
           <ToolbarButton onClick={() => setGrouped((g) => !g)} active={grouped}>
             <LayersIcon size={14} color="#fff" /> Group by type
           </ToolbarButton>
-          {pills.length > 0 && (
-            <ToolbarButton onClick={clearAll}>
-              <span className="text-[14px] leading-none">×</span> Clear filters
-            </ToolbarButton>
-          )}
         </div>
-
-        {pills.length > 0 && (
-          <div className="flex items-center gap-1.5 flex-wrap px-3 py-2" style={{ borderBottom: `1px solid ${theme.divider}` }}>
-            {pills.map((p) => (
-              <span
-                key={`${p.key}|${p.value}`}
-                className="inline-flex items-center gap-1 rounded-full pl-[10px] pr-1 py-[2px] text-[11.5px] font-semibold"
-                style={{ backgroundColor: '#eaf0ff', color: theme.brand }}
-              >
-                {p.label}
-                <button
-                  type="button"
-                  onClick={() => removePill(p)}
-                  aria-label={`Remove filter ${p.label}`}
-                  className="px-1 text-[12px]"
-                  style={{ color: 'inherit', border: 'none', background: 'none' }}
-                >
-                  ✕
-                </button>
-              </span>
-            ))}
-          </div>
-        )}
 
         <div className="overflow-x-auto">
           <table className="w-full border-collapse">
@@ -860,82 +881,16 @@ export function EquipmentPage() {
                 </th>
                 {COLUMNS.map((col) => (
                   <th key={col.label} className="text-left px-3 py-2.5 whitespace-nowrap" style={{ borderBottom: `2px solid ${theme.borderStrong}` }}>
-                    <div className="flex items-center gap-1.5">
-                      <button
-                        type="button"
-                        onClick={() => cycleSort(col.sortKey)}
-                        className="flex items-center gap-1.5 text-[12.5px] font-bold"
-                        style={{ color: theme.ink, border: 'none', background: 'none' }}
-                        title={`Sort by ${col.label.toLowerCase()}`}
-                      >
-                        {col.label}
-                        <SortIcon dir={sort.key === col.sortKey ? sort.dir : 0} />
-                      </button>
-                      {col.filter === 'status' && (
-                        <MultiFilter
-                          variant="funnel"
-                          label="Status"
-                          options={STATUS_ORDER}
-                          selected={filters.status}
-                          counts={facetCounts('status', 'displayStatus')}
-                          renderOption={(v) => STATUS_META[v].label}
-                          onApply={(v) => setFilter('status', v)}
-                        />
-                      )}
-                      {col.filter === 'type' && (
-                        <MultiFilter
-                          variant="funnel"
-                          label="Type"
-                          options={typeOptions}
-                          selected={filters.type}
-                          counts={facetCounts('type', 'name')}
-                          onApply={(v) => setFilter('type', v)}
-                        />
-                      )}
-                      {col.filter === 'loc' && (
-                        <MultiFilter
-                          variant="funnel"
-                          label="Location"
-                          options={locOptions}
-                          selected={filters.loc}
-                          counts={facetCounts('loc', 'location_category')}
-                          onApply={(v) => setFilter('loc', v)}
-                        />
-                      )}
-                      {col.filter === 'due' && (
-                        <Popover
-                          button={({ toggle }) => (
-                            <button
-                              type="button"
-                              onClick={toggle}
-                              aria-label="Filter by next due"
-                              title="Filter by next due"
-                              className="w-5 h-5 flex items-center justify-center rounded"
-                              style={{ border: 'none', background: filters.due ? '#eaf0ff' : 'none' }}
-                            >
-                              <FunnelIcon color={filters.due ? theme.brand : theme.textFaint} />
-                            </button>
-                          )}
-                        >
-                          {(close) =>
-                            Object.entries(DUE_OPTIONS).map(([k, v]) => (
-                              <label key={k} className="flex items-center gap-2 px-1.5 py-[5px] rounded-md cursor-pointer text-[13px] hover:bg-[#f6f7fb]">
-                                <input
-                                  type="radio"
-                                  name="due"
-                                  checked={filters.due === k}
-                                  onChange={() => {
-                                    setFilter('due', k);
-                                    close();
-                                  }}
-                                />
-                                {v}
-                              </label>
-                            ))
-                          }
-                        </Popover>
-                      )}
-                    </div>
+                    <button
+                      type="button"
+                      onClick={() => cycleSort(col.sortKey)}
+                      className="flex items-center gap-1.5 text-[12.5px] font-bold"
+                      style={{ color: theme.ink, border: 'none', background: 'none' }}
+                      title={`Sort by ${col.label.toLowerCase()}`}
+                    >
+                      {col.label}
+                      <SortIcon dir={sort.key === col.sortKey ? sort.dir : 0} />
+                    </button>
                   </th>
                 ))}
                 <th style={{ borderBottom: `2px solid ${theme.borderStrong}` }} />

@@ -665,6 +665,8 @@ coopproject/
 
 - **Deployed 2026-10-12**: pushed `4024d9c` to GitHub, built with the Railway `VITE_API_URL`, `netlify deploy --prod` → deploy `6acbdc4c7693203192a44041`. Verified on the live site with a real login: DASHBOARD/EQUIPMENT header titles, queue shows 10 rows ("1–10 of 44"), Equipment grid "163 entries" + toolbar, no JS errors. Rollback = re-publish deploy `6acbd480dd77be2134fc610d` in Netlify (old design).
 
+- **Equipment filters back to the pre-SPARKS style** (user request, after the deploy): removed the funnel icons from the column headers (headers now only sort) and restored the filter bar above the grid — search + Status/Type/Location/Next due dropdown buttons, removable filter pills + "Clear all" below it; the toolbar's "Clear filters" button and in-card pills row were dropped as duplicates. SPARKS toolbar, sort arrows, striping and paging unchanged. Verified locally: Overdue 37 → +QA Team 9 → +due≤30d 0, Clear all 163, Type=Steel Weight 77; no header funnels left; no errors. **Committed locally, not yet deployed.**
+
 ## Next up
 
 - Verify the inferred manufacturer values against physical nameplates/purchase records during the next calibration cycle — they're confident inferences, not sourced from purchase documentation.
