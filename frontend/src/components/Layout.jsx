@@ -2,17 +2,16 @@ import { useState, useRef, useEffect } from 'react';
 import { NavLink, Outlet, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { theme } from '../theme';
-import { HomeIcon, PackageIcon, DecisionSupportIcon, BellIcon, SettingsIcon, LogOutIcon, SearchIcon, UsersIcon } from './icons';
+import { HomeIcon, PackageIcon, BellIcon, SettingsIcon, LogOutIcon, SearchIcon, UsersIcon } from './icons';
 
 const BASE_NAV_ITEMS = [
   { to: '/dashboard', label: 'Dashboard', Icon: HomeIcon },
   { to: '/equipment', label: 'Equipment', Icon: PackageIcon },
-  { to: '/dss', label: 'Decision Support', Icon: DecisionSupportIcon },
 ];
 // Reminders (rules, history, manual run, and every account's own LINE
 // connection) and Team (assigning positions) are both Deputy Manager
 // tooling -- confirmed with the user everyone else should see only
-// Dashboard/Equipment/Decision Support.
+// Dashboard/Equipment.
 const REMINDERS_NAV_ITEM = { to: '/reminders', label: 'Reminders', Icon: BellIcon };
 const TEAM_NAV_ITEM = { to: '/access-levels', label: 'Team', Icon: UsersIcon };
 

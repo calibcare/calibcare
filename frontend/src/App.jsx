@@ -10,7 +10,6 @@ import { ResetPasswordPage } from './pages/ResetPasswordPage';
 import { DashboardPage } from './pages/DashboardPage';
 import { EquipmentPage } from './pages/EquipmentPage';
 import { EquipmentDetailPage } from './pages/EquipmentDetailPage';
-import { DssPage } from './pages/DssPage';
 import { AccessLevelsPage } from './pages/AccessLevelsPage';
 import { RemindersPage } from './pages/RemindersPage';
 import { SettingsPage } from './pages/SettingsPage';
@@ -30,7 +29,6 @@ export default function App() {
             <Route path="/dashboard" element={<DashboardPage />} />
             <Route path="/equipment" element={<EquipmentPage />} />
             <Route path="/equipment/:id" element={<EquipmentDetailPage />} />
-            <Route path="/dss" element={<DssPage />} />
             <Route path="/reminders" element={<RemindersPage />} />
             <Route path="/access-levels" element={<AccessLevelsPage />} />
             <Route path="/settings" element={<SettingsPage />} />

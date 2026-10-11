@@ -7,7 +7,7 @@
  * their own list, the same way pickBucket() in reminderService.js is the
  * single shared definition of the reminder thresholds.
  *
- * Every position can view everything and use the Decision Support System;
+ * Every position can view everything;
  * the capabilities below are the additional rights layered on top.
  */
 export const POSITIONS = [

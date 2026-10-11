@@ -3,7 +3,7 @@
 > Living log of what's been built. Updated after every completed unit of work.
 > Read this first when resuming a session on this project.
 
-Last updated: 2026-10-12 (Inter switched to opsz + italic variants)
+Last updated: 2026-10-12 (Decision Support System removed)
 
 ---
 
@@ -644,6 +644,13 @@ coopproject/
 
 - User pasted Google Fonts' Inter embed (`ital,opsz,wght@0,14..32,100..900;1,14..32,100..900`). Site already used Inter, but only the weight axis, no italics. Rather than re-adding Google's `<link>` tags (ad-blocker problem, see the 2026-09-25 entry), switched `main.jsx` to import `@fontsource-variable/inter/opsz.css` + `opsz-italic.css` — same font as that embed, still self-hosted. Family name unchanged (`Inter Variable`), so `index.css` untouched; `font-optical-sizing: auto` was already set.
 - Committed `deba706`, pushed, deployed to Netlify. Verified live: deployed CSS references the opsz normal/italic files, font file serves 200, zero Google font references.
+
+## Decision Support System removed (2026-10-12)
+
+- User asked to remove the Decision Support feature entirely. Deleted: `frontend/src/pages/DssPage.jsx`, `/dss` route + sidebar item + `DecisionSupportIcon`, `backend/src/routes/dss.js` (+ its mount in `server.js`), `services/dssMatcher.js`, `services/rangeParser.js`, and both their test files. Nothing else depended on them.
+- **Kept**: `equipment_capability` table/data and the capability CRUD on the equipment detail page — it's equipment data in its own right, not DSS-only.
+- Not changed: `README.md` (original project spec/objectives still lists the DSS), `decision-support-mockup.html`, `docs/07-er-diagram.md` wording.
+- Verified locally: backend 44/44 tests pass, `/api/dss/*` → 404, equipment/detail/dashboard APIs 200, frontend lint/build clean.
 
 ## Next up
 

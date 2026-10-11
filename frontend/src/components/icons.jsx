@@ -36,16 +36,6 @@ export function PackageIcon({ color = 'currentColor' }) {
   );
 }
 
-// Decision Support -- the redesign's icon is a broken-ring "target" mark,
-// not a pie slice; kept the exact path for a pixel-accurate match.
-export function DecisionSupportIcon({ color = 'currentColor' }) {
-  return (
-    <svg {...nav}>
-      <path d="M20 14.2A8 8 0 1 1 9.8 4a6.3 6.3 0 0 0 10.2 10.2Z" stroke={color} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" fill="none" />
-    </svg>
-  );
-}
-
 export function BellIcon({ color = 'currentColor' }) {
   return (
     <svg {...nav}>

@@ -1,7 +1,6 @@
 import express from 'express';
 import cors from 'cors';
 import 'dotenv/config';
-import { dssRouter } from './routes/dss.js';
 import { authRouter } from './routes/auth.js';
 import { remindersRouter } from './routes/reminders.js';
 import { equipmentRouter } from './routes/equipment.js';
@@ -33,7 +32,6 @@ app.get('/health', (req, res) => res.json({ status: 'ok' }));
 
 app.use('/api/auth', authRouter);
 app.use('/api/line/webhook', lineWebhookRouter); // public: authenticated by LINE signature, not JWT
-app.use('/api/dss', requireAuth, dssRouter);
 app.use('/api/reminders', requireAuth, remindersRouter);
 app.use('/api/equipment', requireAuth, equipmentRouter);
 app.use('/api/dashboard', requireAuth, dashboardRouter);
