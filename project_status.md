@@ -3,7 +3,7 @@
 > Living log of what's been built. Updated after every completed unit of work.
 > Read this first when resuming a session on this project.
 
-Last updated: 2026-10-12 (SPARKS-style restyle, local only)
+Last updated: 2026-10-12 (SPARKS-style restyle deployed)
 
 ---
 
@@ -652,7 +652,7 @@ coopproject/
 - Not changed: `README.md` (original project spec/objectives still lists the DSS), `decision-support-mockup.html`, `docs/07-er-diagram.md` wording.
 - Verified locally: backend 44/44 tests pass, `/api/dss/*` → 404, equipment/detail/dashboard APIs 200, frontend lint/build clean.
 
-## SPARKS-style restyle (2026-10-12) — committed locally, NOT deployed yet
+## SPARKS-style restyle (2026-10-12) — deployed
 
 - User shared photos of IdsMed SPARKS (company system) and asked for "the overall look", with the old design backed up.
 - **Backup of the old design**: git tag `old-design-2026-10-12` + branch `backup/old-design` (both pushed to GitHub, = commit `743ac41`). Live Netlify deploy at that point: `6acbd480dd77be2134fc610d` — can be re-published instantly from the Netlify dashboard (Deploys → that deploy → "Publish deploy"). To restore in code: `git checkout old-design-2026-10-12 -- frontend/src`.
@@ -662,6 +662,8 @@ coopproject/
 - Verified locally with headless Chromium: 163 entries / 20 per page, Overdue funnel → 37, serial sort asc, page 2, row ⋯ menu, all 6 pages render, collapse works, no console errors. Lint/build clean.
 
 - **Dashboard Calibration Queue fills its card** (user request, same day): it was stretched to the left column's height but hard-capped at 6 rows, leaving a blank band. Now the card is `absolute inset-0` inside a `relative` column (so only the left column sets the height), and a ResizeObserver fits rows-per-page to the measured space (min 3, `PAGE_SIZE` = pre-measure fallback). Verified at 1280/1470/1920 widths: 10 rows, bottom aligned with "Upcoming Due Dates", no errors.
+
+- **Deployed 2026-10-12**: pushed `4024d9c` to GitHub, built with the Railway `VITE_API_URL`, `netlify deploy --prod` → deploy `6acbdc4c7693203192a44041`. Verified on the live site with a real login: DASHBOARD/EQUIPMENT header titles, queue shows 10 rows ("1–10 of 44"), Equipment grid "163 entries" + toolbar, no JS errors. Rollback = re-publish deploy `6acbd480dd77be2134fc610d` in Netlify (old design).
 
 ## Next up
 
