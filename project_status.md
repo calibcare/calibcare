@@ -667,6 +667,14 @@ coopproject/
 
 - **Equipment filters back to the pre-SPARKS style** (user request, after the deploy): removed the funnel icons from the column headers (headers now only sort) and restored the filter bar above the grid — search + Status/Type/Location/Next due dropdown buttons, removable filter pills + "Clear all" below it; the toolbar's "Clear filters" button and in-card pills row were dropped as duplicates. SPARKS toolbar, sort arrows, striping and paging unchanged. Verified locally: Overdue 37 → +QA Team 9 → +due≤30d 0, Clear all 163, Type=Steel Weight 77; no header funnels left; no errors. **Deployed 2026-10-12** (`6d9b9c0`, Netlify deploy `6acbdf59e7e622985654098a`); re-verified on the live site: Overdue 38 → +QA Team 9 → Clear all 163, Steel Weight 77, no errors.
 
+## Calibration frequency fixed at 1 year (2026-10-12) — committed locally, not deployed
+
+- User request: drop the Frequency input; next due date should always be calibration date + 1 year without manual entry.
+- `EquipmentDetailPage.jsx`: "Record calibration" form no longer has Frequency or an editable Next due field — Next due is shown read-only ("Next due date (auto: +1 year)") via `addOneYear()` (Feb 29 → Feb 28, same as MySQL `DATE_ADD … INTERVAL 1 YEAR`); submit sends it plus `calibration_frequency = '1 ปี'` so stored data stays uniform with the existing "1 ปี" rows. Frequency column removed from the history table (DB column kept).
+- `backend/src/routes/equipment.js` POST `/:id/calibrations`: `next_calibration_date` falls back to `DATE_ADD(calibration_date, INTERVAL 1 YEAR)` and frequency to '1 ปี' when not sent. PUT unchanged.
+- Verified locally: form shows "Pick a calibration date first" → 2027-10-12 after picking 2026-10-12; saved row = 2026-10-12 / 2027-10-12 / 1 ปี; API fallback 2027-03-15→2028-03-15, 2028-02-29→2029-02-28. Test rows (ids 172–174) deleted afterwards. Backend 44/44 tests, lint/build clean.
+- Deploying needs both a git push (Railway backend) and a Netlify deploy (frontend).
+
 ## Next up
 
 - Verify the inferred manufacturer values against physical nameplates/purchase records during the next calibration cycle — they're confident inferences, not sourced from purchase documentation.

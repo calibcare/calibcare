@@ -348,12 +348,15 @@ equipmentRouter.post('/:id/calibrations', canManage, handleCertificateUpload, as
 
     const cert = req.file;
     const [result] = await pool.query(
+      // Fixed 1-year cycle: if the caller doesn't send a next due date,
+      // derive it from the calibration date (the web form always sends the
+      // same +1 year value, computed client-side for display).
       `INSERT INTO calibration_history
         (equipment_id, responsible_person, calibration_frequency, calibration_date, next_calibration_date, notes,
          certificate_filename, certificate_mime_type, certificate_size, certificate_data)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-      [req.params.id, responsible_person || null, calibration_frequency || null, calibration_date,
-        next_calibration_date || null, notes || null,
+       VALUES (?, ?, ?, ?, COALESCE(?, DATE_ADD(?, INTERVAL 1 YEAR)), ?, ?, ?, ?, ?)`,
+      [req.params.id, responsible_person || null, calibration_frequency || '1 ปี', calibration_date,
+        next_calibration_date || null, calibration_date, notes || null,
         cert ? cert.originalname : null, cert ? cert.mimetype : null, cert ? cert.size : null, cert ? cert.buffer : null]
     );
 

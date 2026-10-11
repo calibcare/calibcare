@@ -23,11 +23,24 @@ const emptyCapForm = {
 };
 const emptyCalForm = {
   calibration_date: '',
-  next_calibration_date: '',
   responsible_person: '',
-  calibration_frequency: '',
   notes: '',
 };
+
+// Every instrument is on a fixed 1-year calibration cycle (user decision,
+// 2026-10-12), so the next due date is always derived from the calibration
+// date rather than entered by hand. Same rule as MySQL's
+// DATE_ADD(d, INTERVAL 1 YEAR), which the backend falls back to: Feb 29
+// becomes Feb 28 in a non-leap year.
+const CALIBRATION_FREQUENCY_LABEL = '1 ปี';
+function addOneYear(dateStr) {
+  if (!dateStr) return '';
+  const [y, m, d] = dateStr.split('-').map(Number);
+  const ny = y + 1;
+  const isLeap = (ny % 4 === 0 && ny % 100 !== 0) || ny % 400 === 0;
+  const day = m === 2 && d === 29 && !isLeap ? 28 : d;
+  return `${ny}-${String(m).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+}
 const MAX_CERT_BYTES = 10 * 1024 * 1024;
 
 const fieldStyle = { border: `1px solid ${theme.borderStrong}`, borderRadius: 9, padding: '10px 13px', fontSize: 14, color: theme.ink, width: '100%', boxSizing: 'border-box' };
@@ -183,6 +196,8 @@ export function EquipmentDetailPage() {
       for (const [key, value] of Object.entries(calForm)) {
         if (value) formData.append(key, value);
       }
+      formData.append('next_calibration_date', addOneYear(calForm.calibration_date));
+      formData.append('calibration_frequency', CALIBRATION_FREQUENCY_LABEL);
       if (certFile) formData.append('certificate', certFile);
 
       await client.post(`/api/equipment/${id}/calibrations`, formData);
@@ -504,7 +519,6 @@ export function EquipmentDetailPage() {
           <div className="flex items-center px-4 py-2.5" style={{ backgroundColor: '#fafbfd' }}>
             <span className="flex-[1.2] text-[11px] font-bold uppercase tracking-wide" style={{ color: theme.textFaint }}>Calibration date</span>
             <span className="flex-1 text-[11px] font-bold uppercase tracking-wide" style={{ color: theme.textFaint }}>Next due</span>
-            <span className="flex-[0.9] text-[11px] font-bold uppercase tracking-wide" style={{ color: theme.textFaint }}>Frequency</span>
             <span className="flex-[1.1] text-[11px] font-bold uppercase tracking-wide" style={{ color: theme.textFaint }}>Responsible</span>
             <span className="flex-[0.9] text-[11px] font-bold uppercase tracking-wide" style={{ color: theme.textFaint }}>Certificate</span>
             <span className="flex-[0.9] text-[11px] font-bold uppercase tracking-wide" style={{ color: theme.textFaint }}>Notes</span>
@@ -521,7 +535,6 @@ export function EquipmentDetailPage() {
             <div key={c.calibration_id} className="flex items-center px-4 py-3" style={{ borderTop: `1px solid ${theme.divider}` }}>
               <span className="flex-[1.2] text-[13.5px] font-semibold" style={{ color: theme.inkAlt }}>{c.calibration_date}</span>
               <span className="flex-1 text-[13px]" style={{ color: '#38415a' }}>{c.next_calibration_date || '—'}</span>
-              <span className="flex-[0.9] text-[13px]" style={{ color: '#38415a' }}>{c.calibration_frequency || '—'}</span>
               <span className="flex-[1.1] text-[13px]" style={{ color: '#38415a' }}>{c.responsible_person || '—'}</span>
               <div className="flex-[0.9]">
                 {c.certificate_filename ? (
@@ -574,12 +587,13 @@ export function EquipmentDetailPage() {
                     <input required type="date" value={calForm.calibration_date} onChange={(e) => setCalForm({ ...calForm, calibration_date: e.target.value })} style={smallFieldStyle} />
                   </div>
                   <div>
-                    <FieldLabel>Next due date</FieldLabel>
-                    <input type="date" value={calForm.next_calibration_date} onChange={(e) => setCalForm({ ...calForm, next_calibration_date: e.target.value })} style={smallFieldStyle} />
-                  </div>
-                  <div>
-                    <FieldLabel>Frequency</FieldLabel>
-                    <input placeholder="e.g. 1 ปี" value={calForm.calibration_frequency} onChange={(e) => setCalForm({ ...calForm, calibration_frequency: e.target.value })} style={smallFieldStyle} />
+                    <FieldLabel>Next due date (auto: +1 year)</FieldLabel>
+                    <div
+                      aria-live="polite"
+                      style={{ ...smallFieldStyle, backgroundColor: theme.chipBg, color: calForm.calibration_date ? theme.ink : theme.textFaint }}
+                    >
+                      {calForm.calibration_date ? addOneYear(calForm.calibration_date) : 'Pick a calibration date first'}
+                    </div>
                   </div>
                   <div>
                     <FieldLabel>Responsible person</FieldLabel>
