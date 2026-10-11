@@ -15,7 +15,11 @@ import {
   SendIcon,
 } from '../components/icons';
 
+// Fallback row count for the Calibration Queue before it has been
+// measured; after that, rows-per-page is fitted to the card's real height
+// (see the ResizeObserver in DashboardPage) so the card is always full.
 const PAGE_SIZE = 6;
+const QUEUE_ROW_FALLBACK_PX = 47;
 const WEEKDAY_LABELS = ['S', 'M', 'T', 'W', 'T', 'F', 'S'];
 
 function KpiCard({ label, value, Icon, iconColor, iconBg, onClick }) {
@@ -360,6 +364,26 @@ export function DashboardPage() {
   const [page, setPage] = useState(0);
   const [alertDismissed, setAlertDismissed] = useState(false);
   const queueRef = useRef(null);
+  const queueBodyRef = useRef(null);
+  const [pageSize, setPageSize] = useState(PAGE_SIZE);
+
+  // The queue card is absolutely positioned inside its column, so its height
+  // comes only from the left column (status / calendar / upcoming) and never
+  // from its own rows. Measure the space left for rows and fit as many as
+  // will fill it -- no empty band at the bottom, no internal scrollbar.
+  useEffect(() => {
+    const el = queueBodyRef.current;
+    if (!el) return undefined;
+    function fit() {
+      const headH = el.querySelector('thead')?.offsetHeight || 30;
+      const rowH = el.querySelector('tbody tr')?.offsetHeight || QUEUE_ROW_FALLBACK_PX;
+      setPageSize(Math.max(3, Math.floor((el.clientHeight - headH) / rowH)));
+    }
+    fit();
+    const ro = new ResizeObserver(fit);
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, [summary]);
 
   useEffect(() => {
     client
@@ -394,9 +418,9 @@ export function DashboardPage() {
     bucket: r.bucket === 'overdue' ? 'overdue' : 'due_soon',
   }));
   const filteredQueue = filter === 'all' ? fullQueue : fullQueue.filter((r) => r.bucket === filter);
-  const pageCount = Math.max(1, Math.ceil(filteredQueue.length / PAGE_SIZE));
+  const pageCount = Math.max(1, Math.ceil(filteredQueue.length / pageSize));
   const currentPage = Math.min(page, pageCount - 1);
-  const pageItems = filteredQueue.slice(currentPage * PAGE_SIZE, currentPage * PAGE_SIZE + PAGE_SIZE);
+  const pageItems = filteredQueue.slice(currentPage * pageSize, currentPage * pageSize + pageSize);
   const upcomingDueDates = summary.dueSoon.slice(0, 3);
 
   function handleFilterChange(e) {
@@ -527,99 +551,103 @@ export function DashboardPage() {
           </div>
         </div>
 
-        <div ref={queueRef} className="flex-1 bg-white rounded-2xl flex flex-col overflow-hidden min-w-0" style={{ border: `1px solid ${theme.border}`, boxShadow: theme.cardShadow }}>
-          <div className="flex items-center justify-between px-5 pt-5 pb-4">
-            <span className="text-[15.5px] font-bold" style={{ color: theme.ink }}>
-              Calibration Queue
-            </span>
-            <div className="relative">
-              <select
-                value={filter}
-                onChange={handleFilterChange}
-                className="appearance-none rounded-md pl-3 pr-8 py-[7px] text-[12.5px] font-semibold"
-                style={{ backgroundColor: theme.chipBg, border: `1px solid ${theme.borderStrong}`, color: '#38415a' }}
-              >
-                <option value="all">All statuses</option>
-                <option value="overdue">Overdue</option>
-                <option value="due_soon">Due Soon</option>
-              </select>
-              <span className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none">
-                <ChevronDownIcon color="#38415a" />
+        {/* Outer box takes the row's height (set by the left column); the card
+            inside is absolute so its rows can't stretch the row taller. */}
+        <div ref={queueRef} className="flex-1 min-w-0 relative" style={{ minHeight: 420 }}>
+          <div className="absolute inset-0 bg-white rounded-2xl flex flex-col overflow-hidden" style={{ border: `1px solid ${theme.border}`, boxShadow: theme.cardShadow }}>
+            <div className="flex items-center justify-between px-5 pt-5 pb-4">
+              <span className="text-[15.5px] font-bold" style={{ color: theme.ink }}>
+                Calibration Queue
               </span>
+              <div className="relative">
+                <select
+                  value={filter}
+                  onChange={handleFilterChange}
+                  className="appearance-none rounded-md pl-3 pr-8 py-[7px] text-[12.5px] font-semibold"
+                  style={{ backgroundColor: theme.chipBg, border: `1px solid ${theme.borderStrong}`, color: '#38415a' }}
+                >
+                  <option value="all">All statuses</option>
+                  <option value="overdue">Overdue</option>
+                  <option value="due_soon">Due Soon</option>
+                </select>
+                <span className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none">
+                  <ChevronDownIcon color="#38415a" />
+                </span>
+              </div>
             </div>
-          </div>
 
-          <div className="flex-1 overflow-auto px-5">
-            <table className="w-full border-collapse">
-              <thead>
-                <tr>
-                  {['Equipment', 'Model', 'Serial Number', 'Next Due', 'Status'].map((h) => (
-                    <th
-                      key={h}
-                      className="text-left text-[10.5px] font-bold uppercase tracking-wide pb-2.5"
-                      style={{ color: theme.textFaint, borderBottom: `1px solid ${theme.border}` }}
-                    >
-                      {h}
-                    </th>
-                  ))}
-                </tr>
-              </thead>
-              <tbody>
-                {pageItems.map((r, i) => (
-                  <tr key={`${r.equipment_id}-${r.bucket}`}>
-                    <td className="py-[13px] text-[13px] font-semibold" style={{ color: theme.inkAlt, borderBottom: i < pageItems.length - 1 ? `1px solid ${theme.divider}` : 'none' }}>
-                      <Link to={`/equipment/${r.equipment_id}`} className="hover:underline">
-                        {r.name}
-                      </Link>
-                    </td>
-                    <td className="py-[13px] text-[13px]" style={{ color: theme.textMuted, borderBottom: i < pageItems.length - 1 ? `1px solid ${theme.divider}` : 'none' }}>
-                      {r.model || '—'}
-                    </td>
-                    <td className="py-[13px] text-[13px]" style={{ color: theme.textMuted, borderBottom: i < pageItems.length - 1 ? `1px solid ${theme.divider}` : 'none' }}>
-                      {r.serial_number}
-                    </td>
-                    <td className="py-[13px] text-[13px]" style={{ color: theme.textMuted, borderBottom: i < pageItems.length - 1 ? `1px solid ${theme.divider}` : 'none' }}>
-                      {String(r.next_calibration_date).slice(0, 10)}
-                    </td>
-                    <td className="py-[13px]" style={{ borderBottom: i < pageItems.length - 1 ? `1px solid ${theme.divider}` : 'none' }}>
-                      <StatusBadge bucket={r.bucket} />
-                    </td>
-                  </tr>
-                ))}
-                {pageItems.length === 0 && (
+            <div ref={queueBodyRef} className="flex-1 min-h-0 overflow-hidden px-5">
+              <table className="w-full border-collapse">
+                <thead>
                   <tr>
-                    <td colSpan={5} className="text-center py-8 text-sm" style={{ color: theme.textFaint }}>
-                      Nothing due right now
-                    </td>
+                    {['Equipment', 'Model', 'Serial Number', 'Next Due', 'Status'].map((h) => (
+                      <th
+                        key={h}
+                        className="text-left text-[10.5px] font-bold uppercase tracking-wide pb-2.5"
+                        style={{ color: theme.textFaint, borderBottom: `1px solid ${theme.border}` }}
+                      >
+                        {h}
+                      </th>
+                    ))}
                   </tr>
-                )}
-              </tbody>
-            </table>
-          </div>
+                </thead>
+                <tbody>
+                  {pageItems.map((r, i) => (
+                    <tr key={`${r.equipment_id}-${r.bucket}`}>
+                      <td className="py-[13px] text-[13px] font-semibold" style={{ color: theme.inkAlt, borderBottom: i < pageItems.length - 1 ? `1px solid ${theme.divider}` : 'none' }}>
+                        <Link to={`/equipment/${r.equipment_id}`} className="hover:underline">
+                          {r.name}
+                        </Link>
+                      </td>
+                      <td className="py-[13px] text-[13px]" style={{ color: theme.textMuted, borderBottom: i < pageItems.length - 1 ? `1px solid ${theme.divider}` : 'none' }}>
+                        {r.model || '—'}
+                      </td>
+                      <td className="py-[13px] text-[13px]" style={{ color: theme.textMuted, borderBottom: i < pageItems.length - 1 ? `1px solid ${theme.divider}` : 'none' }}>
+                        {r.serial_number}
+                      </td>
+                      <td className="py-[13px] text-[13px]" style={{ color: theme.textMuted, borderBottom: i < pageItems.length - 1 ? `1px solid ${theme.divider}` : 'none' }}>
+                        {String(r.next_calibration_date).slice(0, 10)}
+                      </td>
+                      <td className="py-[13px]" style={{ borderBottom: i < pageItems.length - 1 ? `1px solid ${theme.divider}` : 'none' }}>
+                        <StatusBadge bucket={r.bucket} />
+                      </td>
+                    </tr>
+                  ))}
+                  {pageItems.length === 0 && (
+                    <tr>
+                      <td colSpan={5} className="text-center py-8 text-sm" style={{ color: theme.textFaint }}>
+                        Nothing due right now
+                      </td>
+                    </tr>
+                  )}
+                </tbody>
+              </table>
+            </div>
 
-          <div className="flex items-center justify-between px-5 py-3.5" style={{ borderTop: `1px solid ${theme.divider}` }}>
-            <span className="text-[12.5px]" style={{ color: theme.textFaint }}>
-              {filteredQueue.length === 0
-                ? 'Showing 0 of 0 items'
-                : `Showing ${currentPage * PAGE_SIZE + 1}–${Math.min(filteredQueue.length, currentPage * PAGE_SIZE + PAGE_SIZE)} of ${filteredQueue.length} items`}
-            </span>
-            <div className="flex gap-2">
-              <button
-                onClick={() => setPage((p) => Math.max(0, p - 1))}
-                disabled={currentPage === 0}
-                className="text-[12.5px] font-semibold rounded-lg px-[15px] py-[7px] disabled:opacity-60"
-                style={{ border: `1px solid ${theme.border}`, color: currentPage === 0 ? '#c2c8d6' : '#38415a' }}
-              >
-                Previous
-              </button>
-              <button
-                onClick={() => setPage((p) => Math.min(pageCount - 1, p + 1))}
-                disabled={currentPage >= pageCount - 1}
-                className="text-[12.5px] font-semibold rounded-lg px-[15px] py-[7px] disabled:opacity-40"
-                style={{ border: `1px solid #d6ddf2`, color: theme.brand }}
-              >
-                Next
-              </button>
+            <div className="flex items-center justify-between px-5 py-3.5" style={{ borderTop: `1px solid ${theme.divider}` }}>
+              <span className="text-[12.5px]" style={{ color: theme.textFaint }}>
+                {filteredQueue.length === 0
+                  ? 'Showing 0 of 0 items'
+                  : `Showing ${currentPage * pageSize + 1}–${Math.min(filteredQueue.length, currentPage * pageSize + pageSize)} of ${filteredQueue.length} items`}
+              </span>
+              <div className="flex gap-2">
+                <button
+                  onClick={() => setPage((p) => Math.max(0, p - 1))}
+                  disabled={currentPage === 0}
+                  className="text-[12.5px] font-semibold rounded-lg px-[15px] py-[7px] disabled:opacity-60"
+                  style={{ border: `1px solid ${theme.border}`, color: currentPage === 0 ? '#c2c8d6' : '#38415a' }}
+                >
+                  Previous
+                </button>
+                <button
+                  onClick={() => setPage((p) => Math.min(pageCount - 1, p + 1))}
+                  disabled={currentPage >= pageCount - 1}
+                  className="text-[12.5px] font-semibold rounded-lg px-[15px] py-[7px] disabled:opacity-40"
+                  style={{ border: `1px solid #d6ddf2`, color: theme.brand }}
+                >
+                  Next
+                </button>
+              </div>
             </div>
           </div>
         </div>

@@ -661,6 +661,8 @@ coopproject/
 - **Equipment page as SPARKS grid**: "Selected N devices" line, grey toolbar (view menu labelled with active saved view / "All Equipment Listing", + Equipment, Send for calibration [disabled until selection], Export [selection or all filtered], Group by type, Clear filters), column headers with ⇅ sort (asc→desc→off) + funnel filters (Name→Type, Location, Next due, Status), striped rows, "Show [10/20/50/100] per page of N entries" + numbered paging (select-all = current page). Filter/⋯ menus now `position: fixed` (anchored via getBoundingClientRect, close on outside scroll) so the table's scroll container can't clip them.
 - Verified locally with headless Chromium: 163 entries / 20 per page, Overdue funnel → 37, serial sort asc, page 2, row ⋯ menu, all 6 pages render, collapse works, no console errors. Lint/build clean.
 
+- **Dashboard Calibration Queue fills its card** (user request, same day): it was stretched to the left column's height but hard-capped at 6 rows, leaving a blank band. Now the card is `absolute inset-0` inside a `relative` column (so only the left column sets the height), and a ResizeObserver fits rows-per-page to the measured space (min 3, `PAGE_SIZE` = pre-measure fallback). Verified at 1280/1470/1920 widths: 10 rows, bottom aligned with "Upcoming Due Dates", no errors.
+
 ## Next up
 
 - Verify the inferred manufacturer values against physical nameplates/purchase records during the next calibration cycle — they're confident inferences, not sourced from purchase documentation.
