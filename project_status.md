@@ -3,7 +3,7 @@
 > Living log of what's been built. Updated after every completed unit of work.
 > Read this first when resuming a session on this project.
 
-Last updated: 2026-10-01 (Equipment list page rebuilt from calibcare-equipment.html mockup)
+Last updated: 2026-10-12 (Inter switched to opsz + italic variants)
 
 ---
 
@@ -639,6 +639,11 @@ coopproject/
 - **Pre-existing bug found + fixed during the deploy**: the live site had no SPA fallback rule, so loading/refreshing any deep link (`/dashboard`, `/equipment/27`, …) returned Netlify's 404. Added `frontend/public/_redirects` (`/*  /index.html  200`); verified all routes now return 200 and JS assets still serve as `application/javascript`.
 - Netlify CLI is now logged in on this Mac via `netlify login` (browser OAuth, not a Personal Access Token) — `netlify logout` if you don't want it to stay signed in.
 - Phone-width layout is cramped because the shared `Layout.jsx` sidebar isn't responsive (pre-existing, all pages).
+
+## Inter switched to optical-size + italic variants (2026-10-12)
+
+- User pasted Google Fonts' Inter embed (`ital,opsz,wght@0,14..32,100..900;1,14..32,100..900`). Site already used Inter, but only the weight axis, no italics. Rather than re-adding Google's `<link>` tags (ad-blocker problem, see the 2026-09-25 entry), switched `main.jsx` to import `@fontsource-variable/inter/opsz.css` + `opsz-italic.css` — same font as that embed, still self-hosted. Family name unchanged (`Inter Variable`), so `index.css` untouched; `font-optical-sizing: auto` was already set.
+- Committed `deba706`, pushed, deployed to Netlify. Verified live: deployed CSS references the opsz normal/italic files, font file serves 200, zero Google font references.
 
 ## Next up
 
