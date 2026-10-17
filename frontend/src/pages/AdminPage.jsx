@@ -123,7 +123,11 @@ export function AdminPage() {
     setError('');
     try {
       const { data, headers } = await client.get('/api/admin/backup.xlsx', { responseType: 'blob' });
-      const name = /filename="([^"]+)"/.exec(headers['content-disposition'] || '')?.[1] || 'calibcare-backup.xlsx';
+      // The API is on another origin, so the browser hides Content-Disposition
+      // unless it's exposed -- fall back to the same dated name client-side.
+      const d = new Date();
+      const today = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+      const name = /filename="([^"]+)"/.exec(headers['content-disposition'] || '')?.[1] || `calibcare-backup-${today}.xlsx`;
       const url = URL.createObjectURL(data);
       const a = document.createElement('a');
       a.href = url;
