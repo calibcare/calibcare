@@ -1,0 +1,15 @@
+.env*
+**/.env*
+**/node_modules
+frontend/dist
+.netlify
+frontend/.netlify
+backend
+database
+report
+google form
+*.docx
+*.xlsx
+*.pdf
+*.jpg
+*.png
