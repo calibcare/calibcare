@@ -1,6 +1,6 @@
 import axios from 'axios';
 
-// In production (Netlify), VITE_API_URL points at the deployed backend
+// In production (Vercel), VITE_API_URL points at the deployed backend
 // (e.g. the Railway URL). Left unset for local dev, requests fall back to
 // relative paths ('') and go through the Vite dev server's own proxy
 // (see vite.config.js) instead -- no separate env var needed locally.

@@ -14,8 +14,8 @@ import { requireAuth } from './middleware/auth.js';
 const app = express();
 // Restrict cross-origin requests to the deployed frontend's own origin(s) --
 // process.env.FRONTEND_URL is required in production. It may hold several
-// comma-separated origins (e.g. the Vercel site plus the old Netlify one
-// while the team switches over); left unset, cors() falls back to allowing
+// comma-separated origins (e.g. the Vercel site plus a second origin
+// during a hosting switch); left unset, cors() falls back to allowing
 // any origin, which is fine for local dev but must be set once deployed.
 const allowedOrigins = (process.env.FRONTEND_URL || '')
   .split(',')

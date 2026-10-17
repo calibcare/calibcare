@@ -1,11 +1,12 @@
-# Deploying CalibCare (Railway + Netlify)
+# Deploying CalibCare (Railway + Vercel)
 
 This checklist covers moving off local-dev-only (ngrok + Vite proxy) to a
-permanent deployment: backend + MySQL on Railway, frontend on Netlify, on
-separate permanent domains.
+permanent deployment: backend + MySQL on Railway, frontend on Vercel, on
+separate permanent domains. (The frontend was on Netlify until 2026-10-17;
+that site has been deleted.)
 
 Account creation and the actual deploy/click-through steps in Railway's and
-Netlify's dashboards need to be done by you directly (they require your own
+Vercel's dashboards need to be done by you directly (they require your own
 identity/billing) — this doc is the reference for exactly what to enter.
 
 ---
@@ -47,7 +48,7 @@ assume that as the working directory — `npm start` runs `node src/server.js`).
 | `DB_NAME` | from the MySQL plugin's `MYSQLDATABASE` |
 | `JWT_SECRET` | a long random string (generate a new one for production — don't reuse the local dev value) |
 | `JWT_EXPIRES_IN` | e.g. `30d` |
-| `FRONTEND_URL` | the Netlify site's URL, e.g. `https://calibcare.netlify.app` (set this *after* the Netlify site exists — see below) |
+| `FRONTEND_URL` | the Vercel site's URL, `https://calibcare.vercel.app` (comma-separate several origins if needed; set this *after* the Vercel site exists — see below) |
 | `LINE_CHANNEL_ACCESS_TOKEN` | from the LINE Developers Console |
 | `LINE_CHANNEL_SECRET` | from the LINE Developers Console |
 | `LINE_OA_BASIC_ID` | e.g. `@456cagya` (optional — powers the "add as friend" link) |
@@ -81,24 +82,27 @@ https://<your-backend>.up.railway.app/api/line/webhook
 
 ---
 
-## 2. Netlify — frontend
+## 2. Vercel — frontend
 
-### 2a. Site settings
-- **Base directory**: `frontend`
-- **Build command**: `npm run build`
-- **Publish directory**: `frontend/dist` (or just `dist` if the base
-  directory is already set to `frontend`)
+### 2a. Project settings (project `calibcare`)
+- **Root Directory**: `frontend`
+- **Framework**: Vite — build `npm run build`, output `dist` (also pinned in
+  `frontend/vercel.json`, which rewrites every path to `index.html` so deep
+  links and refreshes work)
+- Deploy manually with `vercel deploy --prod` **from the repo root** (the
+  `.vercel/` link lives there), or automatically on `git push` once the
+  Vercel GitHub app has access to the repo and `vercel git connect` has run.
 
-### 2b. Environment variable to set on the Netlify site
+### 2b. Environment variable to set on the Vercel project (Production)
 | Variable | Value |
 |---|---|
 | `VITE_API_URL` | the Railway backend's URL, e.g. `https://calibcare-backend.up.railway.app` |
 
 Reference: `frontend/.env.example`.
 
-### 2c. After the Netlify site is live
+### 2c. After the Vercel site is live
 Go back to Railway and set the backend's `FRONTEND_URL` variable to this
-Netlify URL (step 1c above) — until that's set, CORS defaults to allowing
+Vercel URL (step 1c above) — until that's set, CORS defaults to allowing
 any origin, which works but isn't the intended locked-down production
 config.
 
@@ -107,11 +111,11 @@ config.
 ## 3. Post-deploy verification checklist
 
 - [ ] `GET https://<backend>/health` returns `{"status":"ok"}`
-- [ ] The Netlify site loads and shows the CalibCare login page
+- [ ] The Vercel site loads and shows the CalibCare login page
 - [ ] Register a new account → succeeds, returns a token
 - [ ] Log in with that account → succeeds, lands on the dashboard
-- [ ] Dashboard, Equipment, Decision Support pages all load real data (confirms `VITE_API_URL` → Railway → MySQL is wired correctly end-to-end)
-- [ ] A request from a browser on a *different* origin than the Netlify URL is blocked by CORS (confirms `FRONTEND_URL` is actually restricting access, not just present)
+- [ ] Dashboard, Equipment, Reminders pages all load real data (confirms `VITE_API_URL` → Railway → MySQL is wired correctly end-to-end)
+- [ ] A request from a browser on a *different* origin than the Vercel URL is blocked by CORS (confirms `FRONTEND_URL` is actually restricting access, not just present)
 - [ ] Manually trigger the Cron Job service once from the Railway dashboard ("Run now" / redeploy) and confirm its logs show `[checkNotifications] evaluated N item(s)` with no fatal error
 - [ ] If any equipment is genuinely due/overdue at deploy time, confirm a real LINE message arrives for a linked account
 
