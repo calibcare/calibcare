@@ -3,7 +3,7 @@
 > Living log of what's been built. Updated after every completed unit of work.
 > Read this first when resuming a session on this project.
 
-Last updated: 2026-10-17 (frontend moved to Vercel)
+Last updated: 2026-10-17 (Admin page: account help + database backup — local only)
 
 ---
 
@@ -686,6 +686,15 @@ coopproject/
 - **Pending**: (1) automatic deploys on `git push` — `vercel git connect` failed because the Vercel GitHub app has no access to `calibcare/calibcare`; user must install it (github.com/apps/vercel → calibcare account → this repo), then rerun `vercel git connect`. (2) Report doc/README links still say netlify.app.
 - **Netlify retired (same day, user request "only Vercel")**: Railway `FRONTEND_URL` set to `https://calibcare.vercel.app` only (verified: Netlify origin now blocked, Vercel allowed); after the user chose "delete completely" over a redirect, the Netlify site `calibcare` (id `21d830b4-…`) was **permanently deleted** — calibcare.netlify.app returns 404, its deploy history (incl. the pre-SPARKS deploy) is gone; the old design survives only as git tag `old-design-2026-10-12`. Removed `frontend/public/_redirects` + local `.netlify/`, updated DEPLOY.md and code comments to Vercel, `netlify logout`.
 - CLIs now logged in on this Mac: `vercel` (calibcare), `railway` (calibcare@gmail.com, linked to fortunate-patience/calibcare from `backend/`). Netlify logged out.
+
+## Admin page — account help + database backup (2026-10-17) — committed locally, NOT deployed
+
+- User wanted a place to help people who forget their password and to keep a copy of all data "in case of risk". Explained passwords are bcrypt-hashed, so nobody can see them; chose: **help locked-out users** + **download backup**, access = **Deputy Manager + Senior Specialist** (`canEdit`).
+- **Safety rule** `canManageAccount(actor, target)` in `positions.js`: Deputy Manager manages anyone; otherwise only strictly more junior positions (Senior Specialist can't reset a Deputy Manager or another Senior Specialist); nobody manages their own account here. 3 new tests (47 total).
+- **DB**: `database/add_must_change_password.sql` adds `users.must_change_password` (also in `schema.sql`). Applied locally (backup taken first). **Must be applied to Railway MySQL BEFORE the backend deploy** — the updated `/reset-password` and new `/change-password` write this column.
+- **Backend**: new `routes/admin.js` at `/api/admin` (requireAuth + requireCapability('canEdit')): `GET /users` (verified, LINE linked, must-change, `can_manage`), `POST /users/:id/temporary-password` (10-char readable random, hashed, sets must_change_password=1 + email_verified=1, returned once, logged to console), `POST /users/:id/resend-verification` (unverified only), `GET /backup.xlsx` (exceljs; About + 7 sheets; no password hashes, LINE ids → yes/no, no certificate blobs). `POST /api/auth/change-password` (current + new ≥8 chars, clears flag); `toPublicUser` now includes `must_change_password`; emailed reset also clears it.
+- **Frontend**: `AdminPage.jsx` (`/admin`, ADMIN nav item + header title, redirects non-editors), `ChangePasswordPage.jsx` (`/change-password`; forced by `ProtectedRoute` when `must_change_password`, also linked from Profile/Settings), `ShieldIcon`/`KeyIcon`, `AuthContext.changePassword`.
+- Verified locally: API (a separate test server with email off) — 16 cases incl. 403s for junior/rank/self, temp password replaces old, forced change, wrong/short password errors, backup counts match DB (163/403/167/12) and contain no hash/LINE id. Browser — DM + Senior see ADMIN, junior doesn't (and /admin redirects), temp-password dialog, forced change → dashboard, Senior sees "Senior account" on the DM row. Test accounts zz.*@test.local deleted afterwards.
 
 ## Next up
 

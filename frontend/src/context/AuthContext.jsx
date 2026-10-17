@@ -63,6 +63,15 @@ export function AuthProvider({ children }) {
     return persist(data);
   }, []);
 
+  // Used after the Admin page issues a temporary password (the user is
+  // forced here by ProtectedRoute) and from Settings. Keeps the same token.
+  const changePassword = useCallback(async (currentPassword, newPassword) => {
+    const { data } = await client.post('/api/auth/change-password', { currentPassword, newPassword });
+    localStorage.setItem('mcems_user', JSON.stringify(data.user));
+    setUser(data.user);
+    return data.user;
+  }, []);
+
   const logout = useCallback(() => {
     localStorage.removeItem('mcems_token');
     localStorage.removeItem('mcems_user');
@@ -70,7 +79,7 @@ export function AuthProvider({ children }) {
   }, []);
 
   return (
-    <AuthContext.Provider value={{ user, login, register, verifyEmail, resendOtp, forgotPassword, resetPassword, logout }}>
+    <AuthContext.Provider value={{ user, login, register, verifyEmail, resendOtp, forgotPassword, resetPassword, changePassword, logout }}>
       {children}
     </AuthContext.Provider>
   );

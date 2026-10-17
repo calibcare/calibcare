@@ -1,3 +1,4 @@
+import { Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 
 const INK = '#0F172A';
@@ -32,6 +33,15 @@ export function SettingsPage() {
         <Row label="Position" value={user?.position_label} />
         <Row label="Access level" value={user?.position_rank ? `${user.position_rank} of 5` : '—'} />
         <Row label="Can edit records" value={user?.can_edit ? 'Yes' : 'No — view only'} />
+        <div className="pt-4">
+          <Link
+            to="/change-password"
+            className="inline-block rounded-md px-4 py-2 text-[13px] font-semibold text-white"
+            style={{ backgroundColor: '#182448' }}
+          >
+            Change password
+          </Link>
+        </div>
       </div>
     </div>
   );

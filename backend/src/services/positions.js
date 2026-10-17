@@ -29,3 +29,18 @@ export function hasCapability(key, capability) {
   const position = getPosition(key);
   return Boolean(position && position[capability]);
 }
+
+/**
+ * Whether `actorKey` may manage `targetKey`'s account from the Admin page
+ * (issue a temporary password, resend verification). Deputy Manager can
+ * help anyone; otherwise only strictly more junior positions -- so a Senior
+ * Specialist can't take over a Deputy Manager's account by resetting it.
+ * Requires canEdit, the same capability that opens the Admin page.
+ */
+export function canManageAccount(actorKey, targetKey) {
+  const actor = getPosition(actorKey);
+  const target = getPosition(targetKey);
+  if (!actor || !target || !actor.canEdit) return false;
+  if (actor.key === 'deputy_manager') return true;
+  return actor.rank < target.rank;
+}

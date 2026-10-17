@@ -4,6 +4,7 @@ import { hashPassword, verifyPassword, signToken } from '../services/authService
 import { createOtp, verifyOtp } from '../services/otpStore.js';
 import { sendOtpEmail } from '../services/emailService.js';
 import { getPosition, DEFAULT_POSITION_KEY } from '../services/positions.js';
+import { requireAuth } from '../middleware/auth.js';
 
 export const authRouter = Router();
 
@@ -21,8 +22,11 @@ export function toPublicUser(row) {
     can_edit: Boolean(position?.canEdit),
     can_run_reminders: Boolean(position?.canRunReminders),
     line_user_id: row.line_user_id,
+    must_change_password: Boolean(row.must_change_password),
   };
 }
+
+export const MIN_PASSWORD_LENGTH = 8;
 
 // Only new registrations are domain-restricted -- accounts that already
 // existed before this feature are grandfathered in (see
@@ -151,7 +155,7 @@ authRouter.post('/reset-password', async (req, res, next) => {
     }
 
     const password_hash = await hashPassword(newPassword);
-    await pool.query('UPDATE users SET password_hash = ? WHERE email = ?', [password_hash, email]);
+    await pool.query('UPDATE users SET password_hash = ?, must_change_password = 0 WHERE email = ?', [password_hash, email]);
 
     const [rows] = await pool.query('SELECT * FROM users WHERE email = ?', [email]);
     if (rows.length === 0) {
@@ -186,6 +190,41 @@ authRouter.post('/login', async (req, res, next) => {
     }
 
     res.json({ token: signToken(rows[0]), user: toPublicUser(rows[0]) });
+  } catch (err) {
+    next(err);
+  }
+});
+
+// POST /api/auth/change-password -- the logged-in user picks a new password.
+// Required after an admin issues a temporary one (must_change_password), and
+// available any time from Settings. Needs the current password, so a stolen
+// session alone can't lock the owner out.
+authRouter.post('/change-password', requireAuth, async (req, res, next) => {
+  try {
+    const { currentPassword, newPassword } = req.body;
+    if (!currentPassword || !newPassword) {
+      return res.status(400).json({ error: 'currentPassword and newPassword are required' });
+    }
+    if (String(newPassword).length < MIN_PASSWORD_LENGTH) {
+      return res.status(400).json({ error: `new password must be at least ${MIN_PASSWORD_LENGTH} characters` });
+    }
+    if (newPassword === currentPassword) {
+      return res.status(400).json({ error: 'new password must be different from the current one' });
+    }
+
+    const [rows] = await pool.query('SELECT * FROM users WHERE user_id = ?', [req.user.user_id]);
+    if (rows.length === 0) {
+      return res.status(404).json({ error: 'user not found' });
+    }
+    const ok = await verifyPassword(currentPassword, rows[0].password_hash);
+    if (!ok) {
+      return res.status(401).json({ error: 'current password is incorrect' });
+    }
+
+    const password_hash = await hashPassword(newPassword);
+    await pool.query('UPDATE users SET password_hash = ?, must_change_password = 0 WHERE user_id = ?', [password_hash, req.user.user_id]);
+    const [updated] = await pool.query('SELECT * FROM users WHERE user_id = ?', [req.user.user_id]);
+    res.json({ user: toPublicUser(updated[0]) });
   } catch (err) {
     next(err);
   }

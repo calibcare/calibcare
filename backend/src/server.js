@@ -9,7 +9,8 @@ import { calendarNotesRouter } from './routes/calendarNotes.js';
 import { usersRouter } from './routes/users.js';
 import { lineWebhookRouter } from './routes/lineWebhook.js';
 import { lineRouter } from './routes/line.js';
-import { requireAuth } from './middleware/auth.js';
+import { adminRouter } from './routes/admin.js';
+import { requireAuth, requireCapability } from './middleware/auth.js';
 
 const app = express();
 // Restrict cross-origin requests to the deployed frontend's own origin(s) --
@@ -42,6 +43,7 @@ app.use('/api/equipment', requireAuth, equipmentRouter);
 app.use('/api/dashboard', requireAuth, dashboardRouter);
 app.use('/api/calendar-notes', requireAuth, calendarNotesRouter);
 app.use('/api/users', requireAuth, usersRouter);
+app.use('/api/admin', requireAuth, requireCapability('canEdit'), adminRouter);
 app.use('/api/line', requireAuth, lineRouter);
 
 app.use((err, req, res, next) => {

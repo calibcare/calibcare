@@ -192,6 +192,24 @@ export function UsersIcon({ color = 'currentColor', size = 18 }) {
   );
 }
 
+export function ShieldIcon({ color = 'currentColor', size = 18 }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+      <path d="M12 3.5 19 6v5.5c0 4.4-3 7.8-7 9-4-1.2-7-4.6-7-9V6Z" stroke={color} strokeWidth="1.8" strokeLinejoin="round" fill="none" />
+      <path d="m9 12 2.2 2.2L15.5 10" stroke={color} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" fill="none" />
+    </svg>
+  );
+}
+
+export function KeyIcon({ color = 'currentColor', size = 18 }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+      <circle cx="8" cy="15" r="4" stroke={color} strokeWidth="1.8" fill="none" />
+      <path d="m11 12 8-8M16 7l3 3M14 9l2 2" stroke={color} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" fill="none" />
+    </svg>
+  );
+}
+
 export function PlusIcon({ color = 'currentColor', size = 14 }) {
   return (
     <svg width={size} height={size} viewBox="0 0 24 24" fill="none">

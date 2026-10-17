@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { POSITIONS, DEFAULT_POSITION_KEY, getPosition, hasCapability } from '../src/services/positions.js';
+import { POSITIONS, DEFAULT_POSITION_KEY, getPosition, hasCapability, canManageAccount } from '../src/services/positions.js';
 
 test('positions are ranked 1..5 with no gaps or ties, most senior first', () => {
   assert.equal(POSITIONS.length, 5);
@@ -41,4 +41,22 @@ test('an unknown position grants nothing rather than throwing', () => {
   assert.equal(getPosition('admin'), null);
   assert.equal(hasCapability('admin', 'canEdit'), false);
   assert.equal(hasCapability(undefined, 'canEdit'), false);
+});
+
+test('canManageAccount: Deputy Manager can help anyone, including another Deputy Manager', () => {
+  for (const p of POSITIONS) assert.equal(canManageAccount('deputy_manager', p.key), true, p.key);
+});
+
+test('canManageAccount: Senior Specialist only manages strictly junior positions', () => {
+  assert.equal(canManageAccount('senior_specialist', 'deputy_manager'), false);
+  assert.equal(canManageAccount('senior_specialist', 'senior_specialist'), false);
+  assert.equal(canManageAccount('senior_specialist', 'specialist_1_pm'), true);
+  assert.equal(canManageAccount('senior_specialist', 'specialist_2'), true);
+});
+
+test('canManageAccount: positions without canEdit manage nobody', () => {
+  for (const actor of ['specialist_1_pm', 'specialist_1', 'specialist_2']) {
+    for (const p of POSITIONS) assert.equal(canManageAccount(actor, p.key), false, `${actor} -> ${p.key}`);
+  }
+  assert.equal(canManageAccount('nonsense', 'specialist_2'), false);
 });

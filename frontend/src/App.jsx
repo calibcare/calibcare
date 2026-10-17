@@ -13,6 +13,8 @@ import { EquipmentDetailPage } from './pages/EquipmentDetailPage';
 import { AccessLevelsPage } from './pages/AccessLevelsPage';
 import { RemindersPage } from './pages/RemindersPage';
 import { SettingsPage } from './pages/SettingsPage';
+import { AdminPage } from './pages/AdminPage';
+import { ChangePasswordPage } from './pages/ChangePasswordPage';
 
 export default function App() {
   return (
@@ -32,6 +34,8 @@ export default function App() {
             <Route path="/reminders" element={<RemindersPage />} />
             <Route path="/access-levels" element={<AccessLevelsPage />} />
             <Route path="/settings" element={<SettingsPage />} />
+            <Route path="/admin" element={<AdminPage />} />
+            <Route path="/change-password" element={<ChangePasswordPage />} />
           </Route>
         </Route>
       </Routes>

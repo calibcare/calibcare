@@ -43,6 +43,7 @@ CREATE TABLE users (
                                    NOT NULL DEFAULT 'specialist_2' COMMENT 'engineering position; doubles as the access level -- see backend/src/services/positions.js',
     line_user_id   VARCHAR(64)     NULL COMMENT 'LINE Messaging API user id, for targeted reminders',
     email_verified TINYINT(1)      NOT NULL DEFAULT 0 COMMENT 'set true once the registration email-OTP is confirmed; login is blocked until then',
+    must_change_password TINYINT(1) NOT NULL DEFAULT 0 COMMENT 'set when an admin issues a temporary password; cleared when the user chooses a new one',
     created_at     TIMESTAMP       NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at     TIMESTAMP       NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     UNIQUE KEY uq_users_email (email)

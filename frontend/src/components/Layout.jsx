@@ -2,7 +2,7 @@ import { useState, useRef, useEffect } from 'react';
 import { NavLink, Outlet, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { theme } from '../theme';
-import { HomeIcon, PackageIcon, BellIcon, SettingsIcon, LogOutIcon, SearchIcon, UsersIcon, ChevronDownIcon } from './icons';
+import { HomeIcon, PackageIcon, BellIcon, SettingsIcon, LogOutIcon, SearchIcon, UsersIcon, ChevronDownIcon, ShieldIcon, KeyIcon } from './icons';
 
 // SPARKS-style shell (2026-10-12): a solid blue sidebar with upper-case
 // labels that collapses to icons via the ☰ button, and a white header row
@@ -20,6 +20,8 @@ const BASE_NAV_ITEMS = [
 // Dashboard/Equipment.
 const REMINDERS_NAV_ITEM = { to: '/reminders', label: 'Reminders', Icon: BellIcon };
 const TEAM_NAV_ITEM = { to: '/access-levels', label: 'Team', Icon: UsersIcon };
+// Admin (account help + database backup) is for both editing positions.
+const ADMIN_NAV_ITEM = { to: '/admin', label: 'Admin', Icon: ShieldIcon };
 
 // Header title per route -- the pages themselves no longer draw their own
 // big title, the header does it once, like SPARKS.
@@ -30,6 +32,8 @@ const PAGE_TITLES = [
   { match: /^\/reminders/, title: 'Reminders', Icon: BellIcon },
   { match: /^\/access-levels/, title: 'Team', Icon: UsersIcon },
   { match: /^\/settings/, title: 'Profile', Icon: SettingsIcon },
+  { match: /^\/admin/, title: 'Admin', Icon: ShieldIcon },
+  { match: /^\/change-password/, title: 'Change Password', Icon: KeyIcon },
 ];
 
 const COLLAPSE_KEY = 'calibcare_sidebar_collapsed';
@@ -65,7 +69,11 @@ function LogoMark() {
 
 function Sidebar({ collapsed }) {
   const { user } = useAuth();
-  const navItems = user?.can_run_reminders ? [...BASE_NAV_ITEMS, REMINDERS_NAV_ITEM, TEAM_NAV_ITEM] : BASE_NAV_ITEMS;
+  const navItems = [
+    ...BASE_NAV_ITEMS,
+    ...(user?.can_run_reminders ? [REMINDERS_NAV_ITEM, TEAM_NAV_ITEM] : []),
+    ...(user?.can_edit ? [ADMIN_NAV_ITEM] : []),
+  ];
 
   return (
     <aside
