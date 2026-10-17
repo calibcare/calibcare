@@ -3,7 +3,7 @@
 > Living log of what's been built. Updated after every completed unit of work.
 > Read this first when resuming a session on this project.
 
-Last updated: 2026-10-12 (SPARKS-style restyle deployed)
+Last updated: 2026-10-17 (frontend moved to Vercel)
 
 ---
 
@@ -676,6 +676,15 @@ coopproject/
 - **Deployed 2026-10-12**: pushed `143b2d7` (Railway auto-redeploys backend), Netlify deploy `6acbe3bedd77be9a07fc654b`. Verified on the live site without saving anything: no Frequency column/field, picking 2026-10-12 shows next due 2027-10-12, backend responding 200, no JS errors. The server-side DATE_ADD fallback wasn't exercised in production (would need writing a real record); the web form always sends the date itself, so it doesn't depend on that fallback.
 
 - **Form submit buttons say "Save"** (user request, 2026-10-12): the green submit buttons in the "Record calibration" and "Add capability" forms repeated the opener's label ("+ Record calibration" / "+ Add capability"), which was confusing. Both now read "Save" ("Saving…" while busy) in the same navy (#182448) as the page's "Save changes". Verified locally (forms opened, nothing saved). **Deployed 2026-10-12** (`a4820c2`, Netlify deploy `6acbe4e8a912d2b3c9d05021`); re-checked on the live site: buttons read Save changes / Save / Save, no errors.
+
+## Frontend moved to Vercel (2026-10-17) — live, Netlify still running in parallel
+
+- User asked to switch hosting to Vercel. Moved **only the frontend**; backend + MySQL + `checknotifications` cron stay on Railway (Vercel functions are per-request, which would break the in-process daily reminder job and the in-memory LINE link codes).
+- **Vercel project `calibcare`** (team `calibcare`, id `prj_0zGLduRKFOmGl9rVyTu0POcnauQS`) → **https://calibcare.vercel.app**. Settings: Root Directory `frontend`, framework Vite, env `VITE_API_URL=https://calibcare-production.up.railway.app` (Production). `frontend/vercel.json` = build `npm run build`, output `dist`, rewrite `/(.*)` → `/index.html` (deep links). Link file lives at repo-root `.vercel/` (gitignored) — **run `vercel deploy --prod` from the repo root**, not from `frontend/`. Root `.vercelignore` keeps env files + personal docs (docx/xlsx/pdf/report/google form) out of uploads.
+- **Backend CORS** (`server.js`): `FRONTEND_URL` now accepts comma-separated origins. Railway project **fortunate-patience** (the real one; `respectful-cooperation` is an unrelated stray) → service `calibcare` → `FRONTEND_URL=https://calibcare.vercel.app,https://calibcare.netlify.app`. Verified live: both origins allowed, unknown origin blocked.
+- Verified on Vercel with a real login through the form: dashboard (queue 1–10 of 43), equipment 163 entries, detail, reminders, team, refresh on a deep link, no JS errors. `.env.local` (Vercel OIDC token, created by `vercel link`) is not served.
+- **Pending**: (1) automatic deploys on `git push` — `vercel git connect` failed because the Vercel GitHub app has no access to `calibcare/calibcare`; user must install it (github.com/apps/vercel → calibcare account → this repo), then rerun `vercel git connect`. (2) Retire Netlify once the team uses the Vercel URL: remove it from `FRONTEND_URL` and delete/disable the Netlify site. (3) Report/README links still say netlify.app.
+- CLIs now logged in on this Mac: `vercel` (calibcare), `railway` (calibcare@gmail.com, linked to fortunate-patience/calibcare from `backend/`), `netlify`.
 
 ## Next up
 
