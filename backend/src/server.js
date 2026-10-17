@@ -12,11 +12,16 @@ import { lineRouter } from './routes/line.js';
 import { requireAuth } from './middleware/auth.js';
 
 const app = express();
-// Restrict cross-origin requests to the deployed frontend's own origin --
-// process.env.FRONTEND_URL is required in production (e.g. the Netlify
-// site URL); left unset, cors() falls back to allowing any origin, which is
-// fine for local dev but must be set once this is actually deployed.
-app.use(cors({ origin: process.env.FRONTEND_URL || true }));
+// Restrict cross-origin requests to the deployed frontend's own origin(s) --
+// process.env.FRONTEND_URL is required in production. It may hold several
+// comma-separated origins (e.g. the Vercel site plus the old Netlify one
+// while the team switches over); left unset, cors() falls back to allowing
+// any origin, which is fine for local dev but must be set once deployed.
+const allowedOrigins = (process.env.FRONTEND_URL || '')
+  .split(',')
+  .map((o) => o.trim().replace(/\/$/, ''))
+  .filter(Boolean);
+app.use(cors({ origin: allowedOrigins.length ? allowedOrigins : true }));
 // Capture the raw request body alongside the parsed one -- LINE webhook
 // signature verification is an HMAC over the exact raw bytes, which
 // express.json() normally discards after parsing.
