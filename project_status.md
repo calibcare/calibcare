@@ -703,6 +703,12 @@ coopproject/
 - Same day, also deleted the duplicate account `stytorpaina@gmail.com` (user_id 2, "weerada", Senior Specialist; 0 reminders sent to it) at the user's request. Backup: `~/Documents/calibcare-backups/mcems-production-2026-10-19-0026-before-deleting-stytorpaina.sql`. Production now has 2 accounts: `ninedenim0@gmail.com` (Deputy Manager) and `studytorpaina@gmail.com` (Senior Specialist).
 - **Local dev DB still has `admin@mcems.local`** (used for local testing only). For future live checks, use a real account or create a temporary check account and delete it afterwards.
 
+## Site font switched to IBM Plex Sans Thai (2026-10-19) — committed locally, not deployed
+
+- User asked to change the font; chose IBM Plex Sans Thai (over Sarabun / Noto Sans Thai / Prompt) because Inter has no Thai glyphs, so Thai data (status notes, locations, "1 ปี") fell back to each viewer's system Thai font.
+- `@fontsource/ibm-plex-sans-thai` (self-hosted, same reason as Inter) — weights 400/500/600/700 imported in `main.jsx` (`font-extrabold` 800 falls back to 700); `index.css` body + Tailwind `--font-sans` → `"IBM Plex Sans Thai", system-ui, sans-serif`. `@fontsource-variable/inter` uninstalled; no Inter left in built CSS.
+- Verified locally: computed font on body and on a Thai status note is IBM Plex Sans Thai; latin + thai woff2 subsets load (Thai subset only when Thai text is on screen); no errors.
+
 ## Next up
 
 - Verify the inferred manufacturer values against physical nameplates/purchase records during the next calibration cycle — they're confident inferences, not sourced from purchase documentation.

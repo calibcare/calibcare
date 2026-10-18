@@ -9,14 +9,14 @@
   --radius-xl: 0.375rem;
   --radius-2xl: 0.375rem;
   --radius-3xl: 0.5rem;
+  --font-sans: "IBM Plex Sans Thai", system-ui, sans-serif;
 }
 
 body {
   margin: 0;
-  /* "Inter Variable" is the family name @fontsource-variable/inter
+  /* "IBM Plex Sans Thai" is the family name @fontsource/ibm-plex-sans-thai
      registers (imported in main.jsx) -- self-hosted, not Google's CDN. */
-  font-family: "Inter Variable", sans-serif;
-  font-optical-sizing: auto;
+  font-family: "IBM Plex Sans Thai", system-ui, sans-serif;
 }
 
 .input {
