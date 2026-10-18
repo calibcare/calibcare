@@ -3,7 +3,7 @@
 > Living log of what's been built. Updated after every completed unit of work.
 > Read this first when resuming a session on this project.
 
-Last updated: 2026-10-17 (Admin page deployed)
+Last updated: 2026-10-19 (email moved to Brevo; fixes OTP/reminder emails on production)
 
 ---
 
@@ -709,6 +709,15 @@ coopproject/
 - `@fontsource/ibm-plex-sans-thai` (self-hosted, same reason as Inter) — weights 400/500/600/700 imported in `main.jsx` (`font-extrabold` 800 falls back to 700); `index.css` body + Tailwind `--font-sans` → `"IBM Plex Sans Thai", system-ui, sans-serif`. `@fontsource-variable/inter` uninstalled; no Inter left in built CSS.
 - **Deployed** (`3800058`, Vercel). Verified live without logging in (test admin is gone): live CSS has IBM Plex Sans Thai, no Inter, no Google Fonts; thai + latin woff2 return 200; login page renders in it with 400–700 loaded, no errors.
 - Verified locally: computed font on body and on a Thai status note is IBM Plex Sans Thai; latin + thai woff2 subsets load (Thai subset only when Thai text is on screen); no errors.
+
+## Production email fixed: Gmail SMTP → Brevo HTTPS API (2026-10-19)
+
+- **Symptom (user report):** forgot-password OTP arrived when using the local Mac copy but never from the live site on other devices; the page still said "code sent" (it's deliberately generic).
+- **Root cause:** Railway blocks outbound SMTP (25/465/587) on Free/Trial/Hobby plans ([docs](https://docs.railway.com/networking/outbound-networking): "SMTP is only available on the Pro plan and above"). SMTP vars were set identically on Railway and locally — only the network differed. Same block silently affected **email reminders** in production; LINE (HTTPS) was unaffected.
+- **Fix:** `emailService.js` → `createSender(env, fetch)` picks **Brevo** (`BREVO_API_KEY`, POST https://api.brevo.com/v3/smtp/email, 15 s timeout) → else SMTP → else dry-run; logs `[emailService] provider: …` at startup and `… failed to send to <to>: <reason>` on errors (success isn't logged). From = `EMAIL_FROM` else `SMTP_USER` (= calibcare@gmail.com, verified sender in Brevo). 4 new tests (51 total). `.env.example` documents it. Commit `8c1f0d9`.
+- **User set up Brevo** (account, verified sender calibcare@gmail.com, API key `xkeysib-…`) and added `BREVO_API_KEY` on Railway services **calibcare** and **checknotifications** (had to press Deploy — Railway stages variable edits). First live send failed `401 unrecognised IP` → user turned off Brevo **Authorised IPs** blocking (required: Railway egress IPs change). Retest: reset code to studytorpaina@gmail.com **arrived in the inbox**.
+- **checknotifications did not auto-redeploy on push** (git-connected, root `backend`, cron `0 9 * * *`); updated with `railway redeploy --service checknotifications --from-source --yes` → now on `8c1f0d9`. Redeploying a cron service does NOT run it (verified: no log output after deploy). Remember this for future backend changes: the cron service needs that command after a push.
+- Local Mac `.env` has no Brevo key, so local dev still uses Gmail SMTP (works on a normal network).
 
 ## Next up
 
