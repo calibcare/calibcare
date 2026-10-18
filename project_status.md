@@ -697,6 +697,11 @@ coopproject/
 - **Deployed 2026-10-17**, in order: (1) production DB dump via the Railway TCP proxy (root / MYSQL_ROOT_PASSWORD, db `mcems`) → `~/Documents/calibcare-backups/mcems-production-2026-10-17-2343-before-admin-page.sql` (outside the repo on purpose); (2) `add_must_change_password.sql` applied to production (4 users, none flagged); (3) `git push` (`566ec94`) → Railway; (4) `vercel deploy --prod`. Verified live without touching real accounts: ADMIN menu, 4 accounts listed (own row "Use Profile"), backup has 163/403/166/4/5/51/0 rows and no hash/LINE id, Profile → Change password present, no JS errors. Follow-up `e9ed4af`: dated backup filename client-side (the API is cross-origin, so `Content-Disposition` isn't readable without `exposedHeaders`). The temporary-password flow itself was only exercised locally, not on production accounts.
 - Verified locally: API (a separate test server with email off) — 16 cases incl. 403s for junior/rank/self, temp password replaces old, forced change, wrong/short password errors, backup counts match DB (163/403/167/12) and contain no hash/LINE id. Browser — DM + Senior see ADMIN, junior doesn't (and /admin redirects), temp-password dialog, forced change → dashboard, Senior sees "Senior account" on the DM row. Test accounts zz.*@test.local deleted afterwards.
 
+## Test admin account deleted from production (2026-10-19)
+
+- At the user's request, deleted `admin@mcems.local` (user_id 1, Test Admin, Deputy Manager) from the **production** DB — its password had been written in chats/notes. Backup taken first: `~/Documents/calibcare-backups/mcems-production-2026-10-19-0017-before-deleting-test-admin.sql`. FKs to users are all `ON DELETE SET NULL`, so reminder history kept (notification_log 51 → 51). Remaining: Weerada `ninedenim0@gmail.com` (Deputy Manager, verified, LINE linked) + two Senior Specialist accounts. Verified the old login now returns `invalid email or password`.
+- **Local dev DB still has `admin@mcems.local`** (used for local testing only). For future live checks, use a real account or create a temporary check account and delete it afterwards.
+
 ## Next up
 
 - Verify the inferred manufacturer values against physical nameplates/purchase records during the next calibration cycle — they're confident inferences, not sourced from purchase documentation.
