@@ -700,6 +700,7 @@ coopproject/
 ## Test admin account deleted from production (2026-10-19)
 
 - At the user's request, deleted `admin@mcems.local` (user_id 1, Test Admin, Deputy Manager) from the **production** DB — its password had been written in chats/notes. Backup taken first: `~/Documents/calibcare-backups/mcems-production-2026-10-19-0017-before-deleting-test-admin.sql`. FKs to users are all `ON DELETE SET NULL`, so reminder history kept (notification_log 51 → 51). Remaining: Weerada `ninedenim0@gmail.com` (Deputy Manager, verified, LINE linked) + two Senior Specialist accounts. Verified the old login now returns `invalid email or password`.
+- Same day, also deleted the duplicate account `stytorpaina@gmail.com` (user_id 2, "weerada", Senior Specialist; 0 reminders sent to it) at the user's request. Backup: `~/Documents/calibcare-backups/mcems-production-2026-10-19-0026-before-deleting-stytorpaina.sql`. Production now has 2 accounts: `ninedenim0@gmail.com` (Deputy Manager) and `studytorpaina@gmail.com` (Senior Specialist).
 - **Local dev DB still has `admin@mcems.local`** (used for local testing only). For future live checks, use a real account or create a temporary check account and delete it afterwards.
 
 ## Next up
