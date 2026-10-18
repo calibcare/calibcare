@@ -2,32 +2,78 @@ import nodemailer from 'nodemailer';
 import 'dotenv/config';
 
 /**
- * Sends OTP emails via SMTP (Gmail App Password by default). Mirrors
- * lineClient.js's dry-run pattern: if no SMTP credentials are configured,
- * returns a client that only logs what it would send, so registration and
- * password-reset are fully testable before real email credentials exist.
+ * Outgoing email. Three providers, picked once at startup from env:
+ *
+ *  1. Brevo HTTPS API (BREVO_API_KEY) -- used in production. Railway blocks
+ *     outbound SMTP (ports 25/465/587) on Free/Trial/Hobby plans, so the
+ *     Gmail SMTP path silently fails there; Brevo's API is a plain HTTPS call
+ *     on port 443, which Railway never blocks.
+ *  2. SMTP (SMTP_USER + SMTP_PASSWORD, Gmail App Password by default) --
+ *     still works for local dev on a normal network.
+ *  3. Neither configured -> dry-run: log what would be sent and report
+ *     success, mirroring lineClient.js, so flows stay testable.
+ *
+ * The From address is EMAIL_FROM, else SMTP_USER. With Brevo it must be a
+ * sender verified in the Brevo account.
  */
-function createTransport() {
-  if (!process.env.SMTP_USER || !process.env.SMTP_PASSWORD) return null;
-  return nodemailer.createTransport({
-    host: process.env.SMTP_HOST || 'smtp.gmail.com',
-    port: Number(process.env.SMTP_PORT) || 587,
-    secure: false, // STARTTLS on port 587
-    auth: {
-      user: process.env.SMTP_USER,
-      pass: process.env.SMTP_PASSWORD,
-    },
-  });
+const BREVO_URL = 'https://api.brevo.com/v3/smtp/email';
+const FROM_NAME = 'CalibCare';
+
+export function createSender(env = process.env, fetchImpl = globalThis.fetch) {
+  const fromEmail = env.EMAIL_FROM || env.SMTP_USER;
+
+  if (env.BREVO_API_KEY) {
+    return {
+      provider: 'brevo',
+      async send({ to, subject, text }) {
+        if (!fromEmail) throw new Error('EMAIL_FROM (a Brevo-verified sender) is not set');
+        const res = await fetchImpl(BREVO_URL, {
+          method: 'POST',
+          headers: { 'api-key': env.BREVO_API_KEY, 'content-type': 'application/json', accept: 'application/json' },
+          body: JSON.stringify({ sender: { name: FROM_NAME, email: fromEmail }, to: [{ email: to }], subject, textContent: text }),
+          signal: AbortSignal.timeout(15000),
+        });
+        if (!res.ok) {
+          let detail = '';
+          try {
+            const body = await res.json();
+            detail = body.message || body.code || '';
+          } catch {
+            // non-JSON error body -- status alone is enough
+          }
+          throw new Error(`Brevo API ${res.status}${detail ? `: ${detail}` : ''}`);
+        }
+      },
+    };
+  }
+
+  if (env.SMTP_USER && env.SMTP_PASSWORD) {
+    const transporter = nodemailer.createTransport({
+      host: env.SMTP_HOST || 'smtp.gmail.com',
+      port: Number(env.SMTP_PORT) || 587,
+      secure: false, // STARTTLS on port 587
+      auth: { user: env.SMTP_USER, pass: env.SMTP_PASSWORD },
+    });
+    return {
+      provider: 'smtp',
+      async send({ to, subject, text }) {
+        await transporter.sendMail({ from: `"${FROM_NAME}" <${fromEmail}>`, to, subject, text });
+      },
+    };
+  }
+
+  return null;
 }
 
-const transporter = createTransport();
-export const emailDryRun = !transporter;
+const sender = createSender();
+export const emailDryRun = !sender;
+export const emailProvider = sender ? sender.provider : 'dry-run';
+console.log(`[emailService] provider: ${emailProvider}`);
 
 /**
  * Generic send, reused by both the OTP flow below and reminderService.js's
- * email channel. Same dry-run behavior either way: no SMTP credentials
- * configured means log-and-succeed rather than fail, exactly like
- * lineClient.js's dry-run client for LINE.
+ * email channel. Never throws: failures are logged and returned as
+ * { ok: false, error }.
  */
 export async function sendEmail({ to, subject, text }) {
   if (emailDryRun) {
@@ -36,15 +82,10 @@ export async function sendEmail({ to, subject, text }) {
   }
 
   try {
-    await transporter.sendMail({
-      from: `"CalibCare" <${process.env.SMTP_USER}>`,
-      to,
-      subject,
-      text,
-    });
+    await sender.send({ to, subject, text });
     return { ok: true, dryRun: false };
   } catch (err) {
-    console.error('[emailService] failed to send:', err);
+    console.error(`[emailService] ${emailProvider} failed to send to ${to}:`, err.message);
     return { ok: false, dryRun: false, error: err.message };
   }
 }
