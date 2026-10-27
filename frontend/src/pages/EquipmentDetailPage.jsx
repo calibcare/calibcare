@@ -429,11 +429,11 @@ export function EquipmentDetailPage() {
 
         <div className="rounded-xl scroll-table" style={{ border: `1px solid ${theme.border}` }}>
           <div className="flex items-center px-4 py-2.5" style={{ backgroundColor: '#fafbfd' }}>
-            <span className="flex-[1.3] text-[11px] font-bold uppercase tracking-wide" style={{ color: theme.textFaint }}>Purpose</span>
-            <span className="flex-[1.6] text-[11px] font-bold uppercase tracking-wide" style={{ color: theme.textFaint }}>Measurement range</span>
-            <span className="flex-[1.3] text-[11px] font-bold uppercase tracking-wide" style={{ color: theme.textFaint }}>Accuracy</span>
-            <span className="flex-[1.6] text-[11px] font-bold uppercase tracking-wide" style={{ color: theme.textFaint }}>Product operating range</span>
-            <span className="flex-[1.3] text-[11px] font-bold uppercase tracking-wide" style={{ color: theme.textFaint }}>Acceptance criteria</span>
+            <span className="flex-[1.3] text-[12px] font-bold leading-snug pr-2" style={{ color: theme.textFaint }}>จุดประสงค์ที่ใช้วัด</span>
+            <span className="flex-[1.6] text-[12px] font-bold leading-snug pr-2" style={{ color: theme.textFaint }}>ช่วงในการวัดของเครื่องมือวัด</span>
+            <span className="flex-[1.3] text-[12px] font-bold leading-snug pr-2" style={{ color: theme.textFaint }}>ค่าผิดพลาดของเครื่องมือวัด</span>
+            <span className="flex-[1.6] text-[12px] font-bold leading-snug pr-2" style={{ color: theme.textFaint }}>ช่วงในการใช้งานของผลิตภัณฑ์</span>
+            <span className="flex-[1.3] text-[12px] font-bold leading-snug pr-2" style={{ color: theme.textFaint }}>เกณฑ์การยอมรับของผลิตภัณฑ์</span>
             <span className="flex-[0.6]" />
           </div>
 
@@ -482,23 +482,23 @@ export function EquipmentDetailPage() {
               <form onSubmit={handleAddCapability} className="border rounded-xl p-4 flex flex-col gap-3" style={{ borderColor: theme.borderStrong, borderStyle: 'dashed' }}>
                 <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
                   <div>
-                    <FieldLabel>Purpose</FieldLabel>
+                    <FieldLabel>จุดประสงค์ที่ใช้วัด</FieldLabel>
                     <input required value={capForm.measurement_purpose} onChange={(e) => setCapForm({ ...capForm, measurement_purpose: e.target.value })} style={smallFieldStyle} />
                   </div>
                   <div>
-                    <FieldLabel>Measurement range</FieldLabel>
+                    <FieldLabel>ช่วงในการวัดของเครื่องมือวัด</FieldLabel>
                     <input value={capForm.measurement_range} onChange={(e) => setCapForm({ ...capForm, measurement_range: e.target.value })} style={smallFieldStyle} />
                   </div>
                   <div>
-                    <FieldLabel>Accuracy</FieldLabel>
+                    <FieldLabel>ค่าผิดพลาดของเครื่องมือวัด</FieldLabel>
                     <input value={capForm.instrument_accuracy} onChange={(e) => setCapForm({ ...capForm, instrument_accuracy: e.target.value })} style={smallFieldStyle} />
                   </div>
                   <div>
-                    <FieldLabel>Product op. range</FieldLabel>
+                    <FieldLabel>ช่วงในการใช้งานของผลิตภัณฑ์</FieldLabel>
                     <input value={capForm.product_operating_range} onChange={(e) => setCapForm({ ...capForm, product_operating_range: e.target.value })} style={smallFieldStyle} />
                   </div>
                   <div>
-                    <FieldLabel>Acceptance criteria</FieldLabel>
+                    <FieldLabel>เกณฑ์การยอมรับของผลิตภัณฑ์</FieldLabel>
                     <input value={capForm.acceptance_criteria} onChange={(e) => setCapForm({ ...capForm, acceptance_criteria: e.target.value })} style={smallFieldStyle} />
                   </div>
                 </div>
