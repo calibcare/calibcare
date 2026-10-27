@@ -3,6 +3,7 @@ import { Navigate } from 'react-router-dom';
 import client from '../api/client';
 import { theme } from '../theme';
 import { useAuth } from '../context/AuthContext';
+import { PageHeader } from '../components/ui';
 import { CheckCircleIcon, AlertTriangleIcon, ClockIcon, ChevronDownIcon } from '../components/icons';
 
 const CHANNEL_META = {
@@ -521,14 +522,10 @@ export function RemindersPage() {
 
   return (
     <div className="flex flex-col gap-5">
-      <div>
-        <h1 className="text-[23px] font-bold mb-1.5" style={{ color: theme.ink }}>
-          Calibration Reminders
-        </h1>
-        <p className="text-sm" style={{ color: '#7a8296' }}>
-          Connect LINE, set reminder rules, and review what's been sent.
-        </p>
-      </div>
+      <PageHeader
+        title="Calibration Reminders"
+        description="Reminders go out by LINE and email 30, 7 and 1 day before each due date. Connect LINE, choose the channels, and review what has been sent."
+      />
 
       {error && (
         <div className="rounded-[10px] px-4 py-2.5 text-sm" style={{ backgroundColor: theme.criticalBg, color: theme.criticalStrong }}>

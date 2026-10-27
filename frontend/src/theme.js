@@ -30,4 +30,10 @@ export const theme = {
   warningBg: '#fef3e2',
   warningBorderSoft: '#f0d3a8',
   neutralMuted: '#94a3b8',
+  // Page leadspace (title band) and the selected sidebar item.
+  leadBg: 'linear-gradient(120deg,#1b2a4b 0%,#24408f 100%)',
+  leadText: '#1b2a4b',
+  leadMuted: '#c8d2ea',
+  navActiveBg: '#2952cc',
+  navHoverBg: '#e2e7f3',
 };

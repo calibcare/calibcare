@@ -3,6 +3,7 @@ import { Navigate } from 'react-router-dom';
 import client from '../api/client';
 import { theme } from '../theme';
 import { useAuth } from '../context/AuthContext';
+import { PageHeader } from '../components/ui';
 import { SearchIcon } from '../components/icons';
 
 // Admin page (Deputy Manager + Senior Specialist): help colleagues who are
@@ -157,14 +158,7 @@ export function AdminPage() {
 
   return (
     <div className="flex flex-col gap-5">
-      <div>
-        <h1 className="text-[23px] font-bold mb-1.5" style={{ color: theme.ink }}>
-          Admin
-        </h1>
-        <p className="text-sm" style={{ color: '#7a8296' }}>
-          Help colleagues who can't log in, and keep a backup copy of all CalibCare data.
-        </p>
-      </div>
+      <PageHeader title="Admin" description="Help colleagues who can't log in, and keep a backup copy of all CalibCare data." />
 
       {error && (
         <div className="rounded-[10px] px-4 py-2.5 text-sm" style={{ backgroundColor: theme.criticalBg, color: theme.criticalStrong }}>

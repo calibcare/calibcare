@@ -3,6 +3,7 @@ import { Navigate } from 'react-router-dom';
 import client from '../api/client';
 import { theme } from '../theme';
 import { useAuth } from '../context/AuthContext';
+import { PageHeader } from '../components/ui';
 
 export function AccessLevelsPage() {
   const { user } = useAuth();
@@ -55,14 +56,11 @@ export function AccessLevelsPage() {
 
   return (
     <div className="flex flex-col gap-5">
-      <div>
-        <h1 className="text-[23px] font-bold mb-1.5" style={{ color: theme.ink }}>
-          Team
-        </h1>
-        <p className="text-sm" style={{ color: '#7a8296' }}>
-          Everyone with access, and their position.
-        </p>
-      </div>
+      <PageHeader
+        title="Team"
+        description="Everyone with access, and their position. The position decides what each person can view and change."
+        stats={users.length ? [{ label: 'People', value: users.length }] : undefined}
+      />
 
       {error && (
         <div className="rounded-[10px] px-4 py-2.5 text-sm" style={{ backgroundColor: theme.criticalBg, color: theme.criticalStrong }}>

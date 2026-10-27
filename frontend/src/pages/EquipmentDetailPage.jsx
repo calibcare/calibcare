@@ -3,6 +3,7 @@ import { useParams, useNavigate, Link } from 'react-router-dom';
 import client from '../api/client';
 import { theme } from '../theme';
 import { useAuth } from '../context/AuthContext';
+import { PageHeader, Skeleton } from '../components/ui';
 import { PlusIcon, TrashIcon, ChevronDownIcon, AlertTriangleIcon } from '../components/icons';
 
 const STATUS_OPTIONS = ['active', 'under_maintenance', 'decommissioned', 'sent_for_calibration'];
@@ -76,6 +77,14 @@ function classify(equipment, latestCalibration, todayStr) {
     return 'overdue';
   }
   return equipment.status;
+}
+
+function BackLink() {
+  return (
+    <Link to="/equipment" className="inline-flex items-center gap-1.5" style={{ color: theme.leadMuted }}>
+      ← Back to equipment
+    </Link>
+  );
 }
 
 export function EquipmentDetailPage() {
@@ -254,7 +263,14 @@ export function EquipmentDetailPage() {
       </div>
     );
   }
-  if (!equipment) return <div style={{ color: theme.textFaint }}>Loading…</div>;
+  if (!equipment)
+    return (
+      <div className="flex flex-col gap-6">
+        <PageHeader eyebrow={<BackLink />} title="Loading…" />
+        <Skeleton style={{ height: 320, borderRadius: 16 }} />
+        <Skeleton style={{ height: 220, borderRadius: 16 }} />
+      </div>
+    );
 
   const todayStr = new Date().toISOString().slice(0, 10);
   const statusKey = classify(equipment, equipment.latest_calibration, todayStr);
@@ -264,10 +280,17 @@ export function EquipmentDetailPage() {
     : 0;
 
   return (
-    <div className="flex flex-col gap-5">
-      <Link to="/equipment" className="flex items-center gap-1.5 text-[13.5px] font-semibold w-fit" style={{ color: theme.textMuted }}>
-        ← Back to equipment
-      </Link>
+    <div className="flex flex-col gap-6">
+      <PageHeader
+        eyebrow={<BackLink />}
+        title={equipment.name}
+        description={`${equipment.model ? `${equipment.model} · ` : ''}S/N ${equipment.serial_number} · No. ${equipment.equipment_no}`}
+        stats={[
+          { label: 'Status', value: isOverdue ? 'Overdue' : STATUS_META[statusKey]?.label || statusKey },
+          { label: 'Next calibration', value: equipment.latest_calibration?.next_calibration_date ? String(equipment.latest_calibration.next_calibration_date).slice(0, 10) : '—' },
+          ...(isOverdue ? [{ label: 'Days overdue', value: overdueDays }] : []),
+        ]}
+      />
 
       {error && (
         <div className="rounded-[10px] px-4 py-2.5 text-sm" style={{ backgroundColor: theme.criticalBg, color: theme.criticalStrong }}>
@@ -276,14 +299,9 @@ export function EquipmentDetailPage() {
       )}
 
       <Card>
-        <div className="mb-5">
-          <h1 className="text-[22px] font-bold mb-1.5" style={{ color: theme.ink }}>
-            {equipment.name} <span className="font-medium" style={{ color: theme.textFaint }}>— {equipment.model}</span>
-          </h1>
-          <p className="text-[13.5px]" style={{ color: theme.textFaint }}>
-            S/N {equipment.serial_number} · No. {equipment.equipment_no}
-          </p>
-        </div>
+        <h2 className="text-[16px] font-bold mb-5" style={{ color: theme.ink }}>
+          Instrument details
+        </h2>
 
         {canManage && editForm && (
           <form onSubmit={handleSave} className="grid grid-cols-2 gap-x-6 gap-y-4">

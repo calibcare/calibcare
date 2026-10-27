@@ -1,10 +1,12 @@
-import { useState, useRef, useEffect } from 'react';
+import { useState } from 'react';
 import { NavLink, Outlet, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { theme } from '../theme';
-import { HomeIcon, PackageIcon, BellIcon, SettingsIcon, LogOutIcon, SearchIcon, UsersIcon, ShieldIcon } from './icons';
+import { HomeIcon, PackageIcon, BellIcon, LogOutIcon, SearchIcon, UsersIcon, ShieldIcon } from './icons';
 
-const BASE_NAV_ITEMS = [
+// Navigation, grouped like with like: everyday pages first, management
+// pages (only for the positions that can use them) under their own label.
+const MAIN_NAV_ITEMS = [
   { to: '/dashboard', label: 'Dashboard', Icon: HomeIcon },
   { to: '/equipment', label: 'Equipment', Icon: PackageIcon },
 ];
@@ -17,25 +19,41 @@ const TEAM_NAV_ITEM = { to: '/access-levels', label: 'Team', Icon: UsersIcon };
 // Admin (account help + database backup) is for both editing positions.
 const ADMIN_NAV_ITEM = { to: '/admin', label: 'Admin', Icon: ShieldIcon };
 
+// The selected item is a solid brand-colour pill so "where am I" is obvious
+// at a glance; unselected items only tint on hover.
 function SidebarLink({ to, label, Icon }) {
   return (
     <NavLink
       to={to}
-      className="flex items-center gap-[11px] w-full rounded-[10px] text-sm px-3.5 py-2.5"
+      className={({ isActive }) => `flex items-center gap-[11px] w-full rounded-[10px] text-sm px-3.5 py-2.5 ${isActive ? '' : 'hover:bg-[#e2e7f3]'}`}
       style={({ isActive }) => ({
-        backgroundColor: isActive ? '#ffffff' : 'transparent',
-        boxShadow: isActive ? '0 1px 2px rgba(16,24,40,.06)' : 'none',
-        color: isActive ? theme.brand : theme.textMuted,
+        backgroundColor: isActive ? theme.navActiveBg : 'transparent',
+        boxShadow: isActive ? '0 4px 12px rgba(41,82,204,.25)' : 'none',
+        color: isActive ? '#fff' : theme.textMuted,
         fontWeight: isActive ? 600 : 500,
       })}
     >
       {({ isActive }) => (
         <>
-          <Icon color={isActive ? theme.brand : theme.textMuted} />
+          <Icon color={isActive ? '#fff' : theme.textMuted} />
           <span>{label}</span>
         </>
       )}
     </NavLink>
+  );
+}
+
+function NavGroup({ label, items }) {
+  if (items.length === 0) return null;
+  return (
+    <div className="flex flex-col gap-1">
+      <div className="px-3.5 pb-1 text-[10.5px] font-bold uppercase tracking-wider" style={{ color: theme.textFaint }}>
+        {label}
+      </div>
+      {items.map((item) => (
+        <SidebarLink key={item.to} {...item} />
+      ))}
+    </div>
   );
 }
 
@@ -49,17 +67,57 @@ function LogoMark() {
   );
 }
 
+// Who is signed in, and the way out, at the foot of the sidebar.
+function UserCard() {
+  const { user, logout } = useAuth();
+  const navigate = useNavigate();
+  const initial = (user?.full_name || '?').trim().charAt(0).toUpperCase();
+
+  function handleLogout() {
+    logout();
+    navigate('/login');
+  }
+
+  return (
+    <div className="flex flex-col gap-2.5">
+      <NavLink
+        to="/settings"
+        title="Your profile"
+        className={({ isActive }) => `flex items-center gap-2.5 rounded-[10px] px-2.5 py-2 ${isActive ? '' : 'hover:bg-[#e2e7f3]'}`}
+        style={({ isActive }) => ({ backgroundColor: isActive ? '#fff' : 'transparent' })}
+      >
+        <span className="w-9 h-9 rounded-full flex items-center justify-center text-[13px] font-bold text-white shrink-0" style={{ backgroundColor: theme.brandDark }}>
+          {initial}
+        </span>
+        <span className="min-w-0">
+          <span className="block text-[13px] font-semibold truncate" style={{ color: theme.ink }}>
+            {user?.full_name}
+          </span>
+          <span className="block text-[11.5px] truncate" style={{ color: theme.textFaint }}>
+            {user?.position_label}
+          </span>
+        </span>
+      </NavLink>
+      <button
+        type="button"
+        onClick={handleLogout}
+        className="flex items-center justify-center gap-2 rounded-[10px] py-2 text-[13px] font-semibold hover:bg-[#fdeceb]"
+        style={{ color: theme.criticalStrong, border: `1px solid ${theme.alertBorder}`, background: 'transparent' }}
+      >
+        <LogOutIcon color={theme.criticalStrong} />
+        Sign out
+      </button>
+    </div>
+  );
+}
+
 function Sidebar() {
   const { user } = useAuth();
-  const navItems = [
-    ...BASE_NAV_ITEMS,
-    ...(user?.can_run_reminders ? [REMINDERS_NAV_ITEM, TEAM_NAV_ITEM] : []),
-    ...(user?.can_edit ? [ADMIN_NAV_ITEM] : []),
-  ];
+  const manageItems = [...(user?.can_run_reminders ? [REMINDERS_NAV_ITEM, TEAM_NAV_ITEM] : []), ...(user?.can_edit ? [ADMIN_NAV_ITEM] : [])];
 
   return (
     <aside
-      className="w-[240px] shrink-0 h-screen sticky top-0 flex flex-col px-4 py-6"
+      className="w-[240px] shrink-0 h-screen sticky top-0 flex flex-col justify-between px-4 py-6"
       style={{ backgroundColor: theme.sidebarBg, borderRight: `1px solid ${theme.borderStrong}` }}
     >
       <div className="flex flex-col gap-7">
@@ -69,90 +127,13 @@ function Sidebar() {
             Calibcare
           </span>
         </div>
-        <nav className="flex flex-col gap-1">
-          {navItems.map((item) => (
-            <SidebarLink key={item.to} {...item} />
-          ))}
+        <nav className="flex flex-col gap-6">
+          <NavGroup label="Overview" items={MAIN_NAV_ITEMS} />
+          <NavGroup label="Manage" items={manageItems} />
         </nav>
       </div>
+      <UserCard />
     </aside>
-  );
-}
-
-function ProfileMenu() {
-  const { user, logout } = useAuth();
-  const navigate = useNavigate();
-  const [open, setOpen] = useState(false);
-  const containerRef = useRef(null);
-
-  useEffect(() => {
-    if (!open) return;
-    function handleClickOutside(e) {
-      if (containerRef.current && !containerRef.current.contains(e.target)) setOpen(false);
-    }
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, [open]);
-
-  function goTo(path) {
-    setOpen(false);
-    navigate(path);
-  }
-
-  function handleLogout() {
-    setOpen(false);
-    logout();
-    navigate('/login');
-  }
-
-  const initial = (user?.full_name || '?').trim().charAt(0).toUpperCase();
-
-  return (
-    <div className="relative shrink-0" ref={containerRef}>
-      <button
-        type="button"
-        onClick={() => setOpen((v) => !v)}
-        className="w-9 h-9 rounded-full flex items-center justify-center text-[13px] font-bold text-white"
-        style={{ backgroundColor: theme.brandDark, border: 'none' }}
-        title={`${user?.full_name || ''} (${user?.position_label || ''})`}
-      >
-        {initial}
-      </button>
-
-      {open && (
-        <div
-          className="absolute right-0 mt-2 rounded-[12px] bg-white overflow-hidden"
-          style={{ width: 220, border: `1px solid ${theme.border}`, boxShadow: '0 8px 24px rgba(16,24,40,.12)', zIndex: 20 }}
-        >
-          <div className="px-4 py-3" style={{ borderBottom: `1px solid ${theme.divider}` }}>
-            <div className="text-[13px] font-semibold truncate" style={{ color: theme.ink }}>
-              {user?.full_name}
-            </div>
-            <div className="text-[11.5px] truncate" style={{ color: theme.textFaint }}>
-              {user?.position_label}
-            </div>
-          </div>
-          <button
-            type="button"
-            onClick={() => goTo('/settings')}
-            className="flex items-center gap-2.5 w-full text-left px-4 py-2.5 text-[13px] font-medium"
-            style={{ color: theme.textMuted, border: 'none', background: 'none' }}
-          >
-            <SettingsIcon color={theme.textMuted} />
-            Profile
-          </button>
-          <button
-            type="button"
-            onClick={handleLogout}
-            className="flex items-center gap-2.5 w-full text-left px-4 py-2.5 text-[13px] font-medium"
-            style={{ color: theme.criticalStrong, border: 'none', background: 'none' }}
-          >
-            <LogOutIcon color={theme.criticalStrong} />
-            Log out
-          </button>
-        </div>
-      )}
-    </div>
   );
 }
 
@@ -167,7 +148,7 @@ function TopBar() {
   }
 
   return (
-    <div className="h-[72px] shrink-0 bg-white flex items-center justify-end gap-4 px-8" style={{ borderBottom: `1px solid ${theme.border}` }}>
+    <div className="h-[64px] shrink-0 bg-white flex items-center justify-end gap-3 px-8" style={{ borderBottom: `1px solid ${theme.border}` }}>
       <form onSubmit={handleSearchSubmit} className="relative">
         <span className="absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none">
           <SearchIcon color={theme.textFaint} />
@@ -175,22 +156,16 @@ function TopBar() {
         <input
           value={search}
           onChange={(e) => setSearch(e.target.value)}
-          placeholder="Search equipment..."
-          className="h-9 w-[320px] pl-9 pr-3 rounded-[10px] text-[13.5px] outline-none"
+          placeholder="Search equipment by name, model or serial…"
+          className="h-9 w-[360px] pl-9 pr-3 rounded-[10px] text-[13.5px] outline-none"
           style={{ backgroundColor: theme.chipBg, color: theme.ink }}
         />
       </form>
       {user?.can_run_reminders && (
-        <NavLink
-          to="/reminders"
-          title="Reminders"
-          className="w-9 h-9 rounded-[10px] flex items-center justify-center shrink-0"
-          style={{ backgroundColor: theme.chipBg }}
-        >
+        <NavLink to="/reminders" title="Reminders" className="w-9 h-9 rounded-[10px] flex items-center justify-center shrink-0" style={{ backgroundColor: theme.chipBg }}>
           <BellIcon color={theme.textMuted} />
         </NavLink>
       )}
-      <ProfileMenu />
     </div>
   );
 }

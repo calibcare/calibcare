@@ -1,5 +1,6 @@
 import { Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import { PageHeader } from '../components/ui';
 
 const INK = '#0F172A';
 const MUTED = '#64748B';
@@ -22,13 +23,8 @@ export function SettingsPage() {
   const { user } = useAuth();
 
   return (
-    <div>
-      <h1 className="text-2xl font-extrabold mb-1" style={{ color: INK }}>
-        Profile
-      </h1>
-      <p className="text-sm mb-6" style={{ color: MUTED }}>
-        Your account details.
-      </p>
+    <div className="flex flex-col gap-6">
+      <PageHeader title="Profile" description="Your account details and what your position lets you do." />
 
       <div className="bg-white rounded-2xl p-5 max-w-md" style={{ border: `1.5px solid ${BORDER}` }}>
         <Row label="Name" value={user?.full_name} />

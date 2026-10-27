@@ -11,6 +11,22 @@ body {
   font-family: "IBM Plex Sans Thai", system-ui, sans-serif;
 }
 
+/* Loading skeleton (components/ui.jsx Skeleton): a soft shimmer shaped
+   like the content that is about to appear. */
+.skeleton {
+  border-radius: 10px;
+  background: linear-gradient(90deg, #e8ecf4 25%, #f3f5fa 50%, #e8ecf4 75%);
+  background-size: 200% 100%;
+  animation: skeleton-shimmer 1.3s ease-in-out infinite;
+}
+@keyframes skeleton-shimmer {
+  from { background-position: 200% 0; }
+  to { background-position: -200% 0; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .skeleton { animation: none; }
+}
+
 .input {
   @apply border border-slate-300 rounded-md px-3 py-1.5 text-sm w-full;
 }

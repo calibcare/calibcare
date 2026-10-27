@@ -4,6 +4,7 @@ import client from '../api/client';
 import { theme } from '../theme';
 import { useAuth } from '../context/AuthContext';
 import { SearchIcon, ChevronDownIcon } from '../components/icons';
+import { PageHeader, HeaderButton, FilterFeedback, Skeleton, SideDrawer } from '../components/ui';
 
 const EDITABLE_STATUSES = ['active', 'under_maintenance', 'decommissioned', 'sent_for_calibration'];
 const DUE_SOON_DAYS = 30;
@@ -447,6 +448,22 @@ export function EquipmentPage() {
     setFilters((f) => ({ ...f, [key]: value }));
   }
 
+  // One-status shortcuts (header numbers and the tabs above the table).
+  const onlyStatus = filters.status.size === 1 ? [...filters.status][0] : null;
+  function showOnly(status) {
+    setFilter('status', status ? new Set([status]) : new Set());
+  }
+  const statusTotals = useMemo(() => {
+    const totals = {};
+    for (const item of items) totals[item.displayStatus] = (totals[item.displayStatus] || 0) + 1;
+    return totals;
+  }, [items]);
+  const tabCounts = facetCounts('status', 'displayStatus');
+  const tabs = [
+    { key: null, label: 'All', count: [...tabCounts.values()].reduce((a, b) => a + b, 0) },
+    ...STATUS_ORDER.map((k) => ({ key: k, label: STATUS_META[k].label, count: tabCounts.get(k) || 0 })).filter((t) => t.count > 0 || t.key === onlyStatus),
+  ];
+
   function removePill({ key, value }) {
     if (key === 'q') return setQ('');
     if (key === 'due') return setFilter('due', '');
@@ -563,26 +580,29 @@ export function EquipmentPage() {
   );
 
   return (
-    <div className="flex flex-col gap-3.5">
-      <div className="flex items-start justify-between gap-4 flex-wrap">
-        <div>
-          <h1 className="text-[23px] font-bold" style={{ color: theme.ink }}>
-            Equipment
-          </h1>
-          <p className="text-[13.5px] mt-0.5" style={{ color: theme.textMuted }}>
-            Find, filter and act on any device. Filters mirror the table columns.
-          </p>
-        </div>
-        {canManage && (
-          <button
-            onClick={() => setShowForm((s) => !s)}
-            className="flex items-center gap-2 text-white rounded-[10px] px-[18px] py-2.5 text-[13.5px] font-semibold"
-            style={{ backgroundColor: '#182448', border: 'none' }}
-          >
-            {showForm ? 'Cancel' : '+ Add equipment'}
-          </button>
-        )}
-      </div>
+    <div className="flex flex-col gap-4">
+      <PageHeader
+        title="Equipment"
+        description="Every instrument the team owns. Click a row for a quick look."
+        stats={[
+          { label: 'Overdue', value: statusTotals.overdue || 0, onClick: () => showOnly('overdue'), active: onlyStatus === 'overdue' },
+          { label: 'Due within 30 days', value: statusTotals.soon || 0, onClick: () => showOnly('soon'), active: onlyStatus === 'soon' },
+          {
+            label: 'Sent for calibration',
+            value: statusTotals.sent_for_calibration || 0,
+            onClick: () => showOnly('sent_for_calibration'),
+            active: onlyStatus === 'sent_for_calibration',
+          },
+        ]}
+        actions={canManage && <HeaderButton onClick={() => setShowForm((v) => !v)}>{showForm ? 'Cancel' : '+ Add equipment'}</HeaderButton>}
+      >
+        <FilterFeedback
+          pills={pills}
+          onRemove={removePill}
+          onClear={clearAll}
+          summary={loading ? 'Loading devices…' : `Showing ${rows.length} of ${items.length} devices`}
+        />
+      </PageHeader>
 
       {error && (
         <div className="rounded-[10px] px-4 py-2.5 text-sm" style={{ backgroundColor: theme.criticalBg, color: theme.criticalStrong }}>
@@ -716,33 +736,6 @@ export function EquipmentPage() {
         </Popover>
       </div>
 
-      {/* Active filter pills */}
-      {pills.length > 0 && (
-        <div className="flex items-center gap-1.5 flex-wrap">
-          {pills.map((p) => (
-            <span
-              key={`${p.key}|${p.value}`}
-              className="inline-flex items-center gap-1 rounded-full pl-[11px] pr-1 py-[3px] text-[12px] font-semibold"
-              style={{ backgroundColor: '#eaf0ff', color: theme.brand }}
-            >
-              {p.label}
-              <button
-                type="button"
-                onClick={() => removePill(p)}
-                aria-label={`Remove filter ${p.label}`}
-                className="px-1 text-[13px]"
-                style={{ color: 'inherit', border: 'none', background: 'none' }}
-              >
-                ✕
-              </button>
-            </span>
-          ))}
-          <button type="button" onClick={clearAll} className="text-[12.5px] font-semibold ml-1" style={{ color: theme.brand, border: 'none', background: 'none' }}>
-            Clear all
-          </button>
-        </div>
-      )}
-
       {/* Bulk action bar */}
       {selected.size > 0 && (
         <div className="flex items-center gap-2.5 rounded-[10px] px-3.5 py-2 text-[13px]" style={{ backgroundColor: theme.ink, color: '#fff' }}>
@@ -779,11 +772,37 @@ export function EquipmentPage() {
         </div>
       )}
 
-      <p className="text-[13px]" style={{ color: theme.textMuted }}>
-        Showing <b style={{ color: theme.ink }}>{rows.length}</b> of {items.length} devices
-      </p>
-
       <div className="bg-white rounded-2xl overflow-hidden" style={{ border: `1px solid ${theme.border}`, boxShadow: theme.cardShadow }}>
+        <div role="tablist" aria-label="Filter by status" className="flex items-center gap-1 px-4 pt-3 overflow-x-auto" style={{ borderBottom: `1px solid ${theme.border}` }}>
+          {tabs.map((t) => {
+            const active = t.key === onlyStatus && (t.key !== null || filters.status.size === 0);
+            return (
+              <button
+                key={t.label}
+                type="button"
+                role="tab"
+                aria-selected={active}
+                onClick={() => showOnly(t.key)}
+                className="flex items-center gap-2 px-3 pb-3 pt-1.5 text-[13px] whitespace-nowrap"
+                style={{
+                  color: active ? theme.ink : theme.textMuted,
+                  fontWeight: active ? 700 : 500,
+                  border: 'none',
+                  background: 'none',
+                  boxShadow: active ? `inset 0 -2.5px 0 ${theme.brand}` : 'none',
+                }}
+              >
+                {t.label}
+                <span
+                  className="rounded-full px-[7px] py-px text-[11px] font-bold"
+                  style={{ backgroundColor: active ? theme.brand : theme.chipBg, color: active ? '#fff' : theme.textMuted }}
+                >
+                  {t.count}
+                </span>
+              </button>
+            );
+          })}
+        </div>
         <div className="overflow-x-auto">
           <table className="w-full border-collapse">
             <thead>
@@ -816,13 +835,19 @@ export function EquipmentPage() {
               </tr>
             </thead>
             <tbody>
-              {loading && (
-                <tr>
-                  <td colSpan={8} className="text-center py-8 text-[13px]" style={{ color: theme.textFaint }}>
-                    Loading…
-                  </td>
-                </tr>
-              )}
+              {loading &&
+                [0, 1, 2, 3, 4, 5, 6, 7].map((i) => (
+                  <tr key={`sk-${i}`} style={{ borderBottom: `1px solid ${theme.divider}` }}>
+                    <td className="pl-4 py-[14px]">
+                      <Skeleton style={{ width: 14, height: 14, borderRadius: 4 }} />
+                    </td>
+                    {[150, 90, 110, 100, 130, 80, 40].map((w, j) => (
+                      <td key={j} className="px-3 py-[14px]">
+                        <Skeleton style={{ width: w, height: 12 }} />
+                      </td>
+                    ))}
+                  </tr>
+                ))}
               {!loading && rows.length === 0 && (
                 <tr>
                   <td colSpan={8} className="text-center py-8 text-[13px]" style={{ color: theme.textMuted }}>
@@ -896,75 +921,77 @@ function EquipmentRow({ item, canManage, checked, onCheck, onOpen, onSend, onDec
       <td className={cell}>
         <Badge statusKey={item.displayStatus} />
       </td>
-      <td className="pr-4 py-[10px] text-right" onClick={(e) => e.stopPropagation()}>
-        <Popover
-          align="right"
-          button={({ toggle }) => (
-            <button
-              type="button"
-              onClick={toggle}
-              aria-label="More actions"
-              className="w-7 h-7 rounded-[7px] text-[16px] font-bold leading-none hover:bg-[#f3f5fa]"
-              style={{ color: theme.textMuted, border: 'none', background: 'none' }}
-            >
-              ⋯
-            </button>
-          )}
-        >
-          {(close) => (
-            <>
-              <MenuItem to={`/equipment/${item.equipment_id}`}>Open full page & history</MenuItem>
-              {canManage && (
-                <>
-                  <MenuItem to={`/equipment/${item.equipment_id}`}>Edit</MenuItem>
-                  {item.status !== 'sent_for_calibration' && !dim && (
+      <td className="pr-4 py-[10px]" onClick={(e) => e.stopPropagation()}>
+        <div className="flex items-center justify-end gap-1">
+          <button
+            type="button"
+            onClick={onOpen}
+            className="rounded-lg px-3 py-1 text-[12px] font-semibold hover:bg-[#eaf0ff]"
+            style={{ color: theme.brand, border: `1px solid #cddaf9`, background: '#fff' }}
+          >
+            View
+          </button>
+          <Popover
+            align="right"
+            button={({ toggle }) => (
+              <button
+                type="button"
+                onClick={toggle}
+                aria-label="More actions"
+                className="w-7 h-7 rounded-[7px] text-[16px] font-bold leading-none hover:bg-[#f3f5fa]"
+                style={{ color: theme.textMuted, border: 'none', background: 'none' }}
+              >
+                ⋯
+              </button>
+            )}
+          >
+            {(close) => (
+              <>
+                <MenuItem to={`/equipment/${item.equipment_id}`}>Open full page & history</MenuItem>
+                {canManage && (
+                  <>
+                    <MenuItem to={`/equipment/${item.equipment_id}`}>Edit</MenuItem>
+                    {item.status !== 'sent_for_calibration' && !dim && (
+                      <MenuItem
+                        onClick={() => {
+                          close();
+                          onSend();
+                        }}
+                      >
+                        Send for calibration
+                      </MenuItem>
+                    )}
+                    {!dim && (
+                      <MenuItem
+                        onClick={() => {
+                          close();
+                          onDecommission();
+                        }}
+                      >
+                        Decommission
+                      </MenuItem>
+                    )}
                     <MenuItem
+                      danger
                       onClick={() => {
                         close();
-                        onSend();
+                        onDelete();
                       }}
                     >
-                      Send for calibration
+                      Delete
                     </MenuItem>
-                  )}
-                  {!dim && (
-                    <MenuItem
-                      onClick={() => {
-                        close();
-                        onDecommission();
-                      }}
-                    >
-                      Decommission
-                    </MenuItem>
-                  )}
-                  <MenuItem
-                    danger
-                    onClick={() => {
-                      close();
-                      onDelete();
-                    }}
-                  >
-                    Delete
-                  </MenuItem>
-                </>
-              )}
-            </>
-          )}
-        </Popover>
+                  </>
+                )}
+              </>
+            )}
+          </Popover>
+        </div>
       </td>
     </tr>
   );
 }
 
 function Drawer({ item, canManage, onClose, onSend }) {
-  useEffect(() => {
-    function onKey(e) {
-      if (e.key === 'Escape') onClose();
-    }
-    document.addEventListener('keydown', onKey);
-    return () => document.removeEventListener('keydown', onKey);
-  }, [onClose]);
-
   const canSend = canManage && item.status !== 'sent_for_calibration' && item.status !== 'decommissioned';
   const fields = [
     ['Serial', item.serial_number],
@@ -978,29 +1005,13 @@ function Drawer({ item, canManage, onClose, onSend }) {
   ];
 
   return (
-    <>
-      <div className="fixed inset-0 z-40" style={{ backgroundColor: 'rgba(15,20,40,.18)' }} onClick={onClose} />
-      <aside
-        aria-label="Equipment details"
-        className="fixed top-0 right-0 bottom-0 z-50 bg-white overflow-y-auto p-6"
-        style={{ width: 'min(400px, 100%)', borderLeft: `1px solid ${theme.border}`, boxShadow: '-8px 0 30px rgba(16,24,40,.15)' }}
-      >
-        <button type="button" onClick={onClose} className="text-[13px] font-semibold" style={{ color: theme.brand, border: 'none', background: 'none' }}>
-          Close
-        </button>
-        <h2 className="text-[20px] font-bold mt-3 mb-2" style={{ color: theme.ink }}>
-          {item.name}
-        </h2>
-        <Badge statusKey={item.displayStatus} />
-        <dl className="grid gap-x-3 gap-y-2.5 my-5 text-[13px]" style={{ gridTemplateColumns: '110px 1fr' }}>
-          {fields.map(([label, value]) => (
-            <div key={label} className="contents">
-              <dt style={{ color: theme.textMuted }}>{label}</dt>
-              <dd style={{ color: theme.ink }}>{value || '—'}</dd>
-            </div>
-          ))}
-        </dl>
-        <div className="flex gap-2 flex-wrap">
+    <SideDrawer
+      label="Equipment details"
+      title={item.name}
+      description={<Badge statusKey={item.displayStatus} />}
+      onClose={onClose}
+      footer={
+        <>
           {canSend && (
             <button
               type="button"
@@ -1016,13 +1027,22 @@ function Drawer({ item, canManage, onClose, onSend }) {
             className="rounded-[10px] px-4 py-2 text-[13px] font-semibold"
             style={{ border: `1px solid ${theme.borderStrong}`, color: theme.ink }}
           >
-            {canManage ? 'Open & edit' : 'Open full page'}
+            {canManage ? 'Open & edit →' : 'Open full page →'}
           </Link>
-        </div>
-        <p className="text-[12.5px] mt-5" style={{ color: theme.textFaint }}>
-          Capabilities, calibration history and certificates are on the full page.
-        </p>
-      </aside>
-    </>
+        </>
+      }
+    >
+      <dl className="grid gap-x-3 gap-y-2.5 text-[13px]" style={{ gridTemplateColumns: '110px 1fr' }}>
+        {fields.map(([label, value]) => (
+          <div key={label} className="contents">
+            <dt style={{ color: theme.textMuted }}>{label}</dt>
+            <dd style={{ color: theme.ink }}>{value || '—'}</dd>
+          </div>
+        ))}
+      </dl>
+      <p className="text-[12.5px] mt-5" style={{ color: theme.textFaint }}>
+        Capabilities, calibration history and certificates are on the full page.
+      </p>
+    </SideDrawer>
   );
 }
