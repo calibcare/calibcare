@@ -1,6 +1,7 @@
 import { useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { theme } from '../theme';
+import { useFullPage } from './fullPage';
 
 // Shared page building blocks, following the dashboard UX patterns the
 // layout is based on (Pencil & Paper, "Dashboard Design UX Patterns"):
@@ -12,37 +13,47 @@ import { theme } from '../theme';
 // Leadspace: full-width band at the top of a page. `stats` are the page's
 // headline numbers (clickable when they lead somewhere), `children` is the
 // filter-feedback row.
+// In full-page mode the band shrinks to a thin strip (smaller title, no
+// description, stats on one line) so the content below gets the space.
 export function PageHeader({ eyebrow, title, description, stats, actions, children }) {
+  const compact = useFullPage();
   return (
-    <header className="-mx-8 -mt-7 px-8 pt-7 pb-7" style={{ background: theme.leadBg }}>
-      {eyebrow && <div className="mb-3 text-[13px] font-semibold">{eyebrow}</div>}
-      <div className="flex items-end justify-between gap-6 flex-wrap">
+    <header className={`-mx-8 -mt-7 px-8 ${compact ? 'pt-3 pb-3' : 'pt-7 pb-7'}`} style={{ background: theme.leadBg }}>
+      {eyebrow && <div className={`${compact ? 'mb-1 text-[12px]' : 'mb-3 text-[13px]'} font-semibold`}>{eyebrow}</div>}
+      <div className={`flex justify-between gap-6 flex-wrap ${compact ? 'items-center' : 'items-end'}`}>
         <div className="min-w-0 flex-1">
-          <h1 className="text-[26px] font-bold leading-tight" style={{ color: '#fff' }}>
+          <h1 className={`${compact ? 'text-[18px]' : 'text-[26px]'} font-bold leading-tight`} style={{ color: '#fff' }}>
             {title}
           </h1>
-          {description && (
+          {description && !compact && (
             <p className="text-[14px] mt-1.5 max-w-[600px]" style={{ color: theme.leadMuted }}>
               {description}
             </p>
           )}
         </div>
         {(stats?.length > 0 || actions) && (
-          <div className="flex items-end gap-7 flex-wrap">
+          <div className={`flex gap-7 flex-wrap ${compact ? 'items-center' : 'items-end'}`}>
             {stats?.map((s) => (
-              <HeaderStat key={s.label} {...s} />
+              <HeaderStat key={s.label} {...s} compact={compact} />
             ))}
             {actions}
           </div>
         )}
       </div>
-      {children && <div className="mt-4">{children}</div>}
+      {children && <div className={compact ? 'mt-2' : 'mt-4'}>{children}</div>}
     </header>
   );
 }
 
-function HeaderStat({ label, value, onClick, active }) {
-  const body = (
+function HeaderStat({ label, value, onClick, active, compact }) {
+  const body = compact ? (
+    <span className="text-[13px] whitespace-nowrap" style={{ color: theme.leadMuted, textDecoration: active ? 'underline' : 'none', textUnderlineOffset: 4 }}>
+      <b className="text-[16px] mr-1.5" style={{ color: '#fff' }}>
+        {value}
+      </b>
+      {label}
+    </span>
+  ) : (
     <>
       <span className="block text-[26px] font-bold leading-none" style={{ color: '#fff' }}>
         {value}
@@ -62,11 +73,12 @@ function HeaderStat({ label, value, onClick, active }) {
 
 // A button that reads well on the dark leadspace.
 export function HeaderButton({ children, ...props }) {
+  const compact = useFullPage();
   return (
     <button
       type="button"
       {...props}
-      className="rounded-[10px] px-[18px] py-2.5 text-[13.5px] font-semibold whitespace-nowrap"
+      className={`rounded-[10px] px-[18px] ${compact ? 'py-1.5' : 'py-2.5'} text-[13.5px] font-semibold whitespace-nowrap`}
       style={{ backgroundColor: '#fff', color: theme.leadText, border: 'none' }}
     >
       {children}

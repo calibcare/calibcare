@@ -2,7 +2,8 @@ import { useState, useRef, useEffect } from 'react';
 import { NavLink, Outlet, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { theme } from '../theme';
-import { HomeIcon, PackageIcon, BellIcon, LogOutIcon, SearchIcon, UsersIcon, ShieldIcon, SettingsIcon, KeyIcon, ChevronDownIcon } from './icons';
+import { HomeIcon, PackageIcon, BellIcon, LogOutIcon, SearchIcon, UsersIcon, ShieldIcon, SettingsIcon, KeyIcon, ChevronDownIcon, ExpandIcon, CollapseIcon } from './icons';
+import { FullPageContext } from './fullPage';
 
 // Navigation, grouped like with like: everyday pages first, management
 // pages (only for the positions that can use them) under their own label.
@@ -192,7 +193,7 @@ function Sidebar() {
   );
 }
 
-function TopBar() {
+function TopBar({ fullPage, onToggleFullPage }) {
   const { user } = useAuth();
   const navigate = useNavigate();
   const [search, setSearch] = useState('');
@@ -204,6 +205,24 @@ function TopBar() {
 
   return (
     <div className="h-[64px] shrink-0 bg-white flex items-center justify-end gap-3 px-8" style={{ borderBottom: `1px solid ${theme.border}` }}>
+      {fullPage && (
+        <div className="flex items-center gap-2.5 mr-auto">
+          <LogoMark />
+          <span className="text-[17px] font-bold tracking-tight" style={{ color: '#182448' }}>
+            Calibcare
+          </span>
+        </div>
+      )}
+      <button
+        type="button"
+        onClick={onToggleFullPage}
+        title={fullPage ? 'Exit full page (show the menu again)' : 'Full page (hide the menu and title band)'}
+        className="flex items-center gap-2 h-9 rounded-[10px] px-3 text-[13px] font-semibold shrink-0 hover:bg-[#e8ecf4]"
+        style={{ backgroundColor: fullPage ? '#eaf0ff' : theme.chipBg, color: fullPage ? theme.brand : theme.textMuted, border: 'none' }}
+      >
+        {fullPage ? <CollapseIcon color={theme.brand} /> : <ExpandIcon color={theme.textMuted} />}
+        {fullPage ? 'Exit full page' : 'Full page'}
+      </button>
       <form onSubmit={handleSearchSubmit} className="relative">
         <span className="absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none">
           <SearchIcon color={theme.textFaint} />
@@ -227,16 +246,43 @@ function TopBar() {
   );
 }
 
+const FULL_PAGE_KEY = 'calibcare_full_page';
+
+// Remembered per browser; storage can be unavailable (private mode), in
+// which case full page simply starts off.
+function readFullPage() {
+  try {
+    return localStorage.getItem(FULL_PAGE_KEY) === '1';
+  } catch {
+    return false;
+  }
+}
+
 export function Layout() {
+  const [fullPage, setFullPage] = useState(readFullPage);
+
+  function toggleFullPage() {
+    setFullPage((v) => {
+      try {
+        localStorage.setItem(FULL_PAGE_KEY, v ? '0' : '1');
+      } catch {
+        // not remembered -- still toggles for this visit
+      }
+      return !v;
+    });
+  }
+
   return (
-    <div className="min-h-screen flex" style={{ backgroundColor: theme.pageBg }}>
-      <Sidebar />
-      <main className="flex-1 flex flex-col min-w-0">
-        <TopBar />
-        <div className="flex-1 px-8 py-7">
-          <Outlet />
-        </div>
-      </main>
-    </div>
+    <FullPageContext.Provider value={fullPage}>
+      <div className="min-h-screen flex" style={{ backgroundColor: theme.pageBg }}>
+        {!fullPage && <Sidebar />}
+        <main className="flex-1 flex flex-col min-w-0">
+          <TopBar fullPage={fullPage} onToggleFullPage={toggleFullPage} />
+          <div className="flex-1 px-8 py-7">
+            <Outlet />
+          </div>
+        </main>
+      </div>
+    </FullPageContext.Provider>
   );
 }
