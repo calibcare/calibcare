@@ -761,13 +761,14 @@ coopproject/
 
 - User asked for a summary of all work from day one for their report. Written as a Claude Doc, "CalibCare — Project Work Log (Jul–Oct 2026)": https://claude.ai/artifact/5vkGbU6nZJoaedidT8HLXd — overview, four dated phase tables (Jul / Aug / Sep / Oct), problems + fixes, technologies + architecture diagram, status + next-step checklist. Built from this file + git history; not a change to `report/update report.docx`.
 
-## New top position: "Admin - System Owner" (2026-10-27)
+## New top position: "Admin - System Owner" (2026-10-27) — deployed
 
 - User asked for `ninedenim0@gmail.com` (Weerada, was Deputy Manager) to become the website's owner with access to everything. Added position key **`owner`** (label "Admin - System Owner", rank 1; others shift to 2–6) in `positions.js`. Key isn't `admin` because the retired pre-positions role was called `admin` and a test asserts that string grants nothing.
 - Owner = all Deputy Manager rights + `canManageOwner`: only an Owner can give/take the Owner position (`canAssignPosition()`, enforced in `PATCH /api/users/:id/position`) or manage an Owner's account on the Admin page (`canManageAccount()`). Deputy Manager otherwise unchanged (still manages everyone else, incl. other DMs). Nobody changes their own position (existing rule).
 - Public user gains `position_count` (Settings "1 of 6", no hardcoded 5) and `can_manage_owner`; Team page hides the Owner option and shows an Owner's row read-only for non-Owners. Reminders page hints say "System Owner or a Deputy Manager".
 - `database/add_owner_position.sql` (+ `schema.sql`): ENUM gains `owner`. **Live order**: ALTER → deploy backend → `UPDATE users SET role='owner' WHERE email='ninedenim0@gmail.com'` (an `owner` row under old code = unknown position = no access).
 - Tests 57 pass (4 new). Verified locally on a send-disabled test server: as DM — demote Owner 403, make Owner 403, normal moves 200, Admin page can_manage false + temp password 403 for the Owner; as Owner (test account temporarily) — make/unmake Owner 200, own position 403. Local DB: ninedenim0 = owner; admin@mcems.local back to deputy_manager.
+- **Deployed** in order: production backup `~/Documents/calibcare-backups/mcems-production-2026-10-27-before-owner-position.sql` → ENUM ALTER → push `792903d` (Railway deployment `16420ded` SUCCESS) + `vercel deploy --prod` → `UPDATE … role='owner'` for ninedenim0@gmail.com. Production users now: ninedenim0@ = owner, studytorpaina@ = senior_specialist.
 
 ## Next up
 
