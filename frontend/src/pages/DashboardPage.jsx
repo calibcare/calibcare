@@ -106,7 +106,6 @@ function DeviceDrawer({ item, onClose }) {
   const fields = detail && [
     ['Serial number', detail.serial_number],
     ['Model', detail.model],
-    ['Manufacturer', detail.manufacturer],
     ['Category', detail.category],
     ['Site', detail.location_category],
     ['Location', detail.location],
