@@ -30,6 +30,12 @@ export function AccessLevelsPage() {
     return <Navigate to="/settings" replace />;
   }
 
+  // Only the System Owner may give or change the Owner position (the
+  // backend enforces this; here it just hides what would be refused).
+  const ownerKeys = positions.filter((p) => p.canManageOwner).map((p) => p.key);
+  const canManageOwner = Boolean(user?.can_manage_owner);
+  const choices = canManageOwner ? positions : positions.filter((p) => !p.canManageOwner);
+
   async function handlePositionChange(userId, position) {
     setSavingId(userId);
     setError('');
@@ -75,7 +81,7 @@ export function AccessLevelsPage() {
                   )}
                 </span>
 
-                {canAssign && !isSelf ? (
+                {canAssign && !isSelf && (canManageOwner || !ownerKeys.includes(u.role)) ? (
                   <select
                     value={u.role}
                     disabled={savingId === u.user_id}
@@ -83,7 +89,7 @@ export function AccessLevelsPage() {
                     className="text-[12px] rounded-md px-2 py-1.5 shrink-0"
                     style={{ border: `1px solid ${theme.borderStrong}`, color: theme.ink, backgroundColor: '#fff' }}
                   >
-                    {positions.map((p) => (
+                    {choices.map((p) => (
                       <option key={p.key} value={p.key}>
                         {p.label}
                       </option>

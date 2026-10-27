@@ -1,7 +1,7 @@
 import { Router } from 'express';
 import { pool } from '../db.js';
 import { requireCapability } from '../middleware/auth.js';
-import { POSITIONS, getPosition } from '../services/positions.js';
+import { POSITIONS, getPosition, canAssignPosition } from '../services/positions.js';
 import { toPublicUser } from './auth.js';
 
 export const usersRouter = Router();
@@ -40,8 +40,9 @@ usersRouter.get('/', async (req, res, next) => {
   }
 });
 
-// PATCH /api/users/:id/position -- promote or demote someone (Deputy
-// Manager only, since that's the position that carries canRunReminders).
+// PATCH /api/users/:id/position -- promote or demote someone (System Owner
+// and Deputy Manager, the positions that carry canRunReminders; only the
+// Owner can touch the Owner position -- see canAssignPosition()).
 usersRouter.patch('/:id/position', requireCapability('canRunReminders'), async (req, res, next) => {
   try {
     const { position } = req.body;
@@ -54,10 +55,15 @@ usersRouter.patch('/:id/position', requireCapability('canRunReminders'), async (
       return res.status(403).json({ error: 'you cannot change your own position' });
     }
 
-    const [result] = await pool.query('UPDATE users SET role = ? WHERE user_id = ?', [position, req.params.id]);
-    if (result.affectedRows === 0) {
+    const [targets] = await pool.query('SELECT role FROM users WHERE user_id = ?', [req.params.id]);
+    if (targets.length === 0) {
       return res.status(404).json({ error: 'user not found' });
     }
+    if (!canAssignPosition(req.user.role, targets[0].role, position)) {
+      return res.status(403).json({ error: 'only the System Owner can give or change the System Owner position' });
+    }
+
+    await pool.query('UPDATE users SET role = ? WHERE user_id = ?', [position, req.params.id]);
 
     const [rows] = await pool.query('SELECT * FROM users WHERE user_id = ?', [req.params.id]);
     res.json(toPublicUser(rows[0]));

@@ -10,12 +10,16 @@
  * Every position can view everything;
  * the capabilities below are the additional rights layered on top.
  */
+// canManageOwner: only the System Owner can give someone the Owner
+// position, change an Owner's position, or reset an Owner's account --
+// so a Deputy Manager can't take over or demote the site's owner.
 export const POSITIONS = [
-  { key: 'deputy_manager', label: 'Deputy Manager - Engineering', rank: 1, canEdit: true, canRunReminders: true },
-  { key: 'senior_specialist', label: 'Senior Specialist - Engineering', rank: 2, canEdit: true, canRunReminders: false },
-  { key: 'specialist_1_pm', label: 'Specialist 1 - Engineering-PM', rank: 3, canEdit: false, canRunReminders: false },
-  { key: 'specialist_1', label: 'Specialist 1 - Engineering', rank: 4, canEdit: false, canRunReminders: false },
-  { key: 'specialist_2', label: 'Specialist 2 - Engineering', rank: 5, canEdit: false, canRunReminders: false },
+  { key: 'owner', label: 'Admin - System Owner', rank: 1, canEdit: true, canRunReminders: true, canManageOwner: true },
+  { key: 'deputy_manager', label: 'Deputy Manager - Engineering', rank: 2, canEdit: true, canRunReminders: true, canManageOwner: false },
+  { key: 'senior_specialist', label: 'Senior Specialist - Engineering', rank: 3, canEdit: true, canRunReminders: false, canManageOwner: false },
+  { key: 'specialist_1_pm', label: 'Specialist 1 - Engineering-PM', rank: 4, canEdit: false, canRunReminders: false, canManageOwner: false },
+  { key: 'specialist_1', label: 'Specialist 1 - Engineering', rank: 5, canEdit: false, canRunReminders: false, canManageOwner: false },
+  { key: 'specialist_2', label: 'Specialist 2 - Engineering', rank: 6, canEdit: false, canRunReminders: false, canManageOwner: false },
 ];
 
 /** New accounts start at the most junior position and are promoted by a Deputy Manager. */
@@ -32,15 +36,31 @@ export function hasCapability(key, capability) {
 
 /**
  * Whether `actorKey` may manage `targetKey`'s account from the Admin page
- * (issue a temporary password, resend verification). Deputy Manager can
- * help anyone; otherwise only strictly more junior positions -- so a Senior
- * Specialist can't take over a Deputy Manager's account by resetting it.
- * Requires canEdit, the same capability that opens the Admin page.
+ * (issue a temporary password, resend verification). The System Owner can
+ * help anyone; a Deputy Manager anyone except an Owner; otherwise only
+ * strictly more junior positions -- so a Senior Specialist can't take over a
+ * Deputy Manager's account by resetting it. Requires canEdit, the same
+ * capability that opens the Admin page.
  */
 export function canManageAccount(actorKey, targetKey) {
   const actor = getPosition(actorKey);
   const target = getPosition(targetKey);
   if (!actor || !target || !actor.canEdit) return false;
-  if (actor.key === 'deputy_manager') return true;
+  if (target.canManageOwner && !actor.canManageOwner) return false;
+  if (actor.canRunReminders) return true;
   return actor.rank < target.rank;
+}
+
+/**
+ * Whether `actorKey` may move someone currently at `targetKey` to `newKey`
+ * on the Team page. Needs canRunReminders (Owner + Deputy Manager); only
+ * the Owner may touch the Owner position, either side of the change.
+ */
+export function canAssignPosition(actorKey, targetKey, newKey) {
+  const actor = getPosition(actorKey);
+  const target = getPosition(targetKey);
+  const next = getPosition(newKey);
+  if (!actor || !target || !next || !actor.canRunReminders) return false;
+  if ((target.canManageOwner || next.canManageOwner) && !actor.canManageOwner) return false;
+  return true;
 }

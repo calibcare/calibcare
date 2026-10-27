@@ -3,7 +3,7 @@ import { pool } from '../db.js';
 import { hashPassword, verifyPassword, signToken } from '../services/authService.js';
 import { createOtp, verifyOtp } from '../services/otpStore.js';
 import { sendOtpEmail } from '../services/emailService.js';
-import { getPosition, DEFAULT_POSITION_KEY } from '../services/positions.js';
+import { POSITIONS, getPosition, DEFAULT_POSITION_KEY } from '../services/positions.js';
 import { requireAuth } from '../middleware/auth.js';
 
 export const authRouter = Router();
@@ -19,8 +19,10 @@ export function toPublicUser(row) {
     role: row.role,
     position_label: position?.label || row.role,
     position_rank: position?.rank ?? null,
+    position_count: POSITIONS.length,
     can_edit: Boolean(position?.canEdit),
     can_run_reminders: Boolean(position?.canRunReminders),
+    can_manage_owner: Boolean(position?.canManageOwner),
     line_user_id: row.line_user_id,
     must_change_password: Boolean(row.must_change_password),
   };

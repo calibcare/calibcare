@@ -282,7 +282,7 @@ function DueDateCheckCard({ user, summary, onRun }) {
           {running ? 'Running…' : 'Run now'}
         </button>
       </div>
-      {!canRun && <Hint>Only a Deputy Manager can trigger a manual check — button stays visible but disabled for other roles.</Hint>}
+      {!canRun && <Hint>Only the System Owner or a Deputy Manager can trigger a manual check — button stays visible but disabled for other roles.</Hint>}
     </Card>
   );
 }
@@ -358,7 +358,7 @@ function RulesCard({ rules, canAssign, onToggle }) {
         ))}
       </div>
 
-      {!canAssign && <Hint>Only a Deputy Manager can change reminder rules — everyone else sees them read-only.</Hint>}
+      {!canAssign && <Hint>Only the System Owner or a Deputy Manager can change reminder rules — everyone else sees them read-only.</Hint>}
     </Card>
   );
 }

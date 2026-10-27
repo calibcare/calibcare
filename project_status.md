@@ -741,6 +741,7 @@ coopproject/
 
 - User supplied the exact layout. New exported `buildReminderMessage(equipment, daysUntilDue, nextDate)` in `reminderService.js`: "🔔 [CalibCare] Calibration Due Soon" / Device / Model / S/N / "⏰ Due in: Today | 1 day | N days" / "📅 Next calibration: 27 Oct 2026" (built from the date string's parts, no timezone shift) / "Please schedule calibration before the due date." Then user asked for email in the same layout → it's now the LINE text **and** the plain-text email body; old one-line `buildMessage()`/`BUCKET_LABEL` removed. Email subject unchanged: "[CalibCare] Calibration reminder: <name>".
 - Tests: exact-text assert on the LINE send, email body == LINE text, due-in/date-format test → 53 pass.
+- Sample sent 2026-10-27 at the user's request (one-off scratch script, local `.env`: real LINE token + Gmail SMTP, not logged in notification_log): LINE to Weerada only, email to ninedenim0@ + studytorpaina@ — all three accepted.
 - Device/model text comes straight from the DB (e.g. equipment "Defibrillator/Transcutanreous Analyzer", model "Impulse7000DP" — the user's sample had these spelled/spaced differently).
 - **Deployed**: `dd43909` pushed → Railway `calibcare` Online (`/health` ok); `checknotifications` redeployed → deployment `d7c8e319` SUCCESS.
 
@@ -755,6 +756,18 @@ coopproject/
 - Symptom (user screenshot): history said "Oct 27 at 9:09 AM" for emails sent at 16:09 Thailand time. Cause: `notification_log.sent_at` is a TIMESTAMP; with `dateStrings: true` it comes back as a bare string in the DB server's timezone (Railway MySQL = UTC, local Mac = +07), and the browser parsed it as local time. Local dev looked right, which is why it went unnoticed.
 - Fix (`routes/reminders.js` only): `/summary` and `/history` select `UNIX_TIMESTAMP(...)` (timezone-independent) and return ISO strings with `Z` via `unixToIso()`; the frontend's existing `new Date(...)` then shows viewer-local time. No frontend change, no cron change. Verified locally: same event = raw 13:44 (+07 session) vs 06:44 (UTC session) but identical unix value; API returns `…T06:44:30.000Z` → "Aug 5, 1:44 PM" in Bangkok. 53 tests pass.
 - Other pages don't show clock times (Admin shows created date only via `.slice(0,10)` — would be the UTC date for accounts created 00:00–07:00 Thai time; not fixed).
+
+## Co-op report work log written (2026-10-27)
+
+- User asked for a summary of all work from day one for their report. Written as a Claude Doc, "CalibCare — Project Work Log (Jul–Oct 2026)": https://claude.ai/artifact/5vkGbU6nZJoaedidT8HLXd — overview, four dated phase tables (Jul / Aug / Sep / Oct), problems + fixes, technologies + architecture diagram, status + next-step checklist. Built from this file + git history; not a change to `report/update report.docx`.
+
+## New top position: "Admin - System Owner" (2026-10-27)
+
+- User asked for `ninedenim0@gmail.com` (Weerada, was Deputy Manager) to become the website's owner with access to everything. Added position key **`owner`** (label "Admin - System Owner", rank 1; others shift to 2–6) in `positions.js`. Key isn't `admin` because the retired pre-positions role was called `admin` and a test asserts that string grants nothing.
+- Owner = all Deputy Manager rights + `canManageOwner`: only an Owner can give/take the Owner position (`canAssignPosition()`, enforced in `PATCH /api/users/:id/position`) or manage an Owner's account on the Admin page (`canManageAccount()`). Deputy Manager otherwise unchanged (still manages everyone else, incl. other DMs). Nobody changes their own position (existing rule).
+- Public user gains `position_count` (Settings "1 of 6", no hardcoded 5) and `can_manage_owner`; Team page hides the Owner option and shows an Owner's row read-only for non-Owners. Reminders page hints say "System Owner or a Deputy Manager".
+- `database/add_owner_position.sql` (+ `schema.sql`): ENUM gains `owner`. **Live order**: ALTER → deploy backend → `UPDATE users SET role='owner' WHERE email='ninedenim0@gmail.com'` (an `owner` row under old code = unknown position = no access).
+- Tests 57 pass (4 new). Verified locally on a send-disabled test server: as DM — demote Owner 403, make Owner 403, normal moves 200, Admin page can_manage false + temp password 403 for the Owner; as Owner (test account temporarily) — make/unmake Owner 200, own position 403. Local DB: ninedenim0 = owner; admin@mcems.local back to deputy_manager.
 
 ## Next up
 

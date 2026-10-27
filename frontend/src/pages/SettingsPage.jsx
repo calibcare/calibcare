@@ -31,7 +31,7 @@ export function SettingsPage() {
         <Row label="Name" value={user?.full_name} />
         <Row label="Email" value={user?.email} />
         <Row label="Position" value={user?.position_label} />
-        <Row label="Access level" value={user?.position_rank ? `${user.position_rank} of 5` : '—'} />
+        <Row label="Access level" value={user?.position_rank ? user.position_count ? `${user.position_rank} of ${user.position_count}` : String(user.position_rank) : '—'} />
         <Row label="Can edit records" value={user?.can_edit ? 'Yes' : 'No — view only'} />
         <div className="pt-4">
           <Link

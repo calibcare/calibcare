@@ -39,7 +39,7 @@ CREATE TABLE users (
     full_name      VARCHAR(150)    NOT NULL,
     email          VARCHAR(150)    NOT NULL,
     password_hash  VARCHAR(255)    NOT NULL,
-    role           ENUM('deputy_manager', 'senior_specialist', 'specialist_1_pm', 'specialist_1', 'specialist_2')
+    role           ENUM('owner', 'deputy_manager', 'senior_specialist', 'specialist_1_pm', 'specialist_1', 'specialist_2')
                                    NOT NULL DEFAULT 'specialist_2' COMMENT 'engineering position; doubles as the access level -- see backend/src/services/positions.js',
     line_user_id   VARCHAR(64)     NULL COMMENT 'LINE Messaging API user id, for targeted reminders',
     email_verified TINYINT(1)      NOT NULL DEFAULT 0 COMMENT 'set true once the registration email-OTP is confirmed; login is blocked until then',
