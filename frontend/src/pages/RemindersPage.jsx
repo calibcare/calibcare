@@ -297,7 +297,7 @@ function RulesCard({ rules, canAssign, onToggle }) {
         </span>
       </div>
 
-      <div className="rounded-xl overflow-hidden" style={{ border: `1px solid ${theme.border}` }}>
+      <div className="rounded-xl scroll-table" style={{ border: `1px solid ${theme.border}` }}>
         <div className="flex items-center px-4 py-2.5" style={{ backgroundColor: '#fafbfd' }}>
           <span className="flex-[2.2] text-[11px] font-bold uppercase tracking-wide" style={{ color: theme.textFaint }}>
             Trigger
@@ -407,7 +407,7 @@ function HistoryCard() {
 
       {error && <div className="text-[12.5px]" style={{ color: theme.criticalStrong }}>{error}</div>}
 
-      <div className="rounded-xl overflow-hidden" style={{ border: `1px solid ${theme.border}` }}>
+      <div className="rounded-xl scroll-table" style={{ border: `1px solid ${theme.border}` }}>
         <div className="flex items-center px-4 py-2.5" style={{ backgroundColor: '#fafbfd' }}>
           <span className="flex-[1.3] text-[11px] font-bold uppercase tracking-wide" style={{ color: theme.textFaint }}>
             Sent
@@ -530,7 +530,7 @@ export function RemindersPage() {
         </div>
       )}
 
-      <div className="flex gap-5 items-stretch">
+      <div className="flex flex-col md:flex-row gap-5 md:items-stretch">
         <ConnectLineCard user={user} summary={summary} />
         <DueDateCheckCard user={user} summary={summary} onRun={loadSummary} />
       </div>

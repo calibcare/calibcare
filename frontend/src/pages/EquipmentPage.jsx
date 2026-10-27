@@ -607,7 +607,7 @@ export function EquipmentPage() {
       {showForm && (
         <form
           onSubmit={handleCreate}
-          className="grid grid-cols-2 gap-3 p-[18px] rounded-2xl bg-white"
+          className="grid grid-cols-1 md:grid-cols-2 gap-3 p-[18px] rounded-2xl bg-white"
           style={{ border: `1px solid ${theme.border}`, boxShadow: theme.cardShadow }}
         >
           <input required placeholder="Name" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} className="input" />
@@ -627,7 +627,7 @@ export function EquipmentPage() {
               </option>
             ))}
           </select>
-          <div className="col-span-2">
+          <div className="md:col-span-2">
             <button
               disabled={saving}
               className="rounded-[10px] px-4 py-2 text-[13px] font-semibold text-white disabled:opacity-50"
@@ -643,7 +643,7 @@ export function EquipmentPage() {
       <div className="flex items-center gap-2 flex-wrap">
         <div
           className="flex items-center gap-2 rounded-[10px] px-3.5 py-[9px] bg-white"
-          style={{ border: `1px solid ${theme.borderStrong}`, flex: '1 1 240px', maxWidth: 340 }}
+          style={{ border: `1px solid ${theme.borderStrong}`, flex: '1 1 240px', maxWidth: 'min(340px, 100%)' }}
         >
           <SearchIcon size={15} color={theme.textFaint} />
           <input

@@ -18,11 +18,11 @@ import { useFullPage } from './fullPage';
 export function PageHeader({ eyebrow, title, description, stats, actions, children }) {
   const compact = useFullPage();
   return (
-    <header className={`-mx-8 -mt-7 px-8 ${compact ? 'pt-3 pb-3' : 'pt-7 pb-7'}`} style={{ background: theme.leadBg }}>
+    <header className={`-mx-4 -mt-5 px-4 md:-mx-8 md:-mt-7 md:px-8 ${compact ? 'pt-3 pb-3' : 'pt-5 pb-5 md:pt-7 md:pb-7'}`} style={{ background: theme.leadBg }}>
       {eyebrow && <div className={`${compact ? 'mb-1 text-[12px]' : 'mb-3 text-[13px]'} font-semibold`}>{eyebrow}</div>}
-      <div className={`flex justify-between gap-6 flex-wrap ${compact ? 'items-center' : 'items-end'}`}>
+      <div className={`flex flex-col md:flex-row md:justify-between gap-3 md:gap-6 ${compact ? 'md:items-center' : 'md:items-end'}`}>
         <div className="min-w-0 flex-1">
-          <h1 className={`${compact ? 'text-[18px]' : 'text-[26px]'} font-bold leading-tight`} style={{ color: '#fff' }}>
+          <h1 className={`${compact ? 'text-[18px]' : 'text-[22px] md:text-[26px]'} font-bold leading-tight`} style={{ color: '#fff' }}>
             {title}
           </h1>
           {description && !compact && (
@@ -32,7 +32,7 @@ export function PageHeader({ eyebrow, title, description, stats, actions, childr
           )}
         </div>
         {(stats?.length > 0 || actions) && (
-          <div className={`flex gap-7 flex-wrap ${compact ? 'items-center' : 'items-end'}`}>
+          <div className={`flex gap-5 md:gap-7 flex-wrap ${compact ? 'items-center' : 'items-end'}`}>
             {stats?.map((s) => (
               <HeaderStat key={s.label} {...s} compact={compact} />
             ))}
@@ -132,14 +132,14 @@ export function Section({ title, hint, to, actionLabel = 'View all', action, chi
             {title}
           </h2>
           {hint && (
-            <span className="text-[12.5px]" style={{ color: theme.textFaint }}>
+            <span className="hidden sm:inline text-[12.5px]" style={{ color: theme.textFaint }}>
               {hint}
             </span>
           )}
         </div>
         {action}
         {to && (
-          <Link to={to} className="rounded-lg px-3 py-1.5 text-[12.5px] font-semibold" style={{ border: `1px solid ${theme.borderStrong}`, color: theme.brand, backgroundColor: '#fff' }}>
+          <Link to={to} className="rounded-lg px-3 py-1.5 text-[12.5px] font-semibold whitespace-nowrap shrink-0" style={{ border: `1px solid ${theme.borderStrong}`, color: theme.brand, backgroundColor: '#fff' }}>
             {actionLabel} →
           </Link>
         )}

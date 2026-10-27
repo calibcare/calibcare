@@ -49,7 +49,7 @@ const smallFieldStyle = { ...fieldStyle, padding: '9px 11px', fontSize: 13 };
 
 function Card({ children }) {
   return (
-    <div className="bg-white rounded-2xl p-6" style={{ border: `1px solid ${theme.border}`, boxShadow: theme.cardShadow }}>
+    <div className="bg-white rounded-2xl p-4 md:p-6" style={{ border: `1px solid ${theme.border}`, boxShadow: theme.cardShadow }}>
       {children}
     </div>
   );
@@ -304,7 +304,7 @@ export function EquipmentDetailPage() {
         </h2>
 
         {canManage && editForm && (
-          <form onSubmit={handleSave} className="grid grid-cols-2 gap-x-6 gap-y-4">
+          <form onSubmit={handleSave} className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-4">
             <div>
               <FieldLabel>Name</FieldLabel>
               <input value={editForm.name} onChange={(e) => setEditForm({ ...editForm, name: e.target.value })} style={fieldStyle} />
@@ -360,11 +360,11 @@ export function EquipmentDetailPage() {
                 </span>
               </div>
             </div>
-            <div className="col-span-2">
+            <div className="md:col-span-2">
               <FieldLabel>Remarks</FieldLabel>
               <input value={editForm.remarks} onChange={(e) => setEditForm({ ...editForm, remarks: e.target.value })} style={fieldStyle} />
             </div>
-            <div className="col-span-2 flex items-center justify-between mt-1">
+            <div className="md:col-span-2 flex items-center justify-between mt-1">
               <button
                 disabled={saving}
                 className="rounded-[9px] px-5 py-2.5 text-[13.5px] font-semibold text-white disabled:opacity-50"
@@ -427,7 +427,7 @@ export function EquipmentDetailPage() {
           Capabilities
         </h2>
 
-        <div className="rounded-xl overflow-hidden" style={{ border: `1px solid ${theme.border}` }}>
+        <div className="rounded-xl scroll-table" style={{ border: `1px solid ${theme.border}` }}>
           <div className="flex items-center px-4 py-2.5" style={{ backgroundColor: '#fafbfd' }}>
             <span className="flex-[1.3] text-[11px] font-bold uppercase tracking-wide" style={{ color: theme.textFaint }}>Purpose</span>
             <span className="flex-[1.6] text-[11px] font-bold uppercase tracking-wide" style={{ color: theme.textFaint }}>Measurement range</span>
@@ -480,7 +480,7 @@ export function EquipmentDetailPage() {
               </button>
             ) : (
               <form onSubmit={handleAddCapability} className="border rounded-xl p-4 flex flex-col gap-3" style={{ borderColor: theme.borderStrong, borderStyle: 'dashed' }}>
-                <div className="grid grid-cols-5 gap-3">
+                <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
                   <div>
                     <FieldLabel>Purpose</FieldLabel>
                     <input required value={capForm.measurement_purpose} onChange={(e) => setCapForm({ ...capForm, measurement_purpose: e.target.value })} style={smallFieldStyle} />
@@ -533,7 +533,7 @@ export function EquipmentDetailPage() {
           Calibration history
         </h2>
 
-        <div className="rounded-xl overflow-hidden" style={{ border: `1px solid ${theme.border}` }}>
+        <div className="rounded-xl scroll-table" style={{ border: `1px solid ${theme.border}` }}>
           <div className="flex items-center px-4 py-2.5" style={{ backgroundColor: '#fafbfd' }}>
             <span className="flex-[1.2] text-[11px] font-bold uppercase tracking-wide" style={{ color: theme.textFaint }}>Calibration date</span>
             <span className="flex-1 text-[11px] font-bold uppercase tracking-wide" style={{ color: theme.textFaint }}>Next due</span>
@@ -599,7 +599,7 @@ export function EquipmentDetailPage() {
               </button>
             ) : (
               <form onSubmit={handleAddCalibration} className="border rounded-xl p-4 flex flex-col gap-3" style={{ borderColor: theme.borderStrong, borderStyle: 'dashed' }}>
-                <div className="grid grid-cols-3 gap-3">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
                   <div>
                     <FieldLabel>Calibration date</FieldLabel>
                     <input required type="date" value={calForm.calibration_date} onChange={(e) => setCalForm({ ...calForm, calibration_date: e.target.value })} style={smallFieldStyle} />

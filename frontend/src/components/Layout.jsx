@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from 'react';
-import { NavLink, Outlet, useNavigate } from 'react-router-dom';
+import { NavLink, Outlet, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { theme } from '../theme';
 import { HomeIcon, PackageIcon, BellIcon, LogOutIcon, SearchIcon, UsersIcon, ShieldIcon, SettingsIcon, KeyIcon, ChevronDownIcon, MenuIcon } from './icons';
@@ -113,13 +113,13 @@ function ProfileMenu() {
         onClick={() => setOpen((v) => !v)}
         aria-haspopup="menu"
         aria-expanded={open}
-        className="flex items-center gap-2.5 rounded-[12px] pl-1.5 pr-3 py-1.5 hover:bg-[#f3f5fa]"
+        className="flex items-center gap-2.5 rounded-[12px] p-0.5 md:pl-1.5 md:pr-3 md:py-1.5 hover:bg-[#f3f5fa]"
         style={{ border: `1px solid ${open ? theme.borderStrong : 'transparent'}`, backgroundColor: open ? theme.chipBg : 'transparent' }}
       >
         <span className="w-9 h-9 rounded-full flex items-center justify-center text-[13px] font-bold text-white shrink-0" style={{ backgroundColor: theme.brandDark }}>
           {initial}
         </span>
-        <span className="text-left max-w-[180px]">
+        <span className="hidden md:block text-left max-w-[180px]">
           <span className="block text-[13px] font-semibold truncate" style={{ color: theme.ink }}>
             {user?.full_name}
           </span>
@@ -127,7 +127,9 @@ function ProfileMenu() {
             {user?.position_label}
           </span>
         </span>
-        <ChevronDownIcon color={theme.textMuted} />
+        <span className="hidden md:inline">
+          <ChevronDownIcon color={theme.textMuted} />
+        </span>
       </button>
 
       {open && (
@@ -168,32 +170,54 @@ function ProfileMenu() {
   );
 }
 
-function Sidebar() {
+// Desktop: a fixed column. Phone (`overlay`): the same menu slides in over
+// the page from the ☰ button and closes on a tap outside it.
+function Sidebar({ overlay, onClose }) {
   const { user } = useAuth();
   const manageItems = [...(user?.can_run_reminders ? [REMINDERS_NAV_ITEM, TEAM_NAV_ITEM] : []), ...(user?.can_edit ? [ADMIN_NAV_ITEM] : [])];
 
   return (
-    <aside
-      className="w-[240px] shrink-0 h-screen sticky top-0 flex flex-col px-4 py-6"
-      style={{ backgroundColor: theme.sidebarBg, borderRight: `1px solid ${theme.borderStrong}` }}
-    >
-      <div className="flex flex-col gap-7">
-        <div className="flex items-center gap-2.5 px-2 pb-1">
-          <LogoMark />
-          <span className="text-[19px] font-bold tracking-tight" style={{ color: '#182448' }}>
-            Calibcare
-          </span>
+    <>
+      {overlay && <div className="fixed inset-0 z-40" style={{ backgroundColor: 'rgba(15,20,40,.35)' }} onClick={onClose} />}
+      <aside
+        className={
+          overlay
+            ? 'fixed top-0 left-0 bottom-0 z-50 w-[260px] max-w-[85vw] flex flex-col px-4 py-6 overflow-y-auto'
+            : 'hidden md:flex w-[240px] shrink-0 h-screen sticky top-0 flex-col px-4 py-6'
+        }
+        style={{ backgroundColor: theme.sidebarBg, borderRight: `1px solid ${theme.borderStrong}`, boxShadow: overlay ? '8px 0 30px rgba(16,24,40,.18)' : 'none' }}
+      >
+        <div className="flex flex-col gap-7">
+          <div className="flex items-center gap-2.5 px-2 pb-1">
+            <LogoMark />
+            <span className="text-[19px] font-bold tracking-tight" style={{ color: '#182448' }}>
+              Calibcare
+            </span>
+          </div>
+          <nav className="flex flex-col gap-6">
+            <NavGroup label="Overview" items={MAIN_NAV_ITEMS} />
+            <NavGroup label="Manage" items={manageItems} />
+          </nav>
         </div>
-        <nav className="flex flex-col gap-6">
-          <NavGroup label="Overview" items={MAIN_NAV_ITEMS} />
-          <NavGroup label="Manage" items={manageItems} />
-        </nav>
-      </div>
-    </aside>
+      </aside>
+    </>
   );
 }
 
-function TopBar({ fullPage, onToggleFullPage }) {
+// True on screens at least as wide as Tailwind's `md` breakpoint (768px).
+function useIsDesktop() {
+  const query = '(min-width: 768px)';
+  const [isDesktop, setIsDesktop] = useState(() => window.matchMedia(query).matches);
+  useEffect(() => {
+    const mql = window.matchMedia(query);
+    const onChange = () => setIsDesktop(mql.matches);
+    mql.addEventListener('change', onChange);
+    return () => mql.removeEventListener('change', onChange);
+  }, []);
+  return isDesktop;
+}
+
+function TopBar({ fullPage, isDesktop, onMenu }) {
   const { user } = useAuth();
   const navigate = useNavigate();
   const [search, setSearch] = useState('');
@@ -204,29 +228,31 @@ function TopBar({ fullPage, onToggleFullPage }) {
   }
 
   return (
-    <div className="h-[64px] shrink-0 bg-white flex items-center justify-end gap-3 px-8" style={{ borderBottom: `1px solid ${theme.border}` }}>
-      <div className="flex items-center gap-3 mr-auto">
+    <div className="h-[64px] shrink-0 bg-white flex items-center justify-end gap-2 md:gap-3 px-4 md:px-8 sticky top-0 z-20" style={{ borderBottom: `1px solid ${theme.border}` }}>
+      <div className="flex items-center gap-3 mr-auto min-w-0">
         <button
           type="button"
-          onClick={onToggleFullPage}
-          aria-label={fullPage ? 'Show the menu' : 'Hide the menu (full page)'}
-          aria-pressed={fullPage}
-          title={fullPage ? 'Show the menu' : 'Hide the menu (full page)'}
+          onClick={onMenu}
+          aria-label={!isDesktop ? 'Open the menu' : fullPage ? 'Show the menu' : 'Hide the menu (full page)'}
+          title={!isDesktop ? 'Open the menu' : fullPage ? 'Show the menu' : 'Hide the menu (full page)'}
           className="w-9 h-9 rounded-[10px] flex items-center justify-center shrink-0 hover:bg-[#e8ecf4]"
           style={{ backgroundColor: theme.chipBg, border: 'none' }}
         >
           <MenuIcon color={theme.textMuted} />
         </button>
-        {fullPage && (
+        {(fullPage || !isDesktop) && (
           <>
             <LogoMark />
-            <span className="text-[17px] font-bold tracking-tight" style={{ color: '#182448' }}>
+            <span className="hidden sm:inline text-[17px] font-bold tracking-tight" style={{ color: '#182448' }}>
               Calibcare
             </span>
           </>
         )}
       </div>
-      <form onSubmit={handleSearchSubmit} className="relative">
+      <NavLink to="/equipment" title="Search equipment" className="md:hidden w-9 h-9 rounded-[10px] flex items-center justify-center shrink-0" style={{ backgroundColor: theme.chipBg }}>
+        <SearchIcon color={theme.textMuted} />
+      </NavLink>
+      <form onSubmit={handleSearchSubmit} className="relative hidden md:block">
         <span className="absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none">
           <SearchIcon color={theme.textFaint} />
         </span>
@@ -234,7 +260,7 @@ function TopBar({ fullPage, onToggleFullPage }) {
           value={search}
           onChange={(e) => setSearch(e.target.value)}
           placeholder="Search equipment by name, model or serial…"
-          className="h-9 w-[360px] pl-9 pr-3 rounded-[10px] text-[13.5px] outline-none"
+          className="h-9 w-[260px] lg:w-[360px] pl-9 pr-3 rounded-[10px] text-[13.5px] outline-none"
           style={{ backgroundColor: theme.chipBg, color: theme.ink }}
         />
       </form>
@@ -243,7 +269,7 @@ function TopBar({ fullPage, onToggleFullPage }) {
           <BellIcon color={theme.textMuted} />
         </NavLink>
       )}
-      <div className="w-px h-8 mx-1" style={{ backgroundColor: theme.border }} />
+      <div className="hidden md:block w-px h-8 mx-1" style={{ backgroundColor: theme.border }} />
       <ProfileMenu />
     </div>
   );
@@ -263,6 +289,12 @@ function readFullPage() {
 
 export function Layout() {
   const [fullPage, setFullPage] = useState(readFullPage);
+  const [mobileNavOpen, setMobileNavOpen] = useState(false);
+  const isDesktop = useIsDesktop();
+  const location = useLocation();
+
+  // Close the phone menu after moving to another page.
+  useEffect(() => setMobileNavOpen(false), [location.pathname]);
 
   function toggleFullPage() {
     setFullPage((v) => {
@@ -279,9 +311,10 @@ export function Layout() {
     <FullPageContext.Provider value={fullPage}>
       <div className="min-h-screen flex" style={{ backgroundColor: theme.pageBg }}>
         {!fullPage && <Sidebar />}
+        {!isDesktop && mobileNavOpen && <Sidebar overlay onClose={() => setMobileNavOpen(false)} />}
         <main className="flex-1 flex flex-col min-w-0">
-          <TopBar fullPage={fullPage} onToggleFullPage={toggleFullPage} />
-          <div className="flex-1 px-8 py-7">
+          <TopBar fullPage={fullPage} isDesktop={isDesktop} onMenu={isDesktop ? toggleFullPage : () => setMobileNavOpen(true)} />
+          <div className="flex-1 px-4 py-5 md:px-8 md:py-7">
             <Outlet />
           </div>
         </main>

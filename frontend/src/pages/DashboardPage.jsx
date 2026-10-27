@@ -57,17 +57,17 @@ function KpiCard({ label, value, hint, Icon, iconColor, iconBg, onClick }) {
 function DashboardSkeleton() {
   return (
     <div className="flex flex-col gap-6">
-      <div className="grid grid-cols-5 gap-[18px]">
+      <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-5 gap-3 md:gap-[18px]">
         {[0, 1, 2, 3, 4].map((i) => (
           <Skeleton key={i} style={{ height: 116, borderRadius: 16 }} />
         ))}
       </div>
-      <div className="flex gap-5">
-        <div className="flex flex-col gap-[18px]" style={{ flex: '0 0 388px' }}>
+      <div className="flex flex-col lg:flex-row gap-5">
+        <div className="flex flex-col gap-[18px] lg:w-[388px] lg:shrink-0">
           <Skeleton style={{ height: 180, borderRadius: 16 }} />
           <Skeleton style={{ height: 300, borderRadius: 16 }} />
         </div>
-        <Skeleton className="flex-1" style={{ height: 498, borderRadius: 16 }} />
+        <Skeleton className="lg:flex-1" style={{ height: 498, borderRadius: 16 }} />
       </div>
     </div>
   );
@@ -662,7 +662,7 @@ export function DashboardPage() {
       {header}
 
       <Section title="Overview" hint="Every instrument, counted once" to="/equipment" actionLabel="View all equipment">
-        <div className="grid grid-cols-5 gap-[18px]">
+        <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-5 gap-3 md:gap-[18px]">
           <KpiCard label="Total" value={summary.totalEquipment} hint="All instruments" Icon={LayersIcon} iconColor={theme.brand} iconBg="#eaf0ff" onClick={() => navigate('/equipment')} />
           <KpiCard
             label="Available"
@@ -696,7 +696,7 @@ export function DashboardPage() {
       </Section>
 
       {!alertDismissed && overdueCount > 0 && (
-        <div className="rounded-[14px] px-5 py-3.5 flex items-center justify-between" style={{ backgroundColor: theme.alertBg, border: `1px solid ${theme.alertBorder}` }}>
+        <div className="rounded-[14px] px-4 md:px-5 py-3.5 flex items-center justify-between gap-3 flex-wrap" style={{ backgroundColor: theme.alertBg, border: `1px solid ${theme.alertBorder}` }}>
           <div className="flex items-center gap-3">
             <div className="w-[30px] h-[30px] rounded-[9px] flex items-center justify-center shrink-0" style={{ backgroundColor: theme.criticalBgStrong, color: theme.critical }}>
               <AlertTriangleIcon color={theme.critical} />
@@ -720,8 +720,8 @@ export function DashboardPage() {
         </div>
       )}
 
-      <div className="flex gap-5 items-stretch">
-        <div className="flex flex-col gap-[18px]" style={{ flex: '0 0 388px' }}>
+      <div className="flex flex-col lg:flex-row gap-5 lg:items-stretch">
+        <div className="flex flex-col gap-[18px] lg:w-[388px] lg:shrink-0">
           <Section title="Status and schedule" />
           <div className="bg-white rounded-2xl p-[18px]" style={{ border: `1px solid ${theme.border}`, boxShadow: theme.cardShadow }}>
             <div className="text-sm font-bold mb-3.5" style={{ color: theme.ink }}>
@@ -823,7 +823,7 @@ export function DashboardPage() {
                       {['Equipment', 'Model', 'Serial Number', 'Next Due', 'Status'].map((h) => (
                         <th
                           key={h}
-                          className="text-left text-[10.5px] font-bold uppercase tracking-wide pb-2.5"
+                          className={`text-left text-[10.5px] font-bold uppercase tracking-wide pb-2.5 pr-2 ${h === 'Model' || h === 'Serial Number' ? 'hidden sm:table-cell' : ''}`}
                           style={{ color: theme.textFaint, borderBottom: `1px solid ${theme.border}` }}
                         >
                           {h}
@@ -839,10 +839,10 @@ export function DashboardPage() {
                             {r.name}
                           </Link>
                         </td>
-                        <td className="py-[13px] text-[13px]" style={{ color: theme.textMuted, borderBottom: i < pageItems.length - 1 ? `1px solid ${theme.divider}` : 'none' }}>
+                        <td className="hidden sm:table-cell py-[13px] text-[13px]" style={{ color: theme.textMuted, borderBottom: i < pageItems.length - 1 ? `1px solid ${theme.divider}` : 'none' }}>
                           {r.model || '—'}
                         </td>
-                        <td className="py-[13px] text-[13px]" style={{ color: theme.textMuted, borderBottom: i < pageItems.length - 1 ? `1px solid ${theme.divider}` : 'none' }}>
+                        <td className="hidden sm:table-cell py-[13px] text-[13px]" style={{ color: theme.textMuted, borderBottom: i < pageItems.length - 1 ? `1px solid ${theme.divider}` : 'none' }}>
                           {r.serial_number}
                         </td>
                         <td className="py-[13px] text-[13px]" style={{ color: theme.textMuted, borderBottom: i < pageItems.length - 1 ? `1px solid ${theme.divider}` : 'none' }}>
