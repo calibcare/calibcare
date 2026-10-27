@@ -730,16 +730,23 @@ coopproject/
 - Not verified live through the authenticated API (no test account on production; reading production via a minted token was declined). User to glance at Reminders page: should show exactly 3 rules.
 - `railway login` had expired this session (re-done by the user via `! railway login`). The first `vercel deploy --prod --yes` printed only a JSON "Promote to production" blob and did nothing — rerunning it deployed fine.
 
-## Bug: daily cron job never sent email reminders (found 2026-10-27) — fixed locally, NOT deployed
+## Bug: daily cron job never sent email reminders (found 2026-10-27) — fixed + deployed
 
 - `backend/scripts/checkNotifications.js` (the `checknotifications` Railway cron, 09:00 UTC) called `checkAndSendReminders(pool, lineClient)` with no email client → the no-op dry-run email client → **no email reminder was ever sent by the daily run**, only by the manual "Run check now" button (`POST /api/reminders/run`, which passes `createEmailClient()`). Its sent/failed counts were also always 0 (results carry a `channels` array since the 2026-09-15 rewrite).
-- Fix (uncommitted): pass `createEmailClient()`, count per channel. Dry-run against local DB: 7 items, 8 channel sends, nothing logged. 52 tests pass.
-- **To deploy**: commit + push, then `railway redeploy --service checknotifications --from-source --yes`. Was blocked by a permission check this session — waiting on the user.
+- Fix (`8d4a36c`): pass `createEmailClient()`, count per channel. Dry-run against local DB: 7 items, 8 channel sends, nothing logged. 52 tests pass.
+- **Deployed**: pushed `8d4a36c`; the user ran `railway redeploy --service checknotifications --from-source --yes` themselves (no output, same as the earlier successful redeploy). Build status NOT confirmed — the auto-mode permission check was failing at the time. First real test = the 09:00 UTC run on 2026-10-28: its log line should read `lineDryRun=false, emailDryRun=false` and `channel sends: …`.
 - Because EMAIL dedup is separate from LINE, the first fixed run (or a manual "Run check now") sends one catch-up email per item currently in a window, even if LINE already went out.
+
+## Reminder message restyled, LINE + email (2026-10-27) — local only, NOT deployed
+
+- User supplied the exact layout. New exported `buildReminderMessage(equipment, daysUntilDue, nextDate)` in `reminderService.js`: "🔔 [CalibCare] Calibration Due Soon" / Device / Model / S/N / "⏰ Due in: Today | 1 day | N days" / "📅 Next calibration: 27 Oct 2026" (built from the date string's parts, no timezone shift) / "Please schedule calibration before the due date." Then user asked for email in the same layout → it's now the LINE text **and** the plain-text email body; old one-line `buildMessage()`/`BUCKET_LABEL` removed. Email subject unchanged: "[CalibCare] Calibration reminder: <name>".
+- Tests: exact-text assert on the LINE send, email body == LINE text, due-in/date-format test → 53 pass.
+- Device/model text comes straight from the DB (e.g. equipment "Defibrillator/Transcutanreous Analyzer", model "Impulse7000DP" — the user's sample had these spelled/spaced differently).
+- **To deploy**: commit + push (Railway `calibcare` auto-builds, used by "Run check now") **and** `railway redeploy --service checknotifications --from-source --yes` (the daily job).
 
 ## Next up
 
-- **Deploy the cron email fix** (section above).
+- **Check the 2026-10-28 09:00 UTC `checknotifications` run** (`railway logs --service checknotifications`): should show `emailDryRun=false` and real email sends — confirms the cron email fix is live.
 
 
 - Verify the inferred manufacturer values against physical nameplates/purchase records during the next calibration cycle — they're confident inferences, not sourced from purchase documentation.

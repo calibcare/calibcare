@@ -15,12 +15,6 @@ export function pickBucket(daysUntilDue) {
   return null;
 }
 
-const BUCKET_LABEL = {
-  '1_day': 'is due for calibration within 1 day',
-  '7_days': 'is due for calibration in 7 days or less',
-  '30_days': 'is due for calibration in 30 days or less',
-};
-
 // The buckets that actually send a reminder, with their labels for the
 // reminder-rules UI -- phrased as a rule name rather than a message sentence.
 export const RULE_LABEL = {
@@ -42,8 +36,34 @@ function formatDate(value) {
   return date.toISOString().slice(0, 10);
 }
 
-function buildMessage(equipment, bucket, nextCalibrationDate) {
-  return `[CalibCare] ${equipment.name} (${equipment.model}, S/N ${equipment.serial_number}) ${BUCKET_LABEL[bucket]}. Next calibration date: ${formatDate(nextCalibrationDate)}.`;
+const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+
+// "2026-10-27" -> "27 Oct 2026". Built from the date string's parts rather
+// than via Date/locale formatting, so the server's timezone can't shift it.
+function formatDisplayDate(value) {
+  const [year, month, day] = formatDate(value).split('-').map(Number);
+  return `${day} ${MONTHS[month - 1]} ${year}`;
+}
+
+function formatDueIn(daysUntilDue) {
+  if (daysUntilDue <= 0) return 'Today';
+  return daysUntilDue === 1 ? '1 day' : `${daysUntilDue} days`;
+}
+
+// The reminder text, used as-is for both the LINE message and the email body.
+export function buildReminderMessage(equipment, daysUntilDue, nextCalibrationDate) {
+  return [
+    '🔔 [CalibCare] Calibration Due Soon',
+    '',
+    `Device: ${equipment.name}`,
+    `Model: ${equipment.model}`,
+    `S/N: ${equipment.serial_number}`,
+    '',
+    `⏰ Due in: ${formatDueIn(daysUntilDue)}`,
+    `📅 Next calibration: ${formatDisplayDate(nextCalibrationDate)}`,
+    '',
+    'Please schedule calibration before the due date.',
+  ].join('\n');
 }
 
 function buildEmailSubject(equipment) {
@@ -88,7 +108,7 @@ async function sendLineChannel(db, row, bucket, equipment, recipients, lineClien
     return { channel: 'LINE', skipped: 'no recipients with a line_user_id' };
   }
 
-  const message = buildMessage(equipment, bucket, row.next_calibration_date);
+  const message = buildReminderMessage(equipment, row.days_until_due, row.next_calibration_date);
   const userIds = recipients.map((r) => r.line_user_id);
   const sendResult = await lineClient.multicast(userIds, message);
   const status = sendResult.ok ? 'sent' : 'failed';
@@ -117,7 +137,7 @@ async function sendEmailChannel(db, row, bucket, equipment, recipients, emailCli
   }
 
   const subject = buildEmailSubject(equipment);
-  const text = buildMessage(equipment, bucket, row.next_calibration_date);
+  const text = buildReminderMessage(equipment, row.days_until_due, row.next_calibration_date);
 
   let anyFailed = false;
   for (const recipient of recipients) {

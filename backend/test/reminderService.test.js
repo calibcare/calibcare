@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { pickBucket, checkAndSendReminders } from '../src/services/reminderService.js';
+import { pickBucket, checkAndSendReminders, buildReminderMessage } from '../src/services/reminderService.js';
 
 test('pickBucket picks the most urgent applicable threshold', () => {
   assert.equal(pickBucket(-5), 'overdue');
@@ -11,6 +11,15 @@ test('pickBucket picks the most urgent applicable threshold', () => {
   assert.equal(pickBucket(8), '30_days');
   assert.equal(pickBucket(30), '30_days');
   assert.equal(pickBucket(31), null);
+});
+
+test('buildReminderMessage words the due-in line and formats the date as "27 Oct 2026"', () => {
+  const equipment = { name: 'Defibrillator Analyzer', model: 'Impulse7000DP', serial_number: '2986072' };
+  const today = buildReminderMessage(equipment, 0, '2026-10-27');
+  assert.match(today, /⏰ Due in: Today\n/);
+  assert.match(today, /📅 Next calibration: 27 Oct 2026\n/);
+  assert.match(buildReminderMessage(equipment, 1, '2026-10-28'), /⏰ Due in: 1 day\n/);
+  assert.match(buildReminderMessage(equipment, 30, '2026-01-05'), /⏰ Due in: 30 days\n📅 Next calibration: 5 Jan 2026\n/);
 });
 
 const DEFAULT_RULES = ['30_days', '7_days', '1_day'].map((bucket) => ({
@@ -115,7 +124,21 @@ test('sends a reminder and logs it when an item is due and recipients exist', as
   assert.equal(results[0].channels[0].status, 'sent');
   assert.equal(line.calls.length, 1);
   assert.deepEqual(line.calls[0].userIds, ['Uabc123']);
-  assert.match(line.calls[0].text, /Vital Signs Simulator/);
+  assert.equal(
+    line.calls[0].text,
+    [
+      '🔔 [CalibCare] Calibration Due Soon',
+      '',
+      'Device: Vital Signs Simulator',
+      'Model: Prosim8',
+      'S/N: 5019606',
+      '',
+      '⏰ Due in: 2 days',
+      '📅 Next calibration: 16 Jul 2026',
+      '',
+      'Please schedule calibration before the due date.',
+    ].join('\n')
+  );
   assert.equal(inserts.length, 1);
   assert.equal(inserts[0][2], '7_days'); // notification_type param
   assert.equal(inserts[0][3], 'LINE'); // channel param
@@ -174,6 +197,8 @@ test('a rule with both channels enabled sends LINE and email, logging one row pe
   assert.equal(emailResult.notified, 2);
   assert.equal(email.calls.length, 2);
   assert.match(email.calls[0].subject, /kVp Meter/);
+  assert.equal(email.calls[0].text, line.calls[0].text); // same layout on both channels
+  assert.match(email.calls[0].text, /^🔔 \[CalibCare\] Calibration Due Soon\n/);
   // 1 LINE row + 2 EMAIL rows (one per recipient)
   assert.equal(inserts.filter((i) => i[3] === 'LINE').length, 1);
   assert.equal(inserts.filter((i) => i[3] === 'EMAIL').length, 2);
