@@ -1,8 +1,8 @@
-import { useState } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { NavLink, Outlet, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { theme } from '../theme';
-import { HomeIcon, PackageIcon, BellIcon, LogOutIcon, SearchIcon, UsersIcon, ShieldIcon } from './icons';
+import { HomeIcon, PackageIcon, BellIcon, LogOutIcon, SearchIcon, UsersIcon, ShieldIcon, SettingsIcon, KeyIcon, ChevronDownIcon } from './icons';
 
 // Navigation, grouped like with like: everyday pages first, management
 // pages (only for the positions that can use them) under their own label.
@@ -67,29 +67,58 @@ function LogoMark() {
   );
 }
 
-// Who is signed in, and the way out, at the foot of the sidebar.
-function UserCard() {
+// Who is signed in, top right: avatar, name and position; the menu holds
+// the profile, password change and sign out.
+function ProfileMenu() {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
+  const [open, setOpen] = useState(false);
+  const containerRef = useRef(null);
   const initial = (user?.full_name || '?').trim().charAt(0).toUpperCase();
 
+  useEffect(() => {
+    if (!open) return undefined;
+    function onMouseDown(e) {
+      if (containerRef.current && !containerRef.current.contains(e.target)) setOpen(false);
+    }
+    function onKey(e) {
+      if (e.key === 'Escape') setOpen(false);
+    }
+    document.addEventListener('mousedown', onMouseDown);
+    document.addEventListener('keydown', onKey);
+    return () => {
+      document.removeEventListener('mousedown', onMouseDown);
+      document.removeEventListener('keydown', onKey);
+    };
+  }, [open]);
+
+  function goTo(path) {
+    setOpen(false);
+    navigate(path);
+  }
+
   function handleLogout() {
+    setOpen(false);
     logout();
     navigate('/login');
   }
 
+  const itemClass = 'flex items-center gap-2.5 w-full text-left px-4 py-2.5 text-[13px] font-medium hover:bg-[#f6f7fb]';
+
   return (
-    <div className="flex flex-col gap-2.5">
-      <NavLink
-        to="/settings"
-        title="Your profile"
-        className={({ isActive }) => `flex items-center gap-2.5 rounded-[10px] px-2.5 py-2 ${isActive ? '' : 'hover:bg-[#e2e7f3]'}`}
-        style={({ isActive }) => ({ backgroundColor: isActive ? '#fff' : 'transparent' })}
+    <div className="relative shrink-0" ref={containerRef}>
+      <button
+        type="button"
+        onClick={() => setOpen((v) => !v)}
+        aria-haspopup="menu"
+        aria-expanded={open}
+        className="flex items-center gap-2.5 rounded-[12px] pl-1.5 pr-3 py-1.5 hover:bg-[#f3f5fa]"
+        style={{ border: `1px solid ${open ? theme.borderStrong : 'transparent'}`, backgroundColor: open ? theme.chipBg : 'transparent' }}
       >
         <span className="w-9 h-9 rounded-full flex items-center justify-center text-[13px] font-bold text-white shrink-0" style={{ backgroundColor: theme.brandDark }}>
           {initial}
         </span>
-        <span className="min-w-0">
+        <span className="text-left max-w-[180px]">
           <span className="block text-[13px] font-semibold truncate" style={{ color: theme.ink }}>
             {user?.full_name}
           </span>
@@ -97,16 +126,43 @@ function UserCard() {
             {user?.position_label}
           </span>
         </span>
-      </NavLink>
-      <button
-        type="button"
-        onClick={handleLogout}
-        className="flex items-center justify-center gap-2 rounded-[10px] py-2 text-[13px] font-semibold hover:bg-[#fdeceb]"
-        style={{ color: theme.criticalStrong, border: `1px solid ${theme.alertBorder}`, background: 'transparent' }}
-      >
-        <LogOutIcon color={theme.criticalStrong} />
-        Sign out
+        <ChevronDownIcon color={theme.textMuted} />
       </button>
+
+      {open && (
+        <div
+          role="menu"
+          className="absolute right-0 mt-2 rounded-[12px] bg-white overflow-hidden z-30"
+          style={{ width: 240, border: `1px solid ${theme.border}`, boxShadow: '0 10px 30px rgba(16,24,40,.16)' }}
+        >
+          <div className="px-4 py-3" style={{ borderBottom: `1px solid ${theme.divider}` }}>
+            <div className="text-[13px] font-semibold truncate" style={{ color: theme.ink }}>
+              {user?.full_name}
+            </div>
+            <div className="text-[11.5px] truncate" style={{ color: theme.textFaint }}>
+              {user?.email}
+            </div>
+          </div>
+          <button type="button" role="menuitem" onClick={() => goTo('/settings')} className={itemClass} style={{ color: theme.textMuted, border: 'none', background: 'none' }}>
+            <SettingsIcon color={theme.textMuted} />
+            My profile
+          </button>
+          <button type="button" role="menuitem" onClick={() => goTo('/change-password')} className={itemClass} style={{ color: theme.textMuted, border: 'none', background: 'none' }}>
+            <KeyIcon color={theme.textMuted} />
+            Change password
+          </button>
+          <button
+            type="button"
+            role="menuitem"
+            onClick={handleLogout}
+            className={`${itemClass} hover:bg-[#fdeceb]`}
+            style={{ color: theme.criticalStrong, border: 'none', background: 'none', borderTop: `1px solid ${theme.divider}` }}
+          >
+            <LogOutIcon color={theme.criticalStrong} />
+            Sign out
+          </button>
+        </div>
+      )}
     </div>
   );
 }
@@ -117,7 +173,7 @@ function Sidebar() {
 
   return (
     <aside
-      className="w-[240px] shrink-0 h-screen sticky top-0 flex flex-col justify-between px-4 py-6"
+      className="w-[240px] shrink-0 h-screen sticky top-0 flex flex-col px-4 py-6"
       style={{ backgroundColor: theme.sidebarBg, borderRight: `1px solid ${theme.borderStrong}` }}
     >
       <div className="flex flex-col gap-7">
@@ -132,7 +188,6 @@ function Sidebar() {
           <NavGroup label="Manage" items={manageItems} />
         </nav>
       </div>
-      <UserCard />
     </aside>
   );
 }
@@ -166,6 +221,8 @@ function TopBar() {
           <BellIcon color={theme.textMuted} />
         </NavLink>
       )}
+      <div className="w-px h-8 mx-1" style={{ backgroundColor: theme.border }} />
+      <ProfileMenu />
     </div>
   );
 }
