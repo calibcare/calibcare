@@ -996,7 +996,6 @@ function Drawer({ item, canManage, onClose, onSend }) {
   const fields = [
     ['Serial', item.serial_number],
     ['Model', item.model],
-    ['Manufacturer', item.manufacturer],
     ['Category', item.category],
     ['Site', item.location_category],
     ['Location', item.location],
