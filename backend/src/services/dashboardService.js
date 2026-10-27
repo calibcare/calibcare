@@ -9,8 +9,13 @@ import { pickBucket } from './reminderService.js';
  * overdue" is defined in exactly one place and can't drift between the
  * dashboard and the reminder scheduler.
  */
+// "Today" is the team's calendar date in Thailand, not UTC: the server runs
+// on UTC, so toISOString() would still say "yesterday" until 07:00 Thai
+// time and count a device due yesterday as due today, not overdue.
+const THAI_DATE = new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Bangkok', year: 'numeric', month: '2-digit', day: '2-digit' });
+
 export async function getDashboardSummary(db, today = new Date()) {
-  const todayStr = today.toISOString().slice(0, 10);
+  const todayStr = THAI_DATE.format(today);
 
   const [[{ total }]] = await db.query('SELECT COUNT(*) AS total FROM equipment');
 

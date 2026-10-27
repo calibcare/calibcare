@@ -2,9 +2,10 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { getDashboardSummary } from '../src/services/dashboardService.js';
 
-function makeFakeDb({ total, byStatus, byCategory, byManufacturer, dueRows }) {
+function makeFakeDb({ total, byStatus, byCategory, byManufacturer, dueRows, onDueQuery }) {
   return {
-    async query(sql) {
+    async query(sql, params) {
+      if (sql.includes('FROM calibration_history ch')) onDueQuery?.(params);
       if (sql.includes('COUNT(*) AS total FROM equipment')) return [[{ total }]];
       if (sql.includes('GROUP BY status')) return [byStatus];
       if (sql.includes("COALESCE(NULLIF(category")) return [byCategory];
@@ -81,4 +82,15 @@ test('monthlySchedule buckets real next_calibration_date values into the next 6 
   // all buckets should be 4, not 5.
   const totalBucketed = summary.monthlySchedule.reduce((sum, m) => sum + m.count, 0);
   assert.equal(totalBucketed, 4);
+});
+
+test('measures days until due from the Thailand calendar date, not the UTC one', async () => {
+  // 03:30 on 28 Oct in Thailand is still 27 Oct in UTC.
+  const today = new Date('2026-10-27T20:30:00Z');
+  let params;
+  const db = makeFakeDb({ total: 0, byStatus: [], byCategory: [], byManufacturer: [], dueRows: [], onDueQuery: (p) => (params = p) });
+
+  await getDashboardSummary(db, today);
+
+  assert.deepEqual(params, ['2026-10-28']);
 });
