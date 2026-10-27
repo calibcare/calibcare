@@ -158,7 +158,7 @@ export function AdminPage() {
 
   return (
     <div className="flex flex-col gap-5">
-      <PageHeader title="Admin" description="Help colleagues who can't log in, and keep a backup copy of all CalibCare data." />
+      <PageHeader title="Admin" />
 
       {error && (
         <div className="rounded-[10px] px-4 py-2.5 text-sm" style={{ backgroundColor: theme.criticalBg, color: theme.criticalStrong }}>

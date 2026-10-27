@@ -522,10 +522,7 @@ export function RemindersPage() {
 
   return (
     <div className="flex flex-col gap-5">
-      <PageHeader
-        title="Calibration Reminders"
-        description="Reminders go out by LINE and email 30, 7 and 1 day before each due date. Connect LINE, choose the channels, and review what has been sent."
-      />
+      <PageHeader title="Calibration Reminders" />
 
       {error && (
         <div className="rounded-[10px] px-4 py-2.5 text-sm" style={{ backgroundColor: theme.criticalBg, color: theme.criticalStrong }}>

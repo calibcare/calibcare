@@ -37,7 +37,7 @@ export function ChangePasswordPage() {
 
   return (
     <div className="flex flex-col gap-6">
-      <PageHeader title="Change password" description={`Choose a new password for ${user?.email || 'your account'}.`} />
+      <PageHeader title="Change password" />
       <div className="max-w-md">
         {forced && (
           <div className="rounded-[10px] px-4 py-3 mb-5 text-[13.5px]" style={{ backgroundColor: theme.warningBg, color: theme.warning, border: `1px solid ${theme.warningBorderSoft}` }}>

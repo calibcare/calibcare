@@ -24,7 +24,7 @@ export function SettingsPage() {
 
   return (
     <div className="flex flex-col gap-6">
-      <PageHeader title="Profile" description="Your account details and what your position lets you do." />
+      <PageHeader title="Profile" />
 
       <div className="bg-white rounded-2xl p-5 max-w-md" style={{ border: `1.5px solid ${BORDER}` }}>
         <Row label="Name" value={user?.full_name} />

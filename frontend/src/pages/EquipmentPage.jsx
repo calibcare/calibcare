@@ -583,7 +583,6 @@ export function EquipmentPage() {
     <div className="flex flex-col gap-4">
       <PageHeader
         title="Equipment"
-        description="Every instrument the team owns. Click a row for a quick look."
         stats={[
           { label: 'Overdue', value: statusTotals.overdue || 0, onClick: () => showOnly('overdue'), active: onlyStatus === 'overdue' },
           { label: 'Due within 30 days', value: statusTotals.soon || 0, onClick: () => showOnly('soon'), active: onlyStatus === 'soon' },
@@ -596,12 +595,7 @@ export function EquipmentPage() {
         ]}
         actions={canManage && <HeaderButton onClick={() => setShowForm((v) => !v)}>{showForm ? 'Cancel' : '+ Add equipment'}</HeaderButton>}
       >
-        <FilterFeedback
-          pills={pills}
-          onRemove={removePill}
-          onClear={clearAll}
-          summary={loading ? 'Loading devices…' : `Showing ${rows.length} of ${items.length} devices`}
-        />
+        {pills.length > 0 && <FilterFeedback pills={pills} onRemove={removePill} onClear={clearAll} summary={`Showing ${rows.length} of ${items.length} devices`} />}
       </PageHeader>
 
       {error && (

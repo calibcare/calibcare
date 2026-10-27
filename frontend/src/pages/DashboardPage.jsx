@@ -586,16 +586,7 @@ export function DashboardPage() {
       .catch((err) => setError(err.response?.data?.error || 'Failed to load dashboard'));
   }, []);
 
-  const header = (
-    <PageHeader
-      title="Dashboard"
-      description={
-        summary
-          ? `All ${summary.totalEquipment} instruments at a glance. Click a number to see the devices behind it.`
-          : 'The calibration status of all instruments at a glance.'
-      }
-    />
-  );
+  const header = <PageHeader title="Dashboard" />;
 
   if (error)
     return (

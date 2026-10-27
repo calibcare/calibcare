@@ -58,7 +58,6 @@ export function AccessLevelsPage() {
     <div className="flex flex-col gap-5">
       <PageHeader
         title="Team"
-        description="Everyone with access, and their position. The position decides what each person can view and change."
         stats={users.length ? [{ label: 'People', value: users.length }] : undefined}
       />
 
