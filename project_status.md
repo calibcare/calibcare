@@ -3,7 +3,7 @@
 > Living log of what's been built. Updated after every completed unit of work.
 > Read this first when resuming a session on this project.
 
-Last updated: 2026-10-27 (30/7/1-day reminders, cron email fix, new message layout — all deployed)
+Last updated: 2026-10-28 (presentation slide deck made; earlier: 30/7/1-day reminders, cron email fix, new message layout, owner position)
 
 ---
 
@@ -787,3 +787,5 @@ coopproject/
   3. ~~Rotate/delete the Railway Project Token and Netlify Personal Access Token~~ — done and verified 2026-08-07 (see the deployment section above).
   4. Optional: wire up git-based continuous deployment on Netlify (currently a manual `netlify deploy` per change, not automatic on `git push`).
 - ~~Domain-restricted registration (@xyz.com only) + email-based 2FA~~ — **built** (see "Undocumented work found..." above), just never logged until 2026-09-14 and still **uncommitted and not deployed to Railway**. Next: verify it live through the actual browser now that local MySQL is working again, then commit and redeploy the backend.
+
+- **Presentation deck (2026-10-28)**: 21-slide project presentation published as a private claude.ai Slides artifact — https://claude.ai/artifact/GmCfX1Vk3J6Q7VntxPH51Y (background, objectives, scope, architecture, tech, database, features, access levels, timeline, problems solved, results, next steps; speaker notes on every slide). Built from the Chapter 1 doc (https://claude.ai/artifact/UDrKzm2WKjHR5GaioqDKYQ) and the work log (https://claude.ai/artifact/5vkGbU6nZJoaedidT8HLXd). Placeholders left for the user: name, student ID, university, company, email on the cover/last slide; sample model/S/N in the reminder message mock. No screenshots yet — notes mark where one would help (equipment, dashboard).
