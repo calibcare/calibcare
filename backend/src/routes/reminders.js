@@ -3,7 +3,7 @@ import 'dotenv/config';
 import { pool } from '../db.js';
 import { createLineClient } from '../services/lineClient.js';
 import { createEmailClient, emailDryRun } from '../services/emailService.js';
-import { checkAndSendReminders, RULE_LABEL } from '../services/reminderService.js';
+import { checkAndSendReminders, RULE_LABEL, LEGACY_RULE_LABEL } from '../services/reminderService.js';
 import { requireCapability } from '../middleware/auth.js';
 
 export const remindersRouter = Router();
@@ -24,7 +24,7 @@ remindersRouter.post('/run', requireCapability('canRunReminders'), async (req, r
   }
 });
 
-// GET /api/reminders/rules -- the 5 real buckets with their on/off + channel
+// GET /api/reminders/rules -- the 3 real buckets with their on/off + channel
 // state (any logged-in role can view; only a Deputy Manager can change one).
 remindersRouter.get('/rules', async (req, res, next) => {
   try {
@@ -139,7 +139,7 @@ remindersRouter.get('/history', async (req, res, next) => {
       total,
       limit: safeLimit,
       offset: safeOffset,
-      history: rows.map((r) => ({ ...r, label: RULE_LABEL[r.notification_type] || r.notification_type })),
+      history: rows.map((r) => ({ ...r, label: RULE_LABEL[r.notification_type] || LEGACY_RULE_LABEL[r.notification_type] || r.notification_type })),
     });
   } catch (err) {
     next(err);

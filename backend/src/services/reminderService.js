@@ -3,32 +3,38 @@
  * currently applies. Using "<=" thresholds (not exact equality) means a
  * missed cron run (e.g. server down for a day) still lands in a bucket next
  * time it runs, instead of silently skipping that equipment's reminder.
+ *
+ * 'overdue' is not a reminder -- nothing is sent for it (see RULE_LABEL) --
+ * but the dashboard still uses it to split overdue from due-soon.
  */
 export function pickBucket(daysUntilDue) {
   if (daysUntilDue < 0) return 'overdue';
-  if (daysUntilDue === 0) return 'due';
+  if (daysUntilDue <= 1) return '1_day';
   if (daysUntilDue <= 7) return '7_days';
-  if (daysUntilDue <= 14) return '14_days';
   if (daysUntilDue <= 30) return '30_days';
   return null;
 }
 
 const BUCKET_LABEL = {
-  overdue: 'is OVERDUE for calibration',
-  due: 'is due for calibration TODAY',
+  '1_day': 'is due for calibration within 1 day',
   '7_days': 'is due for calibration in 7 days or less',
-  '14_days': 'is due for calibration in 14 days or less',
   '30_days': 'is due for calibration in 30 days or less',
 };
 
-// Human labels for the reminder-rules UI -- the same 5 buckets as above,
-// phrased as a rule name rather than a message sentence.
+// The buckets that actually send a reminder, with their labels for the
+// reminder-rules UI -- phrased as a rule name rather than a message sentence.
 export const RULE_LABEL = {
   '30_days': '30 days before due date',
-  '14_days': '14 days before due date',
   '7_days': '7 days before due date',
+  '1_day': '1 day before due date',
+};
+
+// Buckets that used to send reminders (before 2026-10-27) -- kept only so
+// old notification_log rows still show a readable label in the history.
+export const LEGACY_RULE_LABEL = {
+  '14_days': '14 days before due date',
   due: 'Due today',
-  overdue: 'Overdue (daily until resolved)',
+  overdue: 'Overdue',
 };
 
 function formatDate(value) {
@@ -40,8 +46,8 @@ function buildMessage(equipment, bucket, nextCalibrationDate) {
   return `[CalibCare] ${equipment.name} (${equipment.model}, S/N ${equipment.serial_number}) ${BUCKET_LABEL[bucket]}. Next calibration date: ${formatDate(nextCalibrationDate)}.`;
 }
 
-function buildEmailSubject(equipment, bucket) {
-  return `[CalibCare] Calibration ${bucket === 'overdue' ? 'overdue' : 'reminder'}: ${equipment.name}`;
+function buildEmailSubject(equipment) {
+  return `[CalibCare] Calibration reminder: ${equipment.name}`;
 }
 
 // Used when no email client is supplied -- keeps checkAndSendReminders
@@ -110,7 +116,7 @@ async function sendEmailChannel(db, row, bucket, equipment, recipients, emailCli
     return { channel: 'EMAIL', skipped: 'no recipients with a verified email' };
   }
 
-  const subject = buildEmailSubject(equipment, bucket);
+  const subject = buildEmailSubject(equipment);
   const text = buildMessage(equipment, bucket, row.next_calibration_date);
 
   let anyFailed = false;
@@ -168,7 +174,7 @@ export async function checkAndSendReminders(db, lineClient, emailClient = NOOP_E
 
   for (const row of dueRows) {
     const bucket = pickBucket(row.days_until_due);
-    if (!bucket) continue;
+    if (!RULE_LABEL[bucket]) continue; // not due within 30 days, or overdue -- no reminder
 
     const rule = rules.get(bucket);
     if (!rule || !rule.enabled) {

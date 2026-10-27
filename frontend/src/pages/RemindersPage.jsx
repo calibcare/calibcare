@@ -312,10 +312,7 @@ function RulesCard({ rules, canAssign, onToggle }) {
         {rules.map((rule) => (
           <div key={rule.bucket} className="flex items-center px-4 py-3" style={{ borderTop: `1px solid ${theme.divider}` }}>
             <div className="flex-[2.2]">
-              <span
-                className="text-[13.5px] font-semibold"
-                style={{ color: rule.bucket === 'overdue' ? theme.criticalStrong : theme.inkAlt }}
-              >
+              <span className="text-[13.5px] font-semibold" style={{ color: theme.inkAlt }}>
                 {rule.label}
               </span>
             </div>

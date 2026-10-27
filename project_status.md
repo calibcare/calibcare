@@ -3,7 +3,7 @@
 > Living log of what's been built. Updated after every completed unit of work.
 > Read this first when resuming a session on this project.
 
-Last updated: 2026-10-19 (email moved to Brevo; fixes OTP/reminder emails on production)
+Last updated: 2026-10-27 (reminders changed to 30 / 7 / 1 day only — local done, production NOT yet deployed)
 
 ---
 
@@ -719,7 +719,17 @@ coopproject/
 - **checknotifications did not auto-redeploy on push** (git-connected, root `backend`, cron `0 9 * * *`); updated with `railway redeploy --service checknotifications --from-source --yes` → now on `8c1f0d9`. Redeploying a cron service does NOT run it (verified: no log output after deploy). Remember this for future backend changes: the cron service needs that command after a push.
 - Local Mac `.env` has no Brevo key, so local dev still uses Gmail SMTP (works on a normal network).
 
+## Reminders changed to 30 / 7 / 1 day before due only (2026-10-27) — local only, NOT deployed
+
+- User asked: "notification only 30 days, 7 days and 1 day only". Old buckets were 30/14/7 days, due today, overdue (daily). Now **only 30_days (8–30 days left), 7_days (2–7), 1_day (0–1)**; nothing for 14 days, due today, or overdue. Ranges stay "<=" so a missed cron day still catches up (e.g. day-0 equipment never told "1 day" gets it on the due date).
+- `reminderService.js`: `pickBucket` → overdue / 1_day / 7_days / 30_days / null (dashboard still uses 'overdue' to split overdue vs due-soon — unchanged behaviour there). `RULE_LABEL` = the 3 sending buckets; `checkAndSendReminders` skips any bucket not in it (overdue). `LEGACY_RULE_LABEL` keeps old history rows (14_days/due/overdue) readable in `GET /history`. Email subject is always "Calibration reminder: …".
+- **DB migration `database/change_reminders_to_30_7_1.sql`** (+ `schema.sql`): `notification_log.notification_type` ENUM gains `1_day` (old values kept for history); `reminder_rule` gets a `1_day` row **copying the old `due` rule's channels** (locally: LINE + email), 14_days/due/overdue rows deleted, ENUM narrowed to the 3. 30/7-day rules keep their settings (LINE only).
+- Tests: 52 pass (pickBucket edges 0/1/2/7/8/30/31, rules moved off retired buckets, new "overdue sends nothing" test). Applied locally (backup `~/Documents/calibcare-backups/mcems-local-2026-10-27-before-30-7-1-reminders.sql`); verified on a send-disabled test server (port 3099, LINE/email dry-run): rules API shows 3 rules, PATCH `14_days` → 400, history 70 rows with labels, dry run gave 6× 30_days + 1× 1_day and 0 overdue, notification_log unchanged (70). Frontend build clean.
+- **To deploy (in this order)**: (1) dump production DB; (2) apply `change_reminders_to_30_7_1.sql` to Railway MySQL **before** the code (a 1_day log insert fails without the ENUM); (3) commit + `git push` → Railway `calibcare`; (4) `railway redeploy --service checknotifications --from-source --yes` (cron does not auto-redeploy); (5) `vercel deploy --prod` from repo root (only a cosmetic RemindersPage change).
+
 ## Next up
+
+- **Deploy the 30/7/1-day reminder change** (see section above for the exact order).
 
 - Verify the inferred manufacturer values against physical nameplates/purchase records during the next calibration cycle — they're confident inferences, not sourced from purchase documentation.
 - Fill in the 80 equipment with unknown manufacturer as that information becomes available (via the equipment edit form).

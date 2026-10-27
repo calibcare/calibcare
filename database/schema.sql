@@ -142,7 +142,7 @@ CREATE TABLE calibration_history (
 -- produce. Deputy-Manager-editable; everything else reads it.
 -- ---------------------------------------------------------------------
 CREATE TABLE reminder_rule (
-    bucket      ENUM('30_days', '14_days', '7_days', 'due', 'overdue') NOT NULL PRIMARY KEY,
+    bucket      ENUM('30_days', '7_days', '1_day') NOT NULL PRIMARY KEY,
     enabled     TINYINT(1)    NOT NULL DEFAULT 1,
     send_line   TINYINT(1)    NOT NULL DEFAULT 1,
     send_email  TINYINT(1)    NOT NULL DEFAULT 0,
@@ -158,10 +158,8 @@ CREATE TABLE reminder_rule (
 -- of this schema should not silently change what gets sent.
 INSERT INTO reminder_rule (bucket, enabled, send_line, send_email) VALUES
     ('30_days', 1, 1, 0),
-    ('14_days', 1, 1, 0),
     ('7_days',  1, 1, 0),
-    ('due',     1, 1, 0),
-    ('overdue', 1, 1, 0);
+    ('1_day',   1, 1, 0);
 
 -- ---------------------------------------------------------------------
 -- notification_log: record of reminders sent via LINE OA
@@ -171,7 +169,7 @@ CREATE TABLE notification_log (
     notification_id   INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
     calibration_id     INT UNSIGNED  NOT NULL,
     user_id            INT UNSIGNED  NULL COMMENT 'recipient; NULL if broadcast',
-    notification_type ENUM('30_days', '14_days', '7_days', 'due', 'overdue') NOT NULL,
+    notification_type ENUM('30_days', '14_days', '7_days', 'due', 'overdue', '1_day') NOT NULL COMMENT '14_days/due/overdue: retired buckets, kept for old history rows',
     channel            VARCHAR(30)   NOT NULL DEFAULT 'LINE',
     status             ENUM('sent', 'failed') NOT NULL DEFAULT 'sent',
     sent_at             TIMESTAMP    NOT NULL DEFAULT CURRENT_TIMESTAMP,

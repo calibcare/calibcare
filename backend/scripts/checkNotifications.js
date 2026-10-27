@@ -11,7 +11,7 @@ import { checkAndSendReminders } from '../src/services/reminderService.js';
  * Deliberately reuses checkAndSendReminders() (the same tested logic behind
  * POST /api/reminders/run and the old in-process scheduler) rather than
  * reimplementing the due-date matching here -- that function already
- * encodes the 30/14/7/due-today/overdue buckets, the catch-up-on-a-missed-
+ * encodes the 30/7/1-day buckets, the catch-up-on-a-missed-
  * run behavior, and the notification_log dedup fix (a real bug found and
  * fixed in this project: a failed send must not permanently block retries).
  * Re-deriving that logic in a second place would risk losing those fixes.

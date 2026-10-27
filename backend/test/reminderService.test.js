@@ -4,14 +4,16 @@ import { pickBucket, checkAndSendReminders } from '../src/services/reminderServi
 
 test('pickBucket picks the most urgent applicable threshold', () => {
   assert.equal(pickBucket(-5), 'overdue');
-  assert.equal(pickBucket(0), 'due');
-  assert.equal(pickBucket(5), '7_days');
-  assert.equal(pickBucket(10), '14_days');
-  assert.equal(pickBucket(25), '30_days');
-  assert.equal(pickBucket(40), null);
+  assert.equal(pickBucket(0), '1_day');
+  assert.equal(pickBucket(1), '1_day');
+  assert.equal(pickBucket(2), '7_days');
+  assert.equal(pickBucket(7), '7_days');
+  assert.equal(pickBucket(8), '30_days');
+  assert.equal(pickBucket(30), '30_days');
+  assert.equal(pickBucket(31), null);
 });
 
-const DEFAULT_RULES = ['30_days', '14_days', '7_days', 'due', 'overdue'].map((bucket) => ({
+const DEFAULT_RULES = ['30_days', '7_days', '1_day'].map((bucket) => ({
   bucket,
   enabled: 1,
   send_line: 1,
@@ -128,11 +130,11 @@ test('a disabled rule is skipped entirely, no send attempted on any channel', as
       name: 'Electrical Safety Analyzer',
       model: 'ESA612',
       serial_number: '5040062',
-      days_until_due: -24,
+      days_until_due: 5,
     },
   ];
   const recipients = [{ user_id: 1, line_user_id: 'Uabc123' }];
-  const rules = DEFAULT_RULES.map((r) => (r.bucket === 'overdue' ? { ...r, enabled: 0 } : r));
+  const rules = DEFAULT_RULES.map((r) => (r.bucket === '7_days' ? { ...r, enabled: 0 } : r));
   const { db } = makeFakeDb({ dueRows, recipients, rules });
   const line = fakeLineClient();
 
@@ -157,7 +159,7 @@ test('a rule with both channels enabled sends LINE and email, logging one row pe
   ];
   const recipients = [{ user_id: 1, line_user_id: 'Uabc123' }];
   const emailRecipients = [{ user_id: 1, email: 'a@idsmed.com' }, { user_id: 2, email: 'b@idsmed.com' }];
-  const rules = DEFAULT_RULES.map((r) => (r.bucket === 'due' ? { ...r, send_email: 1 } : r));
+  const rules = DEFAULT_RULES.map((r) => (r.bucket === '1_day' ? { ...r, send_email: 1 } : r));
   const { db, inserts } = makeFakeDb({ dueRows, recipients, emailRecipients, rules });
   const line = fakeLineClient();
   const email = fakeEmailClient();
@@ -191,8 +193,8 @@ test('per-channel dedup: LINE already sent does not block a first-time email att
   ];
   const recipients = [{ user_id: 1, line_user_id: 'Uabc123' }];
   const emailRecipients = [{ user_id: 1, email: 'a@idsmed.com' }];
-  const rules = DEFAULT_RULES.map((r) => (r.bucket === 'due' ? { ...r, send_email: 1 } : r));
-  const seedLog = [{ calibration_id: 4, user_id: 1, notification_type: 'due', channel: 'LINE', status: 'sent' }];
+  const rules = DEFAULT_RULES.map((r) => (r.bucket === '1_day' ? { ...r, send_email: 1 } : r));
+  const seedLog = [{ calibration_id: 4, user_id: 1, notification_type: '1_day', channel: 'LINE', status: 'sent' }];
   const { db } = makeFakeDb({ dueRows, recipients, emailRecipients, rules, seedLog });
   const line = fakeLineClient();
   const email = fakeEmailClient();
@@ -220,7 +222,7 @@ test('email dry-run never makes a real send and is not logged', async () => {
     },
   ];
   const emailRecipients = [{ user_id: 1, email: 'a@idsmed.com' }];
-  const rules = DEFAULT_RULES.map((r) => (r.bucket === 'due' ? { ...r, send_line: 0, send_email: 1 } : r));
+  const rules = DEFAULT_RULES.map((r) => (r.bucket === '1_day' ? { ...r, send_line: 0, send_email: 1 } : r));
   const { db, inserts } = makeFakeDb({ dueRows, emailRecipients, rules });
   const line = fakeLineClient();
   const email = fakeEmailClient({ dryRun: true });
@@ -243,14 +245,14 @@ test('a previously failed send does not permanently block a retry', async () => 
       name: 'Electrical Safety Analyzer',
       model: 'ESA612',
       serial_number: '5040062',
-      days_until_due: -24,
+      days_until_due: 5,
     },
   ];
   const recipients = [{ user_id: 1, line_user_id: 'Uabc123' }];
   // Simulate exactly what happened live: an earlier run logged a 'failed'
   // row (e.g. LINE rejected an invalid recipient in the batch) for this
   // same calibration_id + bucket.
-  const seedLog = [{ calibration_id: 2, user_id: 1, notification_type: 'overdue', channel: 'LINE', status: 'failed' }];
+  const seedLog = [{ calibration_id: 2, user_id: 1, notification_type: '7_days', channel: 'LINE', status: 'failed' }];
   const { db } = makeFakeDb({ dueRows, recipients, seedLog });
   const line = fakeLineClient();
 
@@ -301,6 +303,26 @@ test('items further than 30 days out produce no reminder', async () => {
 
   const results = await checkAndSendReminders(db, line);
   assert.equal(results.length, 0);
+});
+
+test('overdue items produce no reminder (reminders stop after the 1-day one)', async () => {
+  const dueRows = [
+    {
+      calibration_id: 6,
+      equipment_id: 15,
+      next_calibration_date: '2026-06-20',
+      name: 'Electrical Safety Analyzer',
+      model: 'ESA612',
+      serial_number: '5040062',
+      days_until_due: -24,
+    },
+  ];
+  const { db } = makeFakeDb({ dueRows, recipients: [{ user_id: 1, line_user_id: 'U1' }] });
+  const line = fakeLineClient();
+
+  const results = await checkAndSendReminders(db, line);
+  assert.equal(results.length, 0);
+  assert.equal(line.calls.length, 0);
 });
 
 test('dry-run LINE client never makes a real send but still gets called', async () => {
