@@ -90,12 +90,25 @@ remindersRouter.patch('/rules/:bucket', requireCapability('canRunReminders'), as
   }
 });
 
+// sent_at is a TIMESTAMP, which (with dateStrings) comes back as a bare
+// "YYYY-MM-DD HH:MM:SS" in the database server's own timezone -- UTC on
+// Railway, Bangkok on the local Mac -- so the browser can't tell which and
+// showed Railway times 7 hours early. Queries select UNIX_TIMESTAMP(...)
+// instead (timezone-independent) and this turns it into an ISO string with
+// a "Z", which the browser converts to the viewer's local time.
+function unixToIso(seconds) {
+  return seconds == null ? null : new Date(Number(seconds) * 1000).toISOString();
+}
+
 // GET /api/reminders/summary -- real stand-ins for "last run"/"connection
 // status": the app has no record of the external Railway Cron Job's
 // schedule, so there's deliberately no "next run" field here.
 remindersRouter.get('/summary', async (req, res, next) => {
   try {
-    const [[{ lastSentAt }]] = await pool.query("SELECT MAX(sent_at) AS lastSentAt FROM notification_log WHERE status = 'sent'");
+    const [[{ lastSentUnix }]] = await pool.query(
+      "SELECT UNIX_TIMESTAMP(MAX(sent_at)) AS lastSentUnix FROM notification_log WHERE status = 'sent'"
+    );
+    const lastSentAt = unixToIso(lastSentUnix);
     const [[{ sentLast24h }]] = await pool.query(
       "SELECT COUNT(*) AS sentLast24h FROM notification_log WHERE status = 'sent' AND sent_at >= NOW() - INTERVAL 1 DAY"
     );
@@ -120,7 +133,7 @@ remindersRouter.get('/history', async (req, res, next) => {
     const safeOffset = Math.max(Number(offset) || 0, 0);
 
     const [rows] = await pool.query(
-      `SELECT n.notification_id, n.notification_type, n.channel, n.status, n.sent_at,
+      `SELECT n.notification_id, n.notification_type, n.channel, n.status, UNIX_TIMESTAMP(n.sent_at) AS sent_at_unix,
               e.name, e.model, e.serial_number
        FROM notification_log n
        JOIN calibration_history ch ON ch.calibration_id = n.calibration_id
@@ -139,7 +152,11 @@ remindersRouter.get('/history', async (req, res, next) => {
       total,
       limit: safeLimit,
       offset: safeOffset,
-      history: rows.map((r) => ({ ...r, label: RULE_LABEL[r.notification_type] || LEGACY_RULE_LABEL[r.notification_type] || r.notification_type })),
+      history: rows.map(({ sent_at_unix, ...r }) => ({
+        ...r,
+        sent_at: unixToIso(sent_at_unix),
+        label: RULE_LABEL[r.notification_type] || LEGACY_RULE_LABEL[r.notification_type] || r.notification_type,
+      })),
     });
   } catch (err) {
     next(err);

@@ -744,6 +744,17 @@ coopproject/
 - Device/model text comes straight from the DB (e.g. equipment "Defibrillator/Transcutanreous Analyzer", model "Impulse7000DP" — the user's sample had these spelled/spaced differently).
 - **Deployed**: `dd43909` pushed → Railway `calibcare` Online (`/health` ok); `checknotifications` redeployed → deployment `d7c8e319` SUCCESS.
 
+## Equipment name typo "Transcutanreous" → "Transcutaneous" (2026-10-27) — local done, production pending
+
+- Equipment 15 + 16 ("Defibrillator/Transcutanreous Analyzer", Impulse7000DP, S/N 2986072 / 5383046) — typo from the source Excel, visible in reminder messages. `database/fix_transcutaneous_typo.sql` (same pattern as `fix_ac_current_typo.sql`); applied locally (2 rows, 0 left). `seed_data.sql` still has the typo — re-run the fix after any reload from scratch.
+- **Production not yet fixed**: applying it from this session was blocked by a permission check. Either the user edits the Name of both instruments on the live Equipment detail page, or runs the SQL file against Railway MySQL (back up first).
+
+## Reminders page times shown 7 hours early on the live site (2026-10-27) — fixed
+
+- Symptom (user screenshot): history said "Oct 27 at 9:09 AM" for emails sent at 16:09 Thailand time. Cause: `notification_log.sent_at` is a TIMESTAMP; with `dateStrings: true` it comes back as a bare string in the DB server's timezone (Railway MySQL = UTC, local Mac = +07), and the browser parsed it as local time. Local dev looked right, which is why it went unnoticed.
+- Fix (`routes/reminders.js` only): `/summary` and `/history` select `UNIX_TIMESTAMP(...)` (timezone-independent) and return ISO strings with `Z` via `unixToIso()`; the frontend's existing `new Date(...)` then shows viewer-local time. No frontend change, no cron change. Verified locally: same event = raw 13:44 (+07 session) vs 06:44 (UTC session) but identical unix value; API returns `…T06:44:30.000Z` → "Aug 5, 1:44 PM" in Bangkok. 53 tests pass.
+- Other pages don't show clock times (Admin shows created date only via `.slice(0,10)` — would be the UTC date for accounts created 00:00–07:00 Thai time; not fixed).
+
 ## Next up
 
 - **Check the 2026-10-28 09:00 UTC `checknotifications` run** (`railway logs --service checknotifications`): should show `emailDryRun=false` and real email sends — confirms the cron email fix is live.
