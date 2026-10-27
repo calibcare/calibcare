@@ -303,6 +303,27 @@ function downloadCsv(rows) {
   URL.revokeObjectURL(url);
 }
 
+const COLUMNS = [
+  { label: 'Name', sortKey: 'name' },
+  { label: 'Model', sortKey: 'model' },
+  { label: 'Serial', sortKey: 'serial_number' },
+  { label: 'Location', sortKey: 'location_category' },
+  { label: 'Next due', sortKey: 'days_until_due' },
+  { label: 'Status', sortKey: 'displayStatus' },
+  { label: '' },
+];
+
+function SortIcon({ dir }) {
+  const up = dir === 1 ? theme.brand : theme.textFainter;
+  const down = dir === -1 ? theme.brand : theme.textFainter;
+  return (
+    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M8 20V4M4 8l4-4 4 4" stroke={up} />
+      <path d="M16 4v16M12 16l4 4 4-4" stroke={down} />
+    </svg>
+  );
+}
+
 export function EquipmentPage() {
   const { user } = useAuth();
   const canManage = Boolean(user?.can_edit);
@@ -378,18 +399,31 @@ export function EquipmentPage() {
     return counts;
   }
 
-  const rows = useMemo(
-    () =>
-      items
-        .filter((item) => matches(item, filters, q))
-        .sort(
-          (a, b) =>
-            STATUS_ORDER.indexOf(a.displayStatus) - STATUS_ORDER.indexOf(b.displayStatus) ||
-            (a.days_until_due ?? Infinity) - (b.days_until_due ?? Infinity) ||
-            a.equipment_no - b.equipment_no
-        ),
-    [items, filters, q]
-  );
+  // Default order is urgency; clicking a column header sorts by it instead,
+  // toggling asc -> desc -> back to urgency.
+  const [sort, setSort] = useState({ key: null, dir: 1 });
+  function cycleSort(key) {
+    setSort((s) => (s.key !== key ? { key, dir: 1 } : s.dir === 1 ? { key, dir: -1 } : { key: null, dir: 1 }));
+  }
+
+  const rows = useMemo(() => {
+    const urgency = (a, b) =>
+      STATUS_ORDER.indexOf(a.displayStatus) - STATUS_ORDER.indexOf(b.displayStatus) ||
+      (a.days_until_due ?? Infinity) - (b.days_until_due ?? Infinity) ||
+      a.equipment_no - b.equipment_no;
+    const byColumn = (a, b) => {
+      const { key, dir } = sort;
+      if (key === 'displayStatus') return dir * (STATUS_ORDER.indexOf(a.displayStatus) - STATUS_ORDER.indexOf(b.displayStatus)) || urgency(a, b);
+      const av = a[key];
+      const bv = b[key];
+      // Blanks always sort last, whichever direction.
+      if (av == null || av === '') return bv == null || bv === '' ? urgency(a, b) : 1;
+      if (bv == null || bv === '') return -1;
+      const cmp = typeof av === 'number' ? av - bv : String(av).localeCompare(String(bv), undefined, { numeric: true });
+      return dir * cmp || urgency(a, b);
+    };
+    return items.filter((item) => matches(item, filters, q)).sort(sort.key ? byColumn : urgency);
+  }, [items, filters, q, sort]);
 
   const groups = useMemo(() => {
     if (!grouped) return null;
@@ -757,13 +791,26 @@ export function EquipmentPage() {
                 <th className="w-10 pl-4" style={{ borderBottom: `1px solid ${theme.border}` }}>
                   <input type="checkbox" checked={allVisibleSelected} onChange={toggleSelectAll} aria-label="Select all shown" />
                 </th>
-                {['Name', 'Model', 'Serial', 'Location', 'Next due', 'Status', ''].map((h, i) => (
+                {COLUMNS.map((col, i) => (
                   <th
                     key={i}
                     className="text-left text-[10.5px] font-bold tracking-wide uppercase px-3 py-3"
                     style={{ color: theme.textFaint, borderBottom: `1px solid ${theme.border}` }}
                   >
-                    {h}
+                    {col.sortKey ? (
+                      <button
+                        type="button"
+                        onClick={() => cycleSort(col.sortKey)}
+                        className="flex items-center gap-1.5 uppercase tracking-wide font-bold"
+                        style={{ color: sort.key === col.sortKey ? theme.brand : theme.textFaint, background: 'none', border: 'none', padding: 0 }}
+                        title={`Sort by ${col.label.toLowerCase()}`}
+                      >
+                        {col.label}
+                        <SortIcon dir={sort.key === col.sortKey ? sort.dir : 0} />
+                      </button>
+                    ) : (
+                      col.label
+                    )}
                   </th>
                 ))}
               </tr>
