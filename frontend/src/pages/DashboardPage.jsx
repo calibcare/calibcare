@@ -73,6 +73,121 @@ function DashboardSkeleton() {
   );
 }
 
+const STATUS_LABELS = {
+  active: 'Active',
+  under_maintenance: 'Under Maintenance',
+  decommissioned: 'Decommissioned',
+  sent_for_calibration: 'Sent for Calibration',
+};
+
+function dueText(days) {
+  if (days == null) return '';
+  if (days < 0) return `${-days} day${days === -1 ? '' : 's'} overdue`;
+  if (days === 0) return 'Due today';
+  return `Due in ${days} day${days === 1 ? '' : 's'}`;
+}
+
+// Quick look at one device from a dashboard list: its details load into a
+// side drawer, so the user keeps their place on the dashboard; the full
+// page (history, certificates, editing) is one click away.
+function DeviceDrawer({ item, onClose }) {
+  const [detail, setDetail] = useState(null);
+  const [error, setError] = useState('');
+
+  useEffect(() => {
+    client
+      .get(`/api/equipment/${item.equipment_id}`)
+      .then(({ data }) => setDetail(data))
+      .catch((err) => setError(err.response?.data?.error || 'Failed to load this device'));
+  }, [item.equipment_id]);
+
+  const overdue = item.days_until_due < 0;
+  const latest = detail?.latest_calibration;
+  const fields = detail && [
+    ['Serial number', detail.serial_number],
+    ['Model', detail.model],
+    ['Manufacturer', detail.manufacturer],
+    ['Category', detail.category],
+    ['Site', detail.location_category],
+    ['Location', detail.location],
+    ['Status', STATUS_LABELS[detail.status] || detail.status],
+    ['Last calibrated', latest?.calibration_date ? String(latest.calibration_date).slice(0, 10) : null],
+    ['Next due', String(item.next_calibration_date).slice(0, 10)],
+    ['Calibrated by', latest?.responsible_person],
+  ];
+
+  return (
+    <SideDrawer
+      label="Device details"
+      title={item.name}
+      description={
+        <span
+          className="inline-block text-[12px] font-bold rounded-full px-2.5 py-1"
+          style={{ color: overdue ? theme.criticalStrong : theme.warning, backgroundColor: overdue ? theme.criticalBgStrong : theme.warningBg }}
+        >
+          {dueText(item.days_until_due)}
+        </span>
+      }
+      onClose={onClose}
+      footer={
+        <Link
+          to={`/equipment/${item.equipment_id}`}
+          className="flex-1 text-center rounded-[10px] px-4 py-2.5 text-[13px] font-semibold text-white"
+          style={{ backgroundColor: theme.brand }}
+        >
+          Open full page →
+        </Link>
+      }
+    >
+      {error && (
+        <div className="rounded-[10px] px-4 py-2.5 text-sm" style={{ backgroundColor: theme.criticalBg, color: theme.criticalStrong }}>
+          {error}
+        </div>
+      )}
+      {!detail && !error && (
+        <div className="flex flex-col gap-3">
+          {[0, 1, 2, 3, 4, 5, 6].map((i) => (
+            <Skeleton key={i} style={{ height: 14, width: `${90 - i * 7}%` }} />
+          ))}
+        </div>
+      )}
+      {detail && (
+        <>
+          <dl className="grid gap-x-3 gap-y-2.5 text-[13px]" style={{ gridTemplateColumns: '120px 1fr' }}>
+            {fields.map(([label, value]) => (
+              <div key={label} className="contents">
+                <dt style={{ color: theme.textMuted }}>{label}</dt>
+                <dd style={{ color: theme.ink }}>{value || '—'}</dd>
+              </div>
+            ))}
+          </dl>
+          <div className="mt-6">
+            <div className="text-[13px] font-bold mb-2" style={{ color: theme.ink }}>
+              What it measures
+            </div>
+            {detail.capabilities.length === 0 ? (
+              <p className="text-[13px]" style={{ color: theme.textFaint }}>
+                No measurement capabilities recorded.
+              </p>
+            ) : (
+              <ul className="flex flex-col gap-1.5 text-[13px]" style={{ color: theme.textMuted }}>
+                {detail.capabilities.map((c) => (
+                  <li key={c.capability_id}>
+                    <span className="font-semibold" style={{ color: theme.inkAlt }}>
+                      {c.measurement_purpose}
+                    </span>
+                    {c.measurement_range ? ` · ${c.measurement_range}` : ''}
+                  </li>
+                ))}
+              </ul>
+            )}
+          </div>
+        </>
+      )}
+    </SideDrawer>
+  );
+}
+
 // Drill-down drawer for a KPI: the devices behind the number, without
 // leaving the dashboard; the full, filterable list is one click away.
 function DeviceListDrawer({ title, description, items, to, onClose }) {
@@ -442,6 +557,7 @@ export function DashboardPage() {
   const [page, setPage] = useState(0);
   const [alertDismissed, setAlertDismissed] = useState(false);
   const [drawer, setDrawer] = useState(null);
+  const [device, setDevice] = useState(null);
   const queueRef = useRef(null);
   const queueBodyRef = useRef(null);
   const [pageSize, setPageSize] = useState(PAGE_SIZE);
@@ -652,21 +768,27 @@ export function DashboardPage() {
             </div>
             <div className="flex flex-col flex-1">
               {upcomingDueDates.map((item, i) => (
-                <div
+                <button
                   key={item.equipment_id}
-                  className="flex items-center justify-between py-2.5"
-                  style={{ borderBottom: i < upcomingDueDates.length - 1 ? `1px solid ${theme.divider}` : 'none' }}
+                  type="button"
+                  onClick={() => setDevice(item)}
+                  title="Show details"
+                  className="flex items-center justify-between gap-3 py-2.5 px-2 -mx-2 rounded-lg text-left hover:bg-[#f6f7fb]"
+                  style={{ border: 'none', background: 'none', borderBottom: i < upcomingDueDates.length - 1 ? `1px solid ${theme.divider}` : 'none' }}
                 >
-                  <div className="flex flex-col gap-0.5">
-                    <span className="text-[12.5px] font-semibold" style={{ color: theme.inkAlt }}>
+                  <div className="flex flex-col gap-0.5 min-w-0">
+                    <span className="text-[12.5px] font-semibold truncate" style={{ color: theme.inkAlt }}>
                       {item.name}
                     </span>
-                    <span className="text-[11px]" style={{ color: theme.textFaint }}>
-                      {item.model}
+                    <span className="text-[11px] truncate" style={{ color: theme.textFaint }}>
+                      {item.model ? `${item.model} · ` : ''}S/N {item.serial_number}
                     </span>
                   </div>
-                  <DatePill dateStr={item.next_calibration_date} />
-                </div>
+                  <span className="flex items-center gap-2 shrink-0">
+                    <DatePill dateStr={item.next_calibration_date} />
+                    <ChevronRightIcon color="#c7cbd8" />
+                  </span>
+                </button>
               ))}
               {upcomingDueDates.length === 0 && (
                 <div className="flex-1 flex items-center justify-center text-sm py-4" style={{ color: theme.textFaint }}>
@@ -783,6 +905,7 @@ export function DashboardPage() {
       </div>
 
       {drawer && <DeviceListDrawer {...drawers[drawer]} onClose={() => setDrawer(null)} />}
+      {device && <DeviceDrawer item={device} onClose={() => setDevice(null)} />}
     </div>
   );
 }
