@@ -250,18 +250,10 @@ export function TrashIcon({ color = 'currentColor', size = 15 }) {
   );
 }
 
-export function ExpandIcon({ color = 'currentColor' }) {
+export function MenuIcon({ color = 'currentColor' }) {
   return (
     <svg {...nav}>
-      <path d="M15 4h5v5M9 20H4v-5M20 4l-6 6M4 20l6-6" stroke={color} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" fill="none" />
-    </svg>
-  );
-}
-
-export function CollapseIcon({ color = 'currentColor' }) {
-  return (
-    <svg {...nav}>
-      <path d="M14 10h5M14 10V5M10 14H5M10 14v5M14 10l6-6M10 14l-6 6" stroke={color} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" fill="none" />
+      <path d="M4 7h16M4 12h16M4 17h16" stroke={color} strokeWidth="1.9" strokeLinecap="round" fill="none" />
     </svg>
   );
 }

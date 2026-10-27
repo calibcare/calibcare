@@ -2,7 +2,7 @@ import { useState, useRef, useEffect } from 'react';
 import { NavLink, Outlet, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { theme } from '../theme';
-import { HomeIcon, PackageIcon, BellIcon, LogOutIcon, SearchIcon, UsersIcon, ShieldIcon, SettingsIcon, KeyIcon, ChevronDownIcon, ExpandIcon, CollapseIcon } from './icons';
+import { HomeIcon, PackageIcon, BellIcon, LogOutIcon, SearchIcon, UsersIcon, ShieldIcon, SettingsIcon, KeyIcon, ChevronDownIcon, MenuIcon } from './icons';
 import { FullPageContext } from './fullPage';
 
 // Navigation, grouped like with like: everyday pages first, management
@@ -205,24 +205,27 @@ function TopBar({ fullPage, onToggleFullPage }) {
 
   return (
     <div className="h-[64px] shrink-0 bg-white flex items-center justify-end gap-3 px-8" style={{ borderBottom: `1px solid ${theme.border}` }}>
-      {fullPage && (
-        <div className="flex items-center gap-2.5 mr-auto">
-          <LogoMark />
-          <span className="text-[17px] font-bold tracking-tight" style={{ color: '#182448' }}>
-            Calibcare
-          </span>
-        </div>
-      )}
-      <button
-        type="button"
-        onClick={onToggleFullPage}
-        title={fullPage ? 'Exit full page (show the menu again)' : 'Full page (hide the menu and title band)'}
-        className="flex items-center gap-2 h-9 rounded-[10px] px-3 text-[13px] font-semibold shrink-0 hover:bg-[#e8ecf4]"
-        style={{ backgroundColor: fullPage ? '#eaf0ff' : theme.chipBg, color: fullPage ? theme.brand : theme.textMuted, border: 'none' }}
-      >
-        {fullPage ? <CollapseIcon color={theme.brand} /> : <ExpandIcon color={theme.textMuted} />}
-        {fullPage ? 'Exit full page' : 'Full page'}
-      </button>
+      <div className="flex items-center gap-3 mr-auto">
+        <button
+          type="button"
+          onClick={onToggleFullPage}
+          aria-label={fullPage ? 'Show the menu' : 'Hide the menu (full page)'}
+          aria-pressed={fullPage}
+          title={fullPage ? 'Show the menu' : 'Hide the menu (full page)'}
+          className="w-9 h-9 rounded-[10px] flex items-center justify-center shrink-0 hover:bg-[#e8ecf4]"
+          style={{ backgroundColor: theme.chipBg, border: 'none' }}
+        >
+          <MenuIcon color={theme.textMuted} />
+        </button>
+        {fullPage && (
+          <>
+            <LogoMark />
+            <span className="text-[17px] font-bold tracking-tight" style={{ color: '#182448' }}>
+              Calibcare
+            </span>
+          </>
+        )}
+      </div>
       <form onSubmit={handleSearchSubmit} className="relative">
         <span className="absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none">
           <SearchIcon color={theme.textFaint} />
