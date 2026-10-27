@@ -3,7 +3,7 @@
 > Living log of what's been built. Updated after every completed unit of work.
 > Read this first when resuming a session on this project.
 
-Last updated: 2026-10-27 (reminders changed to 30 / 7 / 1 day only — deployed)
+Last updated: 2026-10-27 (30/7/1-day reminders, cron email fix, new message layout — all deployed)
 
 ---
 
@@ -734,15 +734,15 @@ coopproject/
 
 - `backend/scripts/checkNotifications.js` (the `checknotifications` Railway cron, 09:00 UTC) called `checkAndSendReminders(pool, lineClient)` with no email client → the no-op dry-run email client → **no email reminder was ever sent by the daily run**, only by the manual "Run check now" button (`POST /api/reminders/run`, which passes `createEmailClient()`). Its sent/failed counts were also always 0 (results carry a `channels` array since the 2026-09-15 rewrite).
 - Fix (`8d4a36c`): pass `createEmailClient()`, count per channel. Dry-run against local DB: 7 items, 8 channel sends, nothing logged. 52 tests pass.
-- **Deployed**: pushed `8d4a36c`; the user ran `railway redeploy --service checknotifications --from-source --yes` themselves (no output, same as the earlier successful redeploy). Build status NOT confirmed — the auto-mode permission check was failing at the time. First real test = the 09:00 UTC run on 2026-10-28: its log line should read `lineDryRun=false, emailDryRun=false` and `channel sends: …`.
+- **Deployed**: pushed `8d4a36c`; the user ran `railway redeploy --service checknotifications --from-source --yes` themselves (no output, same as the earlier successful redeploy). Build status confirmed later the same day with the message-restyle deploy (checknotifications deployment `d7c8e319` SUCCESS, newer than both pushes). First real test = the 09:00 UTC run on 2026-10-28: its log line should read `lineDryRun=false, emailDryRun=false` and `channel sends: …`.
 - Because EMAIL dedup is separate from LINE, the first fixed run (or a manual "Run check now") sends one catch-up email per item currently in a window, even if LINE already went out.
 
-## Reminder message restyled, LINE + email (2026-10-27) — local only, NOT deployed
+## Reminder message restyled, LINE + email (2026-10-27) — deployed
 
 - User supplied the exact layout. New exported `buildReminderMessage(equipment, daysUntilDue, nextDate)` in `reminderService.js`: "🔔 [CalibCare] Calibration Due Soon" / Device / Model / S/N / "⏰ Due in: Today | 1 day | N days" / "📅 Next calibration: 27 Oct 2026" (built from the date string's parts, no timezone shift) / "Please schedule calibration before the due date." Then user asked for email in the same layout → it's now the LINE text **and** the plain-text email body; old one-line `buildMessage()`/`BUCKET_LABEL` removed. Email subject unchanged: "[CalibCare] Calibration reminder: <name>".
 - Tests: exact-text assert on the LINE send, email body == LINE text, due-in/date-format test → 53 pass.
 - Device/model text comes straight from the DB (e.g. equipment "Defibrillator/Transcutanreous Analyzer", model "Impulse7000DP" — the user's sample had these spelled/spaced differently).
-- **To deploy**: commit + push (Railway `calibcare` auto-builds, used by "Run check now") **and** `railway redeploy --service checknotifications --from-source --yes` (the daily job).
+- **Deployed**: `dd43909` pushed → Railway `calibcare` Online (`/health` ok); `checknotifications` redeployed → deployment `d7c8e319` SUCCESS.
 
 ## Next up
 
