@@ -36,8 +36,11 @@ export function ChangePasswordPage() {
 
   return (
     <div className="max-w-md">
+      <h1 className="text-[23px] font-bold mb-1.5" style={{ color: theme.ink }}>
+        Change password
+      </h1>
       {forced ? (
-        <div className="rounded-md px-4 py-3 mb-5 text-[13.5px]" style={{ backgroundColor: theme.warningBg, color: theme.warning, border: `1px solid ${theme.warningBorderSoft}` }}>
+        <div className="rounded-[10px] px-4 py-3 mb-5 text-[13.5px]" style={{ backgroundColor: theme.warningBg, color: theme.warning, border: `1px solid ${theme.warningBorderSoft}` }}>
           You signed in with a temporary password. Choose your own password to continue.
         </div>
       ) : (
@@ -46,7 +49,7 @@ export function ChangePasswordPage() {
         </p>
       )}
 
-      <form onSubmit={handleSubmit} className="bg-white rounded-md p-5 flex flex-col gap-4" style={{ border: `1px solid ${theme.borderStrong}` }}>
+      <form onSubmit={handleSubmit} className="bg-white rounded-2xl p-5 flex flex-col gap-4" style={{ border: `1px solid ${theme.borderStrong}` }}>
         <label className="flex flex-col gap-1.5 text-[13px] font-semibold" style={{ color: theme.ink }}>
           {forced ? 'Temporary password' : 'Current password'}
           <input type="password" required autoComplete="current-password" value={current} onChange={(e) => setCurrent(e.target.value)} style={fieldStyle} />
@@ -61,13 +64,13 @@ export function ChangePasswordPage() {
         </label>
 
         {error && (
-          <div className="rounded-md px-3 py-2 text-[13px]" style={{ backgroundColor: theme.criticalBg, color: theme.criticalStrong }}>
+          <div className="rounded-[10px] px-3 py-2 text-[13px]" style={{ backgroundColor: theme.criticalBg, color: theme.criticalStrong }}>
             {error}
           </div>
         )}
 
         <div className="flex items-center gap-3">
-          <button disabled={saving} className="rounded-md px-5 py-2 text-[13px] font-semibold text-white disabled:opacity-50" style={{ backgroundColor: '#182448', border: 'none' }}>
+          <button disabled={saving} className="rounded-[9px] px-5 py-2 text-[13px] font-semibold text-white disabled:opacity-50" style={{ backgroundColor: '#182448', border: 'none' }}>
             {saving ? 'Saving…' : 'Save'}
           </button>
           {forced ? (

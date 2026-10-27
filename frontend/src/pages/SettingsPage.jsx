@@ -23,6 +23,9 @@ export function SettingsPage() {
 
   return (
     <div>
+      <h1 className="text-2xl font-extrabold mb-1" style={{ color: INK }}>
+        Profile
+      </h1>
       <p className="text-sm mb-6" style={{ color: MUTED }}>
         Your account details.
       </p>
@@ -36,7 +39,7 @@ export function SettingsPage() {
         <div className="pt-4">
           <Link
             to="/change-password"
-            className="inline-block rounded-md px-4 py-2 text-[13px] font-semibold text-white"
+            className="inline-block rounded-[9px] px-4 py-2 text-[13px] font-semibold text-white"
             style={{ backgroundColor: '#182448' }}
           >
             Change password

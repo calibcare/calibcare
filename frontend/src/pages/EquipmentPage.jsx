@@ -3,7 +3,7 @@ import { Link, useSearchParams } from 'react-router-dom';
 import client from '../api/client';
 import { theme } from '../theme';
 import { useAuth } from '../context/AuthContext';
-import { SearchIcon, ChevronDownIcon, SendIcon, LayersIcon } from '../components/icons';
+import { SearchIcon, ChevronDownIcon } from '../components/icons';
 
 const EDITABLE_STATUSES = ['active', 'under_maintenance', 'decommissioned', 'sent_for_calibration'];
 const DUE_SOON_DAYS = 30;
@@ -123,71 +123,32 @@ function useDismiss(ref, active, onClose) {
     function onKey(e) {
       if (e.key === 'Escape') onClose();
     }
-    // Menus are position:fixed (see anchorStyle), so they'd drift away from
-    // their button if the page scrolled underneath -- close instead. Scrolls
-    // inside the menu itself (long option lists) are ignored.
-    function onScroll(e) {
-      if (ref.current && !ref.current.contains(e.target)) onClose();
-    }
     document.addEventListener('mousedown', onDown);
     document.addEventListener('keydown', onKey);
-    document.addEventListener('scroll', onScroll, true);
     return () => {
       document.removeEventListener('mousedown', onDown);
       document.removeEventListener('keydown', onKey);
-      document.removeEventListener('scroll', onScroll, true);
     };
   }, [ref, active, onClose]);
 }
 
-// Fixed-position style for a menu anchored under `el`. Fixed rather than
-// absolute because the menus that open from column headers and row ⋯
-// buttons live inside the table's scroll container, which would clip them.
-function anchorStyle(el, align) {
-  if (!el) return {};
-  const r = el.getBoundingClientRect();
-  return align === 'right'
-    ? { position: 'fixed', top: r.bottom + 6, right: window.innerWidth - r.right }
-    : { position: 'fixed', top: r.bottom + 6, left: Math.min(r.left, window.innerWidth - 250) };
-}
-
-function FunnelIcon({ color = 'currentColor', size = 12 }) {
-  return (
-    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2.2" strokeLinejoin="round">
-      <path d="M3 4h18l-7 8.5V19l-4 2v-8.5Z" />
-    </svg>
-  );
-}
-
-function SortIcon({ dir }) {
-  const up = dir === 1 ? theme.brand : theme.textFainter;
-  const down = dir === -1 ? theme.brand : theme.textFainter;
-  return (
-    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-      <path d="M8 20V4M4 8l4-4 4 4" stroke={up} />
-      <path d="M16 4v16M12 16l4 4 4-4" stroke={down} />
-    </svg>
-  );
-}
-
-const chipBase = 'flex items-center gap-1.5 rounded-md px-[13px] py-[8px] text-[13px] font-semibold whitespace-nowrap';
+const chipBase = 'flex items-center gap-1.5 rounded-[10px] px-[13px] py-[8px] text-[13px] font-semibold whitespace-nowrap';
 function chipStyle(active) {
   return active
     ? { border: '1px solid #cddaf9', backgroundColor: '#eaf0ff', color: '#1d3a8f' }
     : { border: `1px solid ${theme.borderStrong}`, backgroundColor: '#fff', color: '#38415a' };
 }
-const menuBox = 'z-50 bg-white rounded-md p-2 min-w-[230px] text-left normal-case tracking-normal font-normal';
+const menuBox = 'absolute left-0 top-[calc(100%+6px)] z-30 bg-white rounded-xl p-2 min-w-[230px]';
 const menuStyle = { border: `1px solid ${theme.borderStrong}`, boxShadow: '0 10px 30px rgba(16,24,40,.16)' };
 
 // Multi-select checkbox menu. Edits a draft copy and only commits on Apply
 // (or clicking away), so the table doesn't re-filter on every tick.
 // `counts` is how many rows each option would show given the *other* active
 // filters -- the same facet-count behavior as the mockup.
-function MultiFilter({ label, options, selected, counts, renderOption = (v) => v, onApply, variant = 'chip' }) {
+function MultiFilter({ label, options, selected, counts, renderOption = (v) => v, onApply }) {
   const [open, setOpen] = useState(false);
   const [draft, setDraft] = useState(selected);
   const [search, setSearch] = useState('');
-  const [pos, setPos] = useState({});
   const ref = useRef(null);
 
   const close = useCallback(() => {
@@ -200,7 +161,6 @@ function MultiFilter({ label, options, selected, counts, renderOption = (v) => v
     if (open) return close();
     setDraft(new Set(selected));
     setSearch('');
-    setPos(anchorStyle(ref.current, 'left'));
     setOpen(true);
   }
 
@@ -208,27 +168,13 @@ function MultiFilter({ label, options, selected, counts, renderOption = (v) => v
 
   return (
     <div className="relative" ref={ref}>
-      {variant === 'funnel' ? (
-        <button
-          type="button"
-          onClick={toggleOpen}
-          aria-expanded={open}
-          aria-label={`Filter by ${label.toLowerCase()}`}
-          title={`Filter by ${label.toLowerCase()}`}
-          className="w-5 h-5 flex items-center justify-center rounded"
-          style={{ border: 'none', background: selected.size ? '#eaf0ff' : 'none' }}
-        >
-          <FunnelIcon color={selected.size ? theme.brand : theme.textFaint} />
-        </button>
-      ) : (
-        <button type="button" onClick={toggleOpen} className={chipBase} style={chipStyle(selected.size > 0)} aria-expanded={open}>
-          {label}
-          {selected.size > 0 && ` (${selected.size})`}
-          <ChevronDownIcon size={11} />
-        </button>
-      )}
+      <button type="button" onClick={toggleOpen} className={chipBase} style={chipStyle(selected.size > 0)} aria-expanded={open}>
+        {label}
+        {selected.size > 0 && ` (${selected.size})`}
+        <ChevronDownIcon size={11} />
+      </button>
       {open && (
-        <div className={menuBox} style={{ ...menuStyle, ...pos }}>
+        <div className={menuBox} style={menuStyle}>
           {options.length > 5 && (
             <input
               autoFocus
@@ -295,19 +241,14 @@ function MultiFilter({ label, options, selected, counts, renderOption = (v) => v
 // saved views, row ⋯ actions).
 function Popover({ button, children, align = 'left' }) {
   const [open, setOpen] = useState(false);
-  const [pos, setPos] = useState({});
   const ref = useRef(null);
   const close = useCallback(() => setOpen(false), []);
   useDismiss(ref, open, close);
-  function toggle() {
-    if (!open) setPos(anchorStyle(ref.current, align));
-    setOpen((o) => !o);
-  }
   return (
     <div className="relative" ref={ref}>
-      {button({ open, toggle })}
+      {button({ open, toggle: () => setOpen((o) => !o) })}
       {open && (
-        <div className={menuBox} style={{ ...menuStyle, ...pos }} onClick={(e) => e.stopPropagation()}>
+        <div className={`${menuBox} ${align === 'right' ? 'left-auto right-0' : ''}`} style={menuStyle} onClick={(e) => e.stopPropagation()}>
           {children(close)}
         </div>
       )}
@@ -330,69 +271,6 @@ function MenuItem({ onClick, children, danger, to }) {
       {children}
     </button>
   );
-}
-
-const COLUMNS = [
-  { label: 'Name', sortKey: 'name', filter: 'type' },
-  { label: 'Model', sortKey: 'model' },
-  { label: 'Serial', sortKey: 'serial_number' },
-  { label: 'Location', sortKey: 'location_category', filter: 'loc' },
-  { label: 'Next due', sortKey: 'days_until_due', filter: 'due' },
-  { label: 'Status', sortKey: 'displayStatus', filter: 'status' },
-];
-
-function ToolbarButton({ children, onClick, disabled, active, title }) {
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      disabled={disabled}
-      title={disabled ? title : undefined}
-      className="flex items-center gap-1.5 px-3 py-1.5 rounded text-[12.5px] text-white whitespace-nowrap hover:bg-white/15 disabled:opacity-50 disabled:hover:bg-transparent disabled:cursor-not-allowed"
-      style={{ border: 'none', background: active ? 'rgba(255,255,255,.22)' : undefined }}
-    >
-      {children}
-    </button>
-  );
-}
-
-function DownloadIcon() {
-  return (
-    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-      <path d="M12 4v11M7 10l5 5 5-5M5 20h14" />
-    </svg>
-  );
-}
-
-function PageButton({ children, onClick, disabled, active, label }) {
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      disabled={disabled}
-      aria-label={label}
-      aria-current={active ? 'page' : undefined}
-      className="min-w-[30px] h-[30px] px-2 rounded text-[13px] font-semibold disabled:opacity-40"
-      style={{
-        border: `1px solid ${active ? theme.sidebarBlue : theme.borderStrong}`,
-        backgroundColor: active ? theme.sidebarBlue : '#fff',
-        color: active ? '#fff' : theme.ink,
-      }}
-    >
-      {children}
-    </button>
-  );
-}
-
-// Page numbers to show: first, last, and a window around the current page,
-// with '…' for the gaps (0-based).
-function pageNumbers(current, count) {
-  const out = [];
-  for (let i = 0; i < count; i++) {
-    if (i === 0 || i === count - 1 || Math.abs(i - current) <= 1) out.push(i);
-    else if (out[out.length - 1] !== '…') out.push('…');
-  }
-  return out;
 }
 
 function toCsv(rows) {
@@ -442,11 +320,6 @@ export function EquipmentPage() {
   const [showForm, setShowForm] = useState(false);
   const [form, setForm] = useState(emptyForm);
   const [saving, setSaving] = useState(false);
-  // null key = the default "most urgent first" order; otherwise a column
-  // sort, toggled asc -> desc -> off by clicking its header arrows.
-  const [sort, setSort] = useState({ key: null, dir: 1 });
-  const [pageSize, setPageSize] = useState(20);
-  const [page, setPage] = useState(0);
 
   const todayStr = localToday();
 
@@ -505,46 +378,28 @@ export function EquipmentPage() {
     return counts;
   }
 
-  const rows = useMemo(() => {
-    const urgency = (a, b) =>
-      STATUS_ORDER.indexOf(a.displayStatus) - STATUS_ORDER.indexOf(b.displayStatus) ||
-      (a.days_until_due ?? Infinity) - (b.days_until_due ?? Infinity) ||
-      a.equipment_no - b.equipment_no;
-    const byColumn = (a, b) => {
-      const { key, dir } = sort;
-      if (key === 'displayStatus') return dir * (STATUS_ORDER.indexOf(a.displayStatus) - STATUS_ORDER.indexOf(b.displayStatus)) || urgency(a, b);
-      const av = a[key];
-      const bv = b[key];
-      // Blanks always sort last, whichever direction.
-      if (av == null || av === '') return bv == null || bv === '' ? urgency(a, b) : 1;
-      if (bv == null || bv === '') return -1;
-      const cmp = typeof av === 'number' ? av - bv : String(av).localeCompare(String(bv), undefined, { numeric: true });
-      return dir * cmp || urgency(a, b);
-    };
-    return items.filter((item) => matches(item, filters, q)).sort(sort.key ? byColumn : urgency);
-  }, [items, filters, q, sort]);
-
-  useEffect(() => {
-    setPage(0);
-  }, [filters, q, sort, pageSize, grouped]);
-
-  const pageCount = Math.max(1, Math.ceil(rows.length / pageSize));
-  const currentPage = Math.min(page, pageCount - 1);
-  const pageRows = rows.slice(currentPage * pageSize, currentPage * pageSize + pageSize);
-
-  function cycleSort(key) {
-    setSort((s) => (s.key !== key ? { key, dir: 1 } : s.dir === 1 ? { key, dir: -1 } : { key: null, dir: 1 }));
-  }
+  const rows = useMemo(
+    () =>
+      items
+        .filter((item) => matches(item, filters, q))
+        .sort(
+          (a, b) =>
+            STATUS_ORDER.indexOf(a.displayStatus) - STATUS_ORDER.indexOf(b.displayStatus) ||
+            (a.days_until_due ?? Infinity) - (b.days_until_due ?? Infinity) ||
+            a.equipment_no - b.equipment_no
+        ),
+    [items, filters, q]
+  );
 
   const groups = useMemo(() => {
     if (!grouped) return null;
     const map = new Map();
-    for (const row of pageRows) {
+    for (const row of rows) {
       if (!map.has(row.name)) map.set(row.name, []);
       map.get(row.name).push(row);
     }
     return [...map.entries()];
-  }, [pageRows, grouped]);
+  }, [rows, grouped]);
 
   const pills = [
     ...[...filters.status].map((v) => ({ key: 'status', value: v, label: `Status: ${STATUS_META[v]?.label || v}` })),
@@ -592,16 +447,9 @@ export function EquipmentPage() {
     });
   }
 
-  const allVisibleSelected = pageRows.length > 0 && pageRows.every((r) => selected.has(r.equipment_id));
+  const allVisibleSelected = rows.length > 0 && rows.every((r) => selected.has(r.equipment_id));
   function toggleSelectAll() {
-    setSelected((prev) => {
-      const next = new Set(prev);
-      for (const r of pageRows) {
-        if (allVisibleSelected) next.delete(r.equipment_id);
-        else next.add(r.equipment_id);
-      }
-      return next;
-    });
+    setSelected(allVisibleSelected ? new Set() : new Set(rows.map((r) => r.equipment_id)));
   }
 
   async function updateStatus(ids, status, message) {
@@ -663,24 +511,13 @@ export function EquipmentPage() {
     }
   }
 
-  const activeViewLabel =
-    SAVED_VIEWS.find(
-      (v) =>
-        !q &&
-        !filters.type.size &&
-        !filters.loc.size &&
-        (filters.due || '') === (v.filters.due || '') &&
-        [...filters.status].sort().join() === [...(v.filters.status || [])].sort().join()
-    )?.label || (pills.length ? 'Filtered listing' : 'All Equipment Listing');
-
   const drawerItem = drawerId != null ? items.find((i) => i.equipment_id === drawerId) : null;
   const selectedRows = items.filter((i) => selected.has(i.equipment_id));
 
-  const renderRow = (item, i) => (
+  const renderRow = (item) => (
     <EquipmentRow
       key={item.equipment_id}
       item={item}
-      striped={i % 2 === 1}
       canManage={canManage}
       checked={selected.has(item.equipment_id)}
       onCheck={() => toggleSelect(item.equipment_id)}
@@ -693,38 +530,28 @@ export function EquipmentPage() {
 
   return (
     <div className="flex flex-col gap-3.5">
-      <div className="flex items-center justify-between gap-4 flex-wrap">
-        <span className="text-[12.5px]" style={{ color: theme.textMuted }}>
-          Selected {selected.size} device{selected.size === 1 ? '' : 's'}
-          {selected.size > 0 && (
-            <button
-              type="button"
-              onClick={() => setSelected(new Set())}
-              className="ml-2 font-semibold"
-              style={{ color: theme.brand, border: 'none', background: 'none' }}
-            >
-              Deselect
-            </button>
-          )}
-        </span>
-        <div
-          className="flex items-center gap-2 rounded-md px-3 py-[7px] bg-white"
-          style={{ border: `1px solid ${theme.borderStrong}`, width: 300, maxWidth: '100%' }}
-        >
-          <SearchIcon size={14} color={theme.textFaint} />
-          <input
-            type="search"
-            value={q}
-            onChange={(e) => setQ(e.target.value)}
-            placeholder="Search name, model or serial"
-            className="text-[13px] flex-1 outline-none min-w-0"
-            style={{ color: theme.ink, border: 'none' }}
-          />
+      <div className="flex items-start justify-between gap-4 flex-wrap">
+        <div>
+          <h1 className="text-[23px] font-bold" style={{ color: theme.ink }}>
+            Equipment
+          </h1>
+          <p className="text-[13.5px] mt-0.5" style={{ color: theme.textMuted }}>
+            Find, filter and act on any device. Filters mirror the table columns.
+          </p>
         </div>
+        {canManage && (
+          <button
+            onClick={() => setShowForm((s) => !s)}
+            className="flex items-center gap-2 text-white rounded-[10px] px-[18px] py-2.5 text-[13.5px] font-semibold"
+            style={{ backgroundColor: '#182448', border: 'none' }}
+          >
+            {showForm ? 'Cancel' : '+ Add equipment'}
+          </button>
+        )}
       </div>
 
       {error && (
-        <div className="rounded-md px-4 py-2.5 text-sm" style={{ backgroundColor: theme.criticalBg, color: theme.criticalStrong }}>
+        <div className="rounded-[10px] px-4 py-2.5 text-sm" style={{ backgroundColor: theme.criticalBg, color: theme.criticalStrong }}>
           {error}
         </div>
       )}
@@ -755,7 +582,7 @@ export function EquipmentPage() {
           <div className="col-span-2">
             <button
               disabled={saving}
-              className="rounded-md px-4 py-2 text-[13px] font-semibold text-white disabled:opacity-50"
+              className="rounded-[10px] px-4 py-2 text-[13px] font-semibold text-white disabled:opacity-50"
               style={{ backgroundColor: theme.brand, border: 'none' }}
             >
               {saving ? 'Saving…' : 'Save'}
@@ -764,181 +591,181 @@ export function EquipmentPage() {
         </form>
       )}
 
-      {/* SPARKS-style grid: grey action toolbar, then the table, then paging */}
-      <div className="bg-white rounded-md" style={{ border: `1px solid ${theme.borderStrong}` }}>
-        <div className="flex items-center gap-1 flex-wrap px-2 py-1.5 rounded-t-md" style={{ backgroundColor: theme.toolbarGrey }}>
-          <Popover
-            button={({ toggle }) => (
-              <ToolbarButton onClick={toggle}>
-                <b>{activeViewLabel}</b>
-                <ChevronDownIcon size={11} color="#fff" />
-              </ToolbarButton>
-            )}
-          >
-            {(close) => (
-              <>
-                <MenuItem
-                  onClick={() => {
-                    clearAll();
-                    close();
-                  }}
-                >
-                  All equipment
-                </MenuItem>
-                {SAVED_VIEWS.map((view) => (
-                  <MenuItem
-                    key={view.label}
-                    onClick={() => {
-                      applyView(view);
-                      close();
-                    }}
-                  >
-                    {view.label}
-                  </MenuItem>
-                ))}
-              </>
-            )}
-          </Popover>
-          {canManage && (
-            <ToolbarButton onClick={() => setShowForm((v) => !v)}>
-              <span className="text-[15px] leading-none">{showForm ? '×' : '+'}</span> {showForm ? 'Cancel' : 'Equipment'}
-            </ToolbarButton>
-          )}
-          {canManage && (
-            <ToolbarButton disabled={selected.size === 0} onClick={() => sendForCalibration([...selected])} title="Select devices first">
-              <SendIcon size={14} color="#fff" /> Send for calibration
-            </ToolbarButton>
-          )}
-          <ToolbarButton
-            onClick={() => {
-              const out = selected.size ? selectedRows : rows;
-              downloadCsv(out);
-              setToast(`Exported ${out.length} rows`);
-            }}
-          >
-            <DownloadIcon /> Export{selected.size ? ` (${selected.size})` : ''}
-          </ToolbarButton>
-          <ToolbarButton onClick={() => setGrouped((g) => !g)} active={grouped}>
-            <LayersIcon size={14} color="#fff" /> Group by type
-          </ToolbarButton>
-          {pills.length > 0 && (
-            <ToolbarButton onClick={clearAll}>
-              <span className="text-[14px] leading-none">×</span> Clear filters
-            </ToolbarButton>
-          )}
+      {/* Filter bar */}
+      <div className="flex items-center gap-2 flex-wrap">
+        <div
+          className="flex items-center gap-2 rounded-[10px] px-3.5 py-[9px] bg-white"
+          style={{ border: `1px solid ${theme.borderStrong}`, flex: '1 1 240px', maxWidth: 340 }}
+        >
+          <SearchIcon size={15} color={theme.textFaint} />
+          <input
+            type="search"
+            value={q}
+            onChange={(e) => setQ(e.target.value)}
+            placeholder="Search name, model or serial"
+            className="text-[13px] flex-1 outline-none min-w-0"
+            style={{ color: theme.ink, border: 'none' }}
+          />
         </div>
 
-        {pills.length > 0 && (
-          <div className="flex items-center gap-1.5 flex-wrap px-3 py-2" style={{ borderBottom: `1px solid ${theme.divider}` }}>
-            {pills.map((p) => (
-              <span
-                key={`${p.key}|${p.value}`}
-                className="inline-flex items-center gap-1 rounded-full pl-[10px] pr-1 py-[2px] text-[11.5px] font-semibold"
-                style={{ backgroundColor: '#eaf0ff', color: theme.brand }}
-              >
-                {p.label}
-                <button
-                  type="button"
-                  onClick={() => removePill(p)}
-                  aria-label={`Remove filter ${p.label}`}
-                  className="px-1 text-[12px]"
-                  style={{ color: 'inherit', border: 'none', background: 'none' }}
-                >
-                  ✕
-                </button>
-              </span>
-            ))}
-          </div>
-        )}
+        <MultiFilter
+          label="Status"
+          options={STATUS_ORDER}
+          selected={filters.status}
+          counts={facetCounts('status', 'displayStatus')}
+          renderOption={(v) => STATUS_META[v].label}
+          onApply={(v) => setFilter('status', v)}
+        />
+        <MultiFilter label="Type" options={typeOptions} selected={filters.type} counts={facetCounts('type', 'name')} onApply={(v) => setFilter('type', v)} />
+        <MultiFilter
+          label="Location"
+          options={locOptions}
+          selected={filters.loc}
+          counts={facetCounts('loc', 'location_category')}
+          onApply={(v) => setFilter('loc', v)}
+        />
 
+        <Popover
+          button={({ toggle }) => (
+            <button type="button" onClick={toggle} className={chipBase} style={chipStyle(Boolean(filters.due))}>
+              Next due{filters.due ? `: ${DUE_OPTIONS[filters.due]}` : ''}
+              <ChevronDownIcon size={11} />
+            </button>
+          )}
+        >
+          {(close) =>
+            Object.entries(DUE_OPTIONS).map(([k, v]) => (
+              <label key={k} className="flex items-center gap-2 px-1.5 py-[5px] rounded-md cursor-pointer text-[13px] hover:bg-[#f6f7fb]">
+                <input
+                  type="radio"
+                  name="due"
+                  checked={filters.due === k}
+                  onChange={() => {
+                    setFilter('due', k);
+                    close();
+                  }}
+                />
+                {v}
+              </label>
+            ))
+          }
+        </Popover>
+
+        <div className="w-px h-[22px] mx-0.5" style={{ backgroundColor: theme.borderStrong }} />
+
+        <label className={`${chipBase} cursor-pointer`} style={chipStyle(grouped)}>
+          <input type="checkbox" checked={grouped} onChange={(e) => setGrouped(e.target.checked)} />
+          Group by type
+        </label>
+
+        <Popover
+          button={({ toggle }) => (
+            <button type="button" onClick={toggle} className={chipBase} style={chipStyle(false)}>
+              ★ Saved views
+              <ChevronDownIcon size={11} />
+            </button>
+          )}
+        >
+          {(close) =>
+            SAVED_VIEWS.map((view) => (
+              <MenuItem
+                key={view.label}
+                onClick={() => {
+                  applyView(view);
+                  close();
+                }}
+              >
+                {view.label}
+              </MenuItem>
+            ))
+          }
+        </Popover>
+      </div>
+
+      {/* Active filter pills */}
+      {pills.length > 0 && (
+        <div className="flex items-center gap-1.5 flex-wrap">
+          {pills.map((p) => (
+            <span
+              key={`${p.key}|${p.value}`}
+              className="inline-flex items-center gap-1 rounded-full pl-[11px] pr-1 py-[3px] text-[12px] font-semibold"
+              style={{ backgroundColor: '#eaf0ff', color: theme.brand }}
+            >
+              {p.label}
+              <button
+                type="button"
+                onClick={() => removePill(p)}
+                aria-label={`Remove filter ${p.label}`}
+                className="px-1 text-[13px]"
+                style={{ color: 'inherit', border: 'none', background: 'none' }}
+              >
+                ✕
+              </button>
+            </span>
+          ))}
+          <button type="button" onClick={clearAll} className="text-[12.5px] font-semibold ml-1" style={{ color: theme.brand, border: 'none', background: 'none' }}>
+            Clear all
+          </button>
+        </div>
+      )}
+
+      {/* Bulk action bar */}
+      {selected.size > 0 && (
+        <div className="flex items-center gap-2.5 rounded-[10px] px-3.5 py-2 text-[13px]" style={{ backgroundColor: theme.ink, color: '#fff' }}>
+          <b>{selected.size} selected</b>
+          {canManage && (
+            <button
+              type="button"
+              onClick={() => sendForCalibration([...selected])}
+              className="rounded-lg px-3 py-1 font-semibold"
+              style={{ backgroundColor: '#fff', color: theme.ink, border: 'none' }}
+            >
+              Send for calibration
+            </button>
+          )}
+          <button
+            type="button"
+            onClick={() => {
+              downloadCsv(selectedRows);
+              setToast(`Exported ${selectedRows.length} rows`);
+            }}
+            className="rounded-lg px-3 py-1 font-semibold"
+            style={{ backgroundColor: 'rgba(255,255,255,.12)', color: '#fff', border: '1px solid rgba(255,255,255,.25)' }}
+          >
+            Export CSV
+          </button>
+          <button
+            type="button"
+            onClick={() => setSelected(new Set())}
+            className="ml-auto font-semibold"
+            style={{ color: '#fff', border: 'none', background: 'none' }}
+          >
+            Deselect
+          </button>
+        </div>
+      )}
+
+      <p className="text-[13px]" style={{ color: theme.textMuted }}>
+        Showing <b style={{ color: theme.ink }}>{rows.length}</b> of {items.length} devices
+      </p>
+
+      <div className="bg-white rounded-2xl overflow-hidden" style={{ border: `1px solid ${theme.border}`, boxShadow: theme.cardShadow }}>
         <div className="overflow-x-auto">
           <table className="w-full border-collapse">
             <thead>
-              <tr>
-                <th className="w-10 pl-3" style={{ borderBottom: `2px solid ${theme.borderStrong}` }}>
-                  <input type="checkbox" checked={allVisibleSelected} onChange={toggleSelectAll} aria-label="Select all on this page" />
+              <tr style={{ backgroundColor: '#fafbfd' }}>
+                <th className="w-10 pl-4" style={{ borderBottom: `1px solid ${theme.border}` }}>
+                  <input type="checkbox" checked={allVisibleSelected} onChange={toggleSelectAll} aria-label="Select all shown" />
                 </th>
-                {COLUMNS.map((col) => (
-                  <th key={col.label} className="text-left px-3 py-2.5 whitespace-nowrap" style={{ borderBottom: `2px solid ${theme.borderStrong}` }}>
-                    <div className="flex items-center gap-1.5">
-                      <button
-                        type="button"
-                        onClick={() => cycleSort(col.sortKey)}
-                        className="flex items-center gap-1.5 text-[12.5px] font-bold"
-                        style={{ color: theme.ink, border: 'none', background: 'none' }}
-                        title={`Sort by ${col.label.toLowerCase()}`}
-                      >
-                        {col.label}
-                        <SortIcon dir={sort.key === col.sortKey ? sort.dir : 0} />
-                      </button>
-                      {col.filter === 'status' && (
-                        <MultiFilter
-                          variant="funnel"
-                          label="Status"
-                          options={STATUS_ORDER}
-                          selected={filters.status}
-                          counts={facetCounts('status', 'displayStatus')}
-                          renderOption={(v) => STATUS_META[v].label}
-                          onApply={(v) => setFilter('status', v)}
-                        />
-                      )}
-                      {col.filter === 'type' && (
-                        <MultiFilter
-                          variant="funnel"
-                          label="Type"
-                          options={typeOptions}
-                          selected={filters.type}
-                          counts={facetCounts('type', 'name')}
-                          onApply={(v) => setFilter('type', v)}
-                        />
-                      )}
-                      {col.filter === 'loc' && (
-                        <MultiFilter
-                          variant="funnel"
-                          label="Location"
-                          options={locOptions}
-                          selected={filters.loc}
-                          counts={facetCounts('loc', 'location_category')}
-                          onApply={(v) => setFilter('loc', v)}
-                        />
-                      )}
-                      {col.filter === 'due' && (
-                        <Popover
-                          button={({ toggle }) => (
-                            <button
-                              type="button"
-                              onClick={toggle}
-                              aria-label="Filter by next due"
-                              title="Filter by next due"
-                              className="w-5 h-5 flex items-center justify-center rounded"
-                              style={{ border: 'none', background: filters.due ? '#eaf0ff' : 'none' }}
-                            >
-                              <FunnelIcon color={filters.due ? theme.brand : theme.textFaint} />
-                            </button>
-                          )}
-                        >
-                          {(close) =>
-                            Object.entries(DUE_OPTIONS).map(([k, v]) => (
-                              <label key={k} className="flex items-center gap-2 px-1.5 py-[5px] rounded-md cursor-pointer text-[13px] hover:bg-[#f6f7fb]">
-                                <input
-                                  type="radio"
-                                  name="due"
-                                  checked={filters.due === k}
-                                  onChange={() => {
-                                    setFilter('due', k);
-                                    close();
-                                  }}
-                                />
-                                {v}
-                              </label>
-                            ))
-                          }
-                        </Popover>
-                      )}
-                    </div>
+                {['Name', 'Model', 'Serial', 'Location', 'Next due', 'Status', ''].map((h, i) => (
+                  <th
+                    key={i}
+                    className="text-left text-[10.5px] font-bold tracking-wide uppercase px-3 py-3"
+                    style={{ color: theme.textFaint, borderBottom: `1px solid ${theme.border}` }}
+                  >
+                    {h}
                   </th>
                 ))}
-                <th style={{ borderBottom: `2px solid ${theme.borderStrong}` }} />
               </tr>
             </thead>
             <tbody>
@@ -961,55 +788,16 @@ export function EquipmentPage() {
               )}
               {groups
                 ? groups.map(([name, groupRows]) => [
-                    <tr key={`g-${name}`} style={{ backgroundColor: '#eef1f6' }}>
-                      <td colSpan={8} className="px-4 py-2 text-[12.5px] font-bold" style={{ color: theme.ink, borderBottom: `1px solid ${theme.borderStrong}` }}>
+                    <tr key={`g-${name}`} style={{ backgroundColor: theme.pageBg }}>
+                      <td colSpan={8} className="px-4 py-2 text-[12.5px] font-bold" style={{ color: theme.ink, borderBottom: `1px solid ${theme.divider}` }}>
                         {name} <span style={{ color: theme.textFaint, fontWeight: 600 }}>· {groupRows.length}</span>
                       </td>
                     </tr>,
                     ...groupRows.map(renderRow),
                   ])
-                : pageRows.map(renderRow)}
+                : rows.map(renderRow)}
             </tbody>
           </table>
-        </div>
-
-        <div className="flex items-center justify-between gap-3 flex-wrap px-4 py-3 text-[13px]" style={{ borderTop: `1px solid ${theme.borderStrong}`, color: theme.textMuted }}>
-          <div className="flex items-center gap-2">
-            Show
-            <select
-              value={pageSize}
-              onChange={(e) => setPageSize(Number(e.target.value))}
-              className="rounded px-1.5 py-1 text-[13px] bg-white"
-              style={{ border: `1px solid ${theme.borderStrong}`, color: theme.ink }}
-            >
-              {[10, 20, 50, 100].map((n) => (
-                <option key={n} value={n}>
-                  {n}
-                </option>
-              ))}
-            </select>
-            per page of <b style={{ color: theme.ink }}>{rows.length}</b> entries
-            {rows.length !== items.length && <span>(filtered from {items.length})</span>}
-          </div>
-          <div className="flex items-center gap-1">
-            <PageButton disabled={currentPage === 0} onClick={() => setPage(currentPage - 1)} label="Previous page">
-              ‹
-            </PageButton>
-            {pageNumbers(currentPage, pageCount).map((n, i) =>
-              n === '…' ? (
-                <span key={`gap-${i}`} className="px-1">
-                  …
-                </span>
-              ) : (
-                <PageButton key={n} active={n === currentPage} onClick={() => setPage(n)} label={`Page ${n + 1}`}>
-                  {n + 1}
-                </PageButton>
-              )
-            )}
-            <PageButton disabled={currentPage >= pageCount - 1} onClick={() => setPage(currentPage + 1)} label="Next page">
-              ›
-            </PageButton>
-          </div>
         </div>
       </div>
 
@@ -1024,7 +812,7 @@ export function EquipmentPage() {
 
       <div
         role="status"
-        className="fixed left-1/2 bottom-5 -translate-x-1/2 rounded-md px-4 py-2 text-[13px] z-50 pointer-events-none"
+        className="fixed left-1/2 bottom-5 -translate-x-1/2 rounded-[10px] px-4 py-2 text-[13px] z-50 pointer-events-none"
         style={{ backgroundColor: theme.ink, color: '#fff', opacity: toast ? 1 : 0, transition: 'opacity .2s' }}
       >
         {toast}
@@ -1033,20 +821,16 @@ export function EquipmentPage() {
   );
 }
 
-function EquipmentRow({ item, striped, canManage, checked, onCheck, onOpen, onSend, onDecommission, onDelete }) {
+function EquipmentRow({ item, canManage, checked, onCheck, onOpen, onSend, onDecommission, onDelete }) {
   const dim = item.status === 'decommissioned';
   const cell = 'px-3 py-[10px] text-[13px]';
   return (
-    <tr
-      onClick={onOpen}
-      className="cursor-pointer hover:bg-[#eef3fc]"
-      style={{ borderBottom: `1px solid ${theme.divider}`, backgroundColor: striped ? theme.rowStripe : '#fff', opacity: dim ? 0.55 : 1 }}
-    >
-      <td className="pl-3 py-[10px]" onClick={(e) => e.stopPropagation()}>
+    <tr onClick={onOpen} className="cursor-pointer hover:bg-[#f9fafc]" style={{ borderBottom: `1px solid ${theme.divider}`, opacity: dim ? 0.55 : 1 }}>
+      <td className="pl-4 py-[10px]" onClick={(e) => e.stopPropagation()}>
         <input type="checkbox" checked={checked} onChange={onCheck} aria-label={`Select ${item.name} ${item.serial_number}`} />
       </td>
       <td className={cell}>
-        <span className="font-semibold underline-offset-2 hover:underline" style={{ color: theme.brand }}>
+        <span className="font-semibold" style={{ color: theme.brand }}>
           {item.name}
         </span>
       </td>
@@ -1073,7 +857,7 @@ function EquipmentRow({ item, striped, canManage, checked, onCheck, onOpen, onSe
               type="button"
               onClick={toggle}
               aria-label="More actions"
-              className="w-7 h-7 rounded-md text-[16px] font-bold leading-none hover:bg-[#f3f5fa]"
+              className="w-7 h-7 rounded-[7px] text-[16px] font-bold leading-none hover:bg-[#f3f5fa]"
               style={{ color: theme.textMuted, border: 'none', background: 'none' }}
             >
               ⋯
@@ -1174,7 +958,7 @@ function Drawer({ item, canManage, onClose, onSend }) {
             <button
               type="button"
               onClick={onSend}
-              className="rounded-md px-4 py-2 text-[13px] font-semibold text-white"
+              className="rounded-[10px] px-4 py-2 text-[13px] font-semibold text-white"
               style={{ backgroundColor: theme.brand, border: 'none' }}
             >
               Send for calibration
@@ -1182,7 +966,7 @@ function Drawer({ item, canManage, onClose, onSend }) {
           )}
           <Link
             to={`/equipment/${item.equipment_id}`}
-            className="rounded-md px-4 py-2 text-[13px] font-semibold"
+            className="rounded-[10px] px-4 py-2 text-[13px] font-semibold"
             style={{ border: `1px solid ${theme.borderStrong}`, color: theme.ink }}
           >
             {canManage ? 'Open & edit' : 'Open full page'}

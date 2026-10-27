@@ -31,7 +31,7 @@ function KpiCard({ label, value, Icon, iconColor, iconBg, onClick }) {
     >
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2.5">
-          <div className="w-8 h-8 rounded-md flex items-center justify-center" style={{ backgroundColor: iconBg, color: iconColor }}>
+          <div className="w-8 h-8 rounded-[9px] flex items-center justify-center" style={{ backgroundColor: iconBg, color: iconColor }}>
             <Icon color={iconColor} />
           </div>
           <span className="text-[11.5px] font-bold uppercase tracking-wide" style={{ color: '#7a8296' }}>
@@ -225,14 +225,14 @@ function CalendarCard({ dueDates }) {
         <div className="flex gap-1.5">
           <button
             onClick={() => shiftMonth(-1)}
-            className="w-[22px] h-[22px] rounded-md flex items-center justify-center"
+            className="w-[22px] h-[22px] rounded-[7px] flex items-center justify-center"
             style={{ border: `1px solid ${theme.borderStrong}`, color: theme.textFaint }}
           >
             <ChevronLeftIcon color={theme.textFaint} />
           </button>
           <button
             onClick={() => shiftMonth(1)}
-            className="w-[22px] h-[22px] rounded-md flex items-center justify-center"
+            className="w-[22px] h-[22px] rounded-[7px] flex items-center justify-center"
             style={{ border: `1px solid ${theme.borderStrong}`, color: theme.textFaint }}
           >
             <ChevronRightIcon color={theme.textFaint} />
@@ -258,7 +258,7 @@ function CalendarCard({ dueDates }) {
               key={i}
               type="button"
               onClick={() => handleDayClick(day)}
-              className="relative flex items-center justify-center text-[11.5px] rounded-md"
+              className="relative flex items-center justify-center text-[11.5px] rounded-[7px]"
               style={{
                 fontWeight: isDue || isToday ? 700 : 400,
                 color: isDue ? theme.warning : isToday ? theme.brand : '#38415a',
@@ -314,7 +314,7 @@ function CalendarCard({ dueDates }) {
                 onChange={(e) => setNoteDraft(e.target.value)}
                 rows={2}
                 placeholder="Add a note for this day…"
-                className="w-full rounded-md text-[12px] p-2 resize-none"
+                className="w-full rounded-[8px] text-[12px] p-2 resize-none"
                 style={{ border: `1px solid ${theme.borderStrong}`, color: theme.ink }}
               />
               {noteError && (
@@ -327,7 +327,7 @@ function CalendarCard({ dueDates }) {
                   type="button"
                   onClick={handleSaveNote}
                   disabled={saving || !noteDraft.trim()}
-                  className="text-[11.5px] font-bold rounded-md px-3 py-1.5"
+                  className="text-[11.5px] font-bold rounded-[8px] px-3 py-1.5"
                   style={{ backgroundColor: theme.brand, color: '#fff', border: 'none', opacity: saving || !noteDraft.trim() ? 0.6 : 1 }}
                 >
                   Save
@@ -337,7 +337,7 @@ function CalendarCard({ dueDates }) {
                     type="button"
                     onClick={handleDeleteNote}
                     disabled={saving}
-                    className="text-[11.5px] font-bold rounded-md px-3 py-1.5"
+                    className="text-[11.5px] font-bold rounded-[8px] px-3 py-1.5"
                     style={{ backgroundColor: theme.criticalBg, color: theme.criticalStrong, border: 'none', opacity: saving ? 0.6 : 1 }}
                   >
                     Delete
@@ -436,6 +436,10 @@ export function DashboardPage() {
 
   return (
     <div className="flex flex-col gap-5">
+      <h1 className="text-[23px] font-bold" style={{ color: '#151f38' }}>
+        System Dashboard
+      </h1>
+
       <div className="grid grid-cols-4 gap-[18px]">
         <KpiCard
           label="Total Equipment"
@@ -465,9 +469,9 @@ export function DashboardPage() {
       </div>
 
       {!alertDismissed && overdueCount > 0 && (
-        <div className="rounded-md px-5 py-3.5 flex items-center justify-between" style={{ backgroundColor: theme.alertBg, border: `1px solid ${theme.alertBorder}` }}>
+        <div className="rounded-[14px] px-5 py-3.5 flex items-center justify-between" style={{ backgroundColor: theme.alertBg, border: `1px solid ${theme.alertBorder}` }}>
           <div className="flex items-center gap-3">
-            <div className="w-[30px] h-[30px] rounded-md flex items-center justify-center shrink-0" style={{ backgroundColor: theme.criticalBgStrong, color: theme.critical }}>
+            <div className="w-[30px] h-[30px] rounded-[9px] flex items-center justify-center shrink-0" style={{ backgroundColor: theme.criticalBgStrong, color: theme.critical }}>
               <AlertTriangleIcon color={theme.critical} />
             </div>
             <span className="text-[13.5px] font-semibold" style={{ color: '#7a271a' }}>
@@ -477,7 +481,7 @@ export function DashboardPage() {
           <div className="flex items-center gap-4">
             <button
               onClick={handleViewOverdue}
-              className="text-white rounded-md px-4 py-2 text-[12.5px] font-semibold"
+              className="text-white rounded-[9px] px-4 py-2 text-[12.5px] font-semibold"
               style={{ backgroundColor: theme.critical }}
             >
               View overdue
@@ -563,7 +567,7 @@ export function DashboardPage() {
                 <select
                   value={filter}
                   onChange={handleFilterChange}
-                  className="appearance-none rounded-md pl-3 pr-8 py-[7px] text-[12.5px] font-semibold"
+                  className="appearance-none rounded-[9px] pl-3 pr-8 py-[7px] text-[12.5px] font-semibold"
                   style={{ backgroundColor: theme.chipBg, border: `1px solid ${theme.borderStrong}`, color: '#38415a' }}
                 >
                   <option value="all">All statuses</option>

@@ -1,14 +1,8 @@
 import { useState, useRef, useEffect } from 'react';
-import { NavLink, Outlet, useNavigate, useLocation } from 'react-router-dom';
+import { NavLink, Outlet, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { theme } from '../theme';
-import { HomeIcon, PackageIcon, BellIcon, SettingsIcon, LogOutIcon, SearchIcon, UsersIcon, ChevronDownIcon, ShieldIcon, KeyIcon } from './icons';
-
-// SPARKS-style shell (2026-10-12): a solid blue sidebar with upper-case
-// labels that collapses to icons via the ☰ button, and a white header row
-// carrying the logo, the current page's title (upper-case, with its icon),
-// and the signed-in user. The pre-restyle version is kept at the git tag
-// `old-design-2026-10-12`.
+import { HomeIcon, PackageIcon, BellIcon, SettingsIcon, LogOutIcon, SearchIcon, UsersIcon, ShieldIcon } from './icons';
 
 const BASE_NAV_ITEMS = [
   { to: '/dashboard', label: 'Dashboard', Icon: HomeIcon },
@@ -23,51 +17,39 @@ const TEAM_NAV_ITEM = { to: '/access-levels', label: 'Team', Icon: UsersIcon };
 // Admin (account help + database backup) is for both editing positions.
 const ADMIN_NAV_ITEM = { to: '/admin', label: 'Admin', Icon: ShieldIcon };
 
-// Header title per route -- the pages themselves no longer draw their own
-// big title, the header does it once, like SPARKS.
-const PAGE_TITLES = [
-  { match: /^\/dashboard/, title: 'Dashboard', Icon: HomeIcon },
-  { match: /^\/equipment\/[^/]+/, title: 'Equipment Details', Icon: PackageIcon },
-  { match: /^\/equipment/, title: 'Equipment', Icon: PackageIcon },
-  { match: /^\/reminders/, title: 'Reminders', Icon: BellIcon },
-  { match: /^\/access-levels/, title: 'Team', Icon: UsersIcon },
-  { match: /^\/settings/, title: 'Profile', Icon: SettingsIcon },
-  { match: /^\/admin/, title: 'Admin', Icon: ShieldIcon },
-  { match: /^\/change-password/, title: 'Change Password', Icon: KeyIcon },
-];
-
-const COLLAPSE_KEY = 'calibcare_sidebar_collapsed';
-
-function SidebarLink({ to, label, Icon, collapsed }) {
+function SidebarLink({ to, label, Icon }) {
   return (
     <NavLink
       to={to}
-      title={collapsed ? label : undefined}
-      className={`flex items-center gap-3 w-full text-[12.5px] font-semibold uppercase tracking-wide py-3 ${collapsed ? 'justify-center px-0' : 'px-5'}`}
+      className="flex items-center gap-[11px] w-full rounded-[10px] text-sm px-3.5 py-2.5"
       style={({ isActive }) => ({
-        backgroundColor: isActive ? theme.sidebarBlueActive : 'transparent',
-        boxShadow: isActive ? 'inset 4px 0 0 #ffffff' : 'none',
-        color: '#ffffff',
-        opacity: isActive ? 1 : 0.92,
+        backgroundColor: isActive ? '#ffffff' : 'transparent',
+        boxShadow: isActive ? '0 1px 2px rgba(16,24,40,.06)' : 'none',
+        color: isActive ? theme.brand : theme.textMuted,
+        fontWeight: isActive ? 600 : 500,
       })}
     >
-      <Icon color="#ffffff" />
-      {!collapsed && <span>{label}</span>}
+      {({ isActive }) => (
+        <>
+          <Icon color={isActive ? theme.brand : theme.textMuted} />
+          <span>{label}</span>
+        </>
+      )}
     </NavLink>
   );
 }
 
 function LogoMark() {
   return (
-    <div className="w-8 h-8 rounded-md flex items-center justify-center shrink-0" style={{ backgroundColor: theme.sidebarBlue }}>
-      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#ffffff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <div className="w-9 h-9 rounded-[11px] flex items-center justify-center shrink-0" style={{ background: theme.brandGradient }}>
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#ffffff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
         <path d="M2 12h4l2.5-7 4 14L15 9l2 3h5" />
       </svg>
     </div>
   );
 }
 
-function Sidebar({ collapsed }) {
+function Sidebar() {
   const { user } = useAuth();
   const navItems = [
     ...BASE_NAV_ITEMS,
@@ -77,14 +59,22 @@ function Sidebar({ collapsed }) {
 
   return (
     <aside
-      className="shrink-0 sticky top-[56px] self-start overflow-y-auto"
-      style={{ width: collapsed ? 64 : 230, height: 'calc(100vh - 56px)', backgroundColor: theme.sidebarBlue, transition: 'width .15s' }}
+      className="w-[240px] shrink-0 h-screen sticky top-0 flex flex-col px-4 py-6"
+      style={{ backgroundColor: theme.sidebarBg, borderRight: `1px solid ${theme.borderStrong}` }}
     >
-      <nav className="flex flex-col py-2">
-        {navItems.map((item) => (
-          <SidebarLink key={item.to} {...item} collapsed={collapsed} />
-        ))}
-      </nav>
+      <div className="flex flex-col gap-7">
+        <div className="flex items-center gap-2.5 px-2 pb-1">
+          <LogoMark />
+          <span className="text-[19px] font-bold tracking-tight" style={{ color: '#182448' }}>
+            Calibcare
+          </span>
+        </div>
+        <nav className="flex flex-col gap-1">
+          {navItems.map((item) => (
+            <SidebarLink key={item.to} {...item} />
+          ))}
+        </nav>
+      </div>
     </aside>
   );
 }
@@ -115,32 +105,37 @@ function ProfileMenu() {
     navigate('/login');
   }
 
+  const initial = (user?.full_name || '?').trim().charAt(0).toUpperCase();
+
   return (
     <div className="relative shrink-0" ref={containerRef}>
       <button
         type="button"
         onClick={() => setOpen((v) => !v)}
-        className="flex items-center gap-2 text-[12px] max-w-[360px]"
-        style={{ color: theme.textMuted, border: 'none', background: 'none' }}
+        className="w-9 h-9 rounded-full flex items-center justify-center text-[13px] font-bold text-white"
+        style={{ backgroundColor: theme.brandDark, border: 'none' }}
+        title={`${user?.full_name || ''} (${user?.position_label || ''})`}
       >
-        <span className="truncate">
-          <span className="font-semibold uppercase" style={{ color: theme.ink }}>
-            {user?.full_name}
-          </span>
-          {user?.position_label ? `, ${user.position_label}` : ''}
-        </span>
-        <ChevronDownIcon size={11} />
+        {initial}
       </button>
 
       {open && (
         <div
-          className="absolute right-0 mt-2 rounded-md bg-white overflow-hidden"
-          style={{ width: 200, border: `1px solid ${theme.borderStrong}`, boxShadow: '0 8px 24px rgba(16,24,40,.12)', zIndex: 40 }}
+          className="absolute right-0 mt-2 rounded-[12px] bg-white overflow-hidden"
+          style={{ width: 220, border: `1px solid ${theme.border}`, boxShadow: '0 8px 24px rgba(16,24,40,.12)', zIndex: 20 }}
         >
+          <div className="px-4 py-3" style={{ borderBottom: `1px solid ${theme.divider}` }}>
+            <div className="text-[13px] font-semibold truncate" style={{ color: theme.ink }}>
+              {user?.full_name}
+            </div>
+            <div className="text-[11.5px] truncate" style={{ color: theme.textFaint }}>
+              {user?.position_label}
+            </div>
+          </div>
           <button
             type="button"
             onClick={() => goTo('/settings')}
-            className="flex items-center gap-2.5 w-full text-left px-4 py-2.5 text-[13px] font-medium hover:bg-[#f6f7fb]"
+            className="flex items-center gap-2.5 w-full text-left px-4 py-2.5 text-[13px] font-medium"
             style={{ color: theme.textMuted, border: 'none', background: 'none' }}
           >
             <SettingsIcon color={theme.textMuted} />
@@ -149,7 +144,7 @@ function ProfileMenu() {
           <button
             type="button"
             onClick={handleLogout}
-            className="flex items-center gap-2.5 w-full text-left px-4 py-2.5 text-[13px] font-medium hover:bg-[#f6f7fb]"
+            className="flex items-center gap-2.5 w-full text-left px-4 py-2.5 text-[13px] font-medium"
             style={{ color: theme.criticalStrong, border: 'none', background: 'none' }}
           >
             <LogOutIcon color={theme.criticalStrong} />
@@ -161,12 +156,10 @@ function ProfileMenu() {
   );
 }
 
-function Header({ collapsed, onToggle }) {
+function TopBar() {
   const { user } = useAuth();
   const navigate = useNavigate();
-  const { pathname } = useLocation();
   const [search, setSearch] = useState('');
-  const page = PAGE_TITLES.find((p) => p.match.test(pathname));
 
   function handleSearchSubmit(e) {
     e.preventDefault();
@@ -174,91 +167,44 @@ function Header({ collapsed, onToggle }) {
   }
 
   return (
-    <header
-      className="h-[56px] sticky top-0 z-30 bg-white flex items-center gap-4 pr-6"
-      style={{ borderBottom: `1px solid ${theme.borderStrong}` }}
-    >
-      <div className="flex items-center gap-2 shrink-0 pl-4" style={{ width: collapsed ? 64 : 230, transition: 'width .15s' }}>
-        <LogoMark />
-        {!collapsed && (
-          <span className="text-[18px] font-extrabold tracking-tight" style={{ color: theme.sidebarBlue }}>
-            CALIBCARE
-          </span>
-        )}
-      </div>
-      <button
-        type="button"
-        onClick={onToggle}
-        aria-label={collapsed ? 'Expand menu' : 'Collapse menu'}
-        className="w-9 h-9 flex items-center justify-center rounded-md hover:bg-[#f3f5fa] shrink-0"
-        style={{ border: 'none', background: 'none', color: theme.textMuted }}
-      >
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
-          <path d="M4 6h16M4 12h16M4 18h16" />
-        </svg>
-      </button>
-      {page && (
-        <h1 className="flex items-center gap-2.5 text-[18px] font-bold uppercase tracking-wide whitespace-nowrap" style={{ color: theme.ink }}>
-          <page.Icon color={theme.ink} />
-          {page.title}
-        </h1>
+    <div className="h-[72px] shrink-0 bg-white flex items-center justify-end gap-4 px-8" style={{ borderBottom: `1px solid ${theme.border}` }}>
+      <form onSubmit={handleSearchSubmit} className="relative">
+        <span className="absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none">
+          <SearchIcon color={theme.textFaint} />
+        </span>
+        <input
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          placeholder="Search equipment..."
+          className="h-9 w-[320px] pl-9 pr-3 rounded-[10px] text-[13.5px] outline-none"
+          style={{ backgroundColor: theme.chipBg, color: theme.ink }}
+        />
+      </form>
+      {user?.can_run_reminders && (
+        <NavLink
+          to="/reminders"
+          title="Reminders"
+          className="w-9 h-9 rounded-[10px] flex items-center justify-center shrink-0"
+          style={{ backgroundColor: theme.chipBg }}
+        >
+          <BellIcon color={theme.textMuted} />
+        </NavLink>
       )}
-
-      <div className="ml-auto flex items-center gap-4 min-w-0">
-        <form onSubmit={handleSearchSubmit} className="relative hidden lg:block">
-          <span className="absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none">
-            <SearchIcon size={14} color={theme.textFaint} />
-          </span>
-          <input
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            placeholder="Search equipment..."
-            className="h-8 w-[220px] pl-8 pr-3 rounded-md text-[13px] outline-none"
-            style={{ backgroundColor: theme.chipBg, color: theme.ink, border: `1px solid ${theme.borderStrong}` }}
-          />
-        </form>
-        {user?.can_run_reminders && (
-          <NavLink to="/reminders" title="Reminders" className="w-8 h-8 flex items-center justify-center shrink-0">
-            <BellIcon color={theme.textMuted} />
-          </NavLink>
-        )}
-        <ProfileMenu />
-      </div>
-    </header>
+      <ProfileMenu />
+    </div>
   );
 }
 
-function readCollapsed() {
-  try {
-    return localStorage.getItem(COLLAPSE_KEY) === '1';
-  } catch {
-    return false;
-  }
-}
-
 export function Layout() {
-  const [collapsed, setCollapsed] = useState(readCollapsed);
-
-  function toggle() {
-    setCollapsed((c) => {
-      try {
-        localStorage.setItem(COLLAPSE_KEY, c ? '0' : '1');
-      } catch {
-        // storage blocked -- the toggle still works for this visit
-      }
-      return !c;
-    });
-  }
-
   return (
-    <div className="min-h-screen flex flex-col" style={{ backgroundColor: theme.shellBg }}>
-      <Header collapsed={collapsed} onToggle={toggle} />
-      <div className="flex flex-1 min-h-0">
-        <Sidebar collapsed={collapsed} />
-        <main className="flex-1 min-w-0 px-7 py-6">
+    <div className="min-h-screen flex" style={{ backgroundColor: theme.pageBg }}>
+      <Sidebar />
+      <main className="flex-1 flex flex-col min-w-0">
+        <TopBar />
+        <div className="flex-1 px-8 py-7">
           <Outlet />
-        </main>
-      </div>
+        </div>
+      </main>
     </div>
   );
 }

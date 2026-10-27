@@ -34,7 +34,7 @@ function Modal({ children, onClose }) {
       <div
         role="dialog"
         aria-modal="true"
-        className="bg-white rounded-md p-6 w-full max-w-[440px]"
+        className="bg-white rounded-2xl p-6 w-full max-w-[440px]"
         style={{ boxShadow: '0 20px 50px rgba(16,24,40,.25)' }}
         onClick={(e) => e.stopPropagation()}
       >
@@ -44,7 +44,7 @@ function Modal({ children, onClose }) {
   );
 }
 
-const primaryBtn = 'rounded-md px-4 py-2 text-[13px] font-semibold text-white disabled:opacity-50';
+const primaryBtn = 'rounded-[9px] px-4 py-2 text-[13px] font-semibold text-white disabled:opacity-50';
 const linkBtn = 'text-[12.5px] font-semibold whitespace-nowrap disabled:opacity-50';
 
 export function AdminPage() {
@@ -157,23 +157,28 @@ export function AdminPage() {
 
   return (
     <div className="flex flex-col gap-5">
-      <p className="text-sm" style={{ color: '#7a8296' }}>
-        Help colleagues who can't log in, and keep a backup copy of all CalibCare data.
-      </p>
+      <div>
+        <h1 className="text-[23px] font-bold mb-1.5" style={{ color: theme.ink }}>
+          Admin
+        </h1>
+        <p className="text-sm" style={{ color: '#7a8296' }}>
+          Help colleagues who can't log in, and keep a backup copy of all CalibCare data.
+        </p>
+      </div>
 
       {error && (
-        <div className="rounded-md px-4 py-2.5 text-sm" style={{ backgroundColor: theme.criticalBg, color: theme.criticalStrong }}>
+        <div className="rounded-[10px] px-4 py-2.5 text-sm" style={{ backgroundColor: theme.criticalBg, color: theme.criticalStrong }}>
           {error}
         </div>
       )}
       {notice && (
-        <div className="rounded-md px-4 py-2.5 text-sm" style={{ backgroundColor: theme.goodBg, color: '#0a7a45' }}>
+        <div className="rounded-[10px] px-4 py-2.5 text-sm" style={{ backgroundColor: theme.goodBg, color: '#0a7a45' }}>
           {notice}
         </div>
       )}
 
       {/* Backup */}
-      <div className="bg-white rounded-md p-5 flex items-center justify-between gap-4 flex-wrap" style={{ border: `1px solid ${theme.borderStrong}` }}>
+      <div className="bg-white rounded-2xl p-5 flex items-center justify-between gap-4 flex-wrap" style={{ border: `1px solid ${theme.borderStrong}` }}>
         <div className="max-w-[640px]">
           <div className="text-[15px] font-bold mb-1" style={{ color: theme.ink }}>
             Database backup
@@ -189,7 +194,7 @@ export function AdminPage() {
       </div>
 
       {/* Accounts */}
-      <div className="bg-white rounded-md" style={{ border: `1px solid ${theme.borderStrong}` }}>
+      <div className="bg-white rounded-2xl" style={{ border: `1px solid ${theme.borderStrong}` }}>
         <div className="flex items-center justify-between gap-4 flex-wrap px-5 pt-5 pb-3">
           <div>
             <div className="text-[15px] font-bold" style={{ color: theme.ink }}>
@@ -199,7 +204,7 @@ export function AdminPage() {
               {counts.total} accounts · {counts.unverified} email not verified · {counts.noLine} without LINE · {counts.pending} waiting to change a temporary password
             </div>
           </div>
-          <div className="flex items-center gap-2 rounded-md px-3 py-[7px] bg-white" style={{ border: `1px solid ${theme.borderStrong}`, width: 260, maxWidth: '100%' }}>
+          <div className="flex items-center gap-2 rounded-[9px] px-3 py-[7px] bg-white" style={{ border: `1px solid ${theme.borderStrong}`, width: 260, maxWidth: '100%' }}>
             <SearchIcon size={14} color={theme.textFaint} />
             <input type="search" value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search name or email" className="text-[13px] flex-1 outline-none min-w-0" style={{ border: 'none' }} />
           </div>
@@ -224,10 +229,10 @@ export function AdminPage() {
                   </td>
                 </tr>
               )}
-              {shown.map((u, i) => {
+              {shown.map((u) => {
                 const isMe = u.user_id === user?.user_id;
                 return (
-                  <tr key={u.user_id} style={{ borderBottom: `1px solid ${theme.divider}`, backgroundColor: i % 2 ? theme.rowStripe : '#fff' }}>
+                  <tr key={u.user_id} style={{ borderBottom: `1px solid ${theme.divider}` }}>
                     <td className="px-4 py-3">
                       <div className="text-[13px] font-semibold" style={{ color: theme.ink }}>
                         {u.full_name}
@@ -323,7 +328,7 @@ export function AdminPage() {
             Temporary password for {issued.user.full_name}
           </div>
           <div
-            className="flex items-center justify-between gap-3 rounded-md px-4 py-3 my-3"
+            className="flex items-center justify-between gap-3 rounded-[10px] px-4 py-3 my-3"
             style={{ backgroundColor: theme.chipBg, border: `1px solid ${theme.borderStrong}` }}
           >
             <code className="text-[20px] font-bold tracking-wider" style={{ color: theme.ink }}>

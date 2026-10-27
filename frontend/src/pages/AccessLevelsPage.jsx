@@ -55,12 +55,17 @@ export function AccessLevelsPage() {
 
   return (
     <div className="flex flex-col gap-5">
-      <p className="text-sm" style={{ color: '#7a8296' }}>
-        Everyone with access, and their position.
-      </p>
+      <div>
+        <h1 className="text-[23px] font-bold mb-1.5" style={{ color: theme.ink }}>
+          Team
+        </h1>
+        <p className="text-sm" style={{ color: '#7a8296' }}>
+          Everyone with access, and their position.
+        </p>
+      </div>
 
       {error && (
-        <div className="rounded-md px-4 py-2.5 text-sm" style={{ backgroundColor: theme.criticalBg, color: theme.criticalStrong }}>
+        <div className="rounded-[10px] px-4 py-2.5 text-sm" style={{ backgroundColor: theme.criticalBg, color: theme.criticalStrong }}>
           {error}
         </div>
       )}
@@ -86,7 +91,7 @@ export function AccessLevelsPage() {
                     value={u.role}
                     disabled={savingId === u.user_id}
                     onChange={(e) => handlePositionChange(u.user_id, e.target.value)}
-                    className="text-[12px] rounded-md px-2 py-1.5 shrink-0"
+                    className="text-[12px] rounded-[8px] px-2 py-1.5 shrink-0"
                     style={{ border: `1px solid ${theme.borderStrong}`, color: theme.ink, backgroundColor: '#fff' }}
                   >
                     {choices.map((p) => (

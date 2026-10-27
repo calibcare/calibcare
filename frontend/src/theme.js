@@ -30,11 +30,4 @@ export const theme = {
   warningBg: '#fef3e2',
   warningBorderSoft: '#f0d3a8',
   neutralMuted: '#94a3b8',
-  // SPARKS-style shell (2026-10-12 restyle): solid blue sidebar, grey
-  // action toolbars above tables, grey page background.
-  sidebarBlue: '#2d6cdf',
-  sidebarBlueActive: '#1f56bd',
-  toolbarGrey: '#878b92',
-  shellBg: '#eceef1',
-  rowStripe: '#f7f8fa',
 };
