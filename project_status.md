@@ -730,7 +730,16 @@ coopproject/
 - Not verified live through the authenticated API (no test account on production; reading production via a minted token was declined). User to glance at Reminders page: should show exactly 3 rules.
 - `railway login` had expired this session (re-done by the user via `! railway login`). The first `vercel deploy --prod --yes` printed only a JSON "Promote to production" blob and did nothing — rerunning it deployed fine.
 
+## Bug: daily cron job never sent email reminders (found 2026-10-27) — fixed locally, NOT deployed
+
+- `backend/scripts/checkNotifications.js` (the `checknotifications` Railway cron, 09:00 UTC) called `checkAndSendReminders(pool, lineClient)` with no email client → the no-op dry-run email client → **no email reminder was ever sent by the daily run**, only by the manual "Run check now" button (`POST /api/reminders/run`, which passes `createEmailClient()`). Its sent/failed counts were also always 0 (results carry a `channels` array since the 2026-09-15 rewrite).
+- Fix (uncommitted): pass `createEmailClient()`, count per channel. Dry-run against local DB: 7 items, 8 channel sends, nothing logged. 52 tests pass.
+- **To deploy**: commit + push, then `railway redeploy --service checknotifications --from-source --yes`. Was blocked by a permission check this session — waiting on the user.
+- Because EMAIL dedup is separate from LINE, the first fixed run (or a manual "Run check now") sends one catch-up email per item currently in a window, even if LINE already went out.
+
 ## Next up
+
+- **Deploy the cron email fix** (section above).
 
 
 - Verify the inferred manufacturer values against physical nameplates/purchase records during the next calibration cycle — they're confident inferences, not sourced from purchase documentation.

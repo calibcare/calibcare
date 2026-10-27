@@ -1,6 +1,7 @@
 import 'dotenv/config';
 import { pool } from '../src/db.js';
 import { createLineClient } from '../src/services/lineClient.js';
+import { createEmailClient } from '../src/services/emailService.js';
 import { checkAndSendReminders } from '../src/services/reminderService.js';
 
 /**
@@ -18,17 +19,24 @@ import { checkAndSendReminders } from '../src/services/reminderService.js';
  */
 async function main() {
   const lineClient = createLineClient(process.env.LINE_CHANNEL_ACCESS_TOKEN);
-  console.log(`[checkNotifications] starting (${new Date().toISOString()}), dryRun=${lineClient.dryRun}`);
+  const emailClient = createEmailClient();
+  console.log(
+    `[checkNotifications] starting (${new Date().toISOString()}), lineDryRun=${lineClient.dryRun}, emailDryRun=${emailClient.dryRun}`
+  );
 
-  const results = await checkAndSendReminders(pool, lineClient);
+  const results = await checkAndSendReminders(pool, lineClient, emailClient);
 
-  const sent = results.filter((r) => r.status === 'sent').length;
-  const failed = results.filter((r) => r.status === 'failed').length;
-  const skipped = results.filter((r) => r.skipped).length;
-  console.log(`[checkNotifications] evaluated ${results.length} item(s) -- sent: ${sent}, failed: ${failed}, skipped: ${skipped}`);
+  // Each result carries one entry per channel its rule has turned on.
+  const channels = results.flatMap((r) => r.channels || []);
+  const sent = channels.filter((c) => c.status === 'sent').length;
+  const failed = channels.filter((c) => c.status === 'failed');
+  const skipped = results.filter((r) => r.skipped).length + channels.filter((c) => c.skipped).length;
+  console.log(
+    `[checkNotifications] evaluated ${results.length} item(s) -- channel sends: ${sent} sent, ${failed.length} failed, ${skipped} skipped`
+  );
 
-  if (failed > 0) {
-    console.error('[checkNotifications] one or more sends failed:', results.filter((r) => r.status === 'failed'));
+  if (failed.length > 0) {
+    console.error('[checkNotifications] one or more sends failed:', results.filter((r) => (r.channels || []).some((c) => c.status === 'failed')));
   }
 }
 
