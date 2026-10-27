@@ -791,16 +791,16 @@ coopproject/
 - **Presentation deck (2026-10-28)**: 21-slide project presentation published as a private claude.ai Slides artifact — https://claude.ai/artifact/GmCfX1Vk3J6Q7VntxPH51Y (background, objectives, scope, architecture, tech, database, features, access levels, timeline, problems solved, results, next steps; speaker notes on every slide). Built from the Chapter 1 doc (https://claude.ai/artifact/UDrKzm2WKjHR5GaioqDKYQ) and the work log (https://claude.ai/artifact/5vkGbU6nZJoaedidT8HLXd). Placeholders left for the user: name, student ID, university, company, email on the cover/last slide; sample model/S/N in the reminder message mock. No screenshots yet — notes mark where one would help (equipment, dashboard).
 - **2026-10-28**: at the user's request, removed every "matches the company's SPARKS system" wording from the slide deck (timeline slide + notes) and the work log doc. The October restyle is now described as "a cleaner, more consistent design" in all write-ups.
 
-## Old design restored, SPARKS look removed (2026-10-28) — local only, NOT deployed yet
+## Old design restored, SPARKS look removed (2026-10-28) — deployed
 
 - User didn't want the site to look like SPARKS; chose "bring back the old design" (from tag `old-design-2026-10-12`) while keeping every feature added since.
 - Branch `restore-old-design` (merged into `main` locally): reverted `6d9b9c0` then `e26b4ad` (the SPARKS restyle) — light sidebar with white active item, big page titles back on each page, rounded cards, no blue sidebar / header titles / grid toolbar / striping / paging. Conflicts resolved keeping later work: dashboard queue fits its card, navy "Save" buttons, IBM Plex Sans Thai font, Admin nav item, System Owner, 30/7/1 reminders.
 - Pages built after the restyle given the old style by hand: `AdminPage.jsx` (h1 "Admin", rounded-2xl cards, no row striping), `ChangePasswordPage.jsx` (h1 "Change password"); Settings h1 now "Profile" (matches the menu).
 - Column-header sorting (a SPARKS-era feature) ported to the old Equipment table (asc → desc → back to urgency). Numbered paging was not kept: the old table shows all rows.
 - Verified locally with headless Chromium as Deputy Manager: all 8 pages render with titles, no console errors; sort Serial asc/desc, Next due asc, reset to urgency all correct. Lint clean (only pre-existing warnings), build OK.
-- **Next**: deploy when the user says so — `git push` (Railway backend unchanged) + `vercel deploy --prod --yes` from the repo root; then check the live site.
+- Deployed together with the UX-pattern redesign below.
 
-## UX-pattern redesign on top of the old design (2026-10-28) — local only, NOT deployed yet
+## UX-pattern redesign on top of the old design (2026-10-28) — deployed
 
 - User asked to base the UI on Pencil & Paper's "Dashboard Design UX Patterns" article (https://www.pencilandpaper.io/articles/ux-pattern-analysis-data-dashboards) and sent screenshots: navigation with an obvious selected state, a leadspace (clear title + description), grouping like with like, zoomed-out overview, filter feedback, loading feedback, drill-down via drawer / details page, tables with tabs + counts + row "View".
 - New `frontend/src/components/ui.jsx`: `PageHeader` (navy leadspace band; title, description, clickable headline stats, actions, filter-feedback slot), `HeaderButton`, `FilterFeedback`, `Section` (heading + hint + "View all →"), `Skeleton` (shimmer, `.skeleton` in index.css, off under reduced motion), `SideDrawer`. Theme tokens `leadBg/leadText/leadMuted/navActiveBg/navHoverBg`.
@@ -810,4 +810,4 @@ coopproject/
 - Reminders, Team (People count), Admin, Profile, Change password, Equipment details (back link, model/S/N, Status / Next calibration / Days overdue, skeleton) all use `PageHeader`.
 - **Bug fixed on the way** (`1dd4008`): `dashboardService` took "today" from `toISOString()` (UTC), so from 00:00–07:00 Thai time the dashboard showed one fewer overdue device than the Equipment page (39 vs 40 locally). Now uses the Asia/Bangkok date; new test; backend 58/58.
 - Verified locally (headless Chromium, Deputy Manager): every page renders, skeleton shows while the dashboard loads, overdue drawer, Equipment Overdue tab → 40 + filter pill in leadspace + row View drawer, no console errors; lint/build clean. Dashboard and Equipment both show 40 overdue / 6 due soon.
-- **Next**: deploy when the user says so — `git push` (Railway redeploys the backend: needed for the date fix) + `vercel deploy --prod --yes`; then check the live site.
+- **Deployed 2026-10-28**: pushed `fbccebc` → Railway backend redeployed (SUCCESS, running `fbccebc`, includes the Thai-date fix); `vercel deploy --prod` → aliased to calibcare.vercel.app (first run printed only JSON again; the rerun deployed). Verified live: the served bundle contains the new UI ("Filters applied:", "Needs attention", "Sign out"), backend answering. Not checked with a real login (no credentials used) — user to confirm Dashboard and Equipment overdue counts match on the live site.
