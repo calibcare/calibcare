@@ -1,14 +1,14 @@
 @import "tailwindcss";
 
 @theme {
-  --font-sans: "IBM Plex Sans Thai", system-ui, sans-serif;
+  --font-sans: "Sarabun", system-ui, sans-serif;
 }
 
 body {
   margin: 0;
-  /* "IBM Plex Sans Thai" is the family name @fontsource/ibm-plex-sans-thai
-     registers (imported in main.jsx) -- self-hosted, not Google's CDN. */
-  font-family: "IBM Plex Sans Thai", system-ui, sans-serif;
+  /* "Sarabun" is the family name @fontsource/sarabun registers (imported
+     in main.jsx) -- self-hosted, not Google's CDN. */
+  font-family: "Sarabun", system-ui, sans-serif;
 }
 
 /* Loading skeleton (components/ui.jsx Skeleton): a soft shimmer shaped
