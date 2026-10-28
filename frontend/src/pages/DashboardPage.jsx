@@ -610,8 +610,7 @@ export function DashboardPage() {
   // Six mutually-exclusive groups, so every instrument is counted exactly
   // once and the groups add up to the total: an active instrument is either
   // overdue, due within 30 days, or simply available; the other statuses
-  // are their own groups. The KPI cards, the donut and the sum line all use
-  // this one list.
+  // are their own groups. The KPI cards and the donut both use this one list.
   const overdueCount = summary.overdueCount;
   const categories = [
     {
@@ -704,18 +703,6 @@ export function DashboardPage() {
             <KpiCard key={c.key} label={c.label} value={c.value} hint={c.hint} Icon={c.Icon} iconColor={c.color} iconBg={c.iconBg} onClick={c.onClick} />
           ))}
         </div>
-        <p className="flex items-center gap-x-2 gap-y-1 flex-wrap text-[12.5px]" style={{ color: theme.textMuted }}>
-          {categories.map((c, i) => (
-            <span key={c.key} className="inline-flex items-center gap-1.5">
-              {i > 0 && <span style={{ color: theme.textFaint }}>+</span>}
-              <span className="w-2 h-2 rounded-full inline-block" style={{ backgroundColor: c.color }} />
-              <b style={{ color: theme.ink }}>{c.value}</b> {c.label.toLowerCase()}
-            </span>
-          ))}
-          <span>
-            = <b style={{ color: theme.ink }}>{categories.reduce((sum, c) => sum + c.value, 0)}</b> instruments
-          </span>
-        </p>
       </Section>
 
       {!alertDismissed && overdueCount > 0 && (
