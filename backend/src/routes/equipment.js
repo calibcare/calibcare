@@ -152,7 +152,7 @@ equipmentRouter.get('/:id', async (req, res, next) => {
 // source spreadsheet's "เลขที่" column works).
 equipmentRouter.post('/', canManage, async (req, res, next) => {
   try {
-    const { name, model, manufacturer, serial_number, category, location, status, status_note, remarks } = req.body;
+    const { name, model, manufacturer, serial_number, category, location, location_category, status, status_note, remarks } = req.body;
 
     if (!name || !serial_number) {
       return res.status(400).json({ error: 'name and serial_number are required' });
@@ -160,15 +160,18 @@ equipmentRouter.post('/', canManage, async (req, res, next) => {
     if (status && !VALID_STATUSES.includes(status)) {
       return res.status(400).json({ error: `status must be one of ${VALID_STATUSES.join(', ')}` });
     }
+    if (location_category && !VALID_LOCATION_CATEGORIES.includes(location_category)) {
+      return res.status(400).json({ error: `location_category must be one of ${VALID_LOCATION_CATEGORIES.join(', ')}` });
+    }
 
     const [[{ next_no }]] = await pool.query('SELECT COALESCE(MAX(equipment_no), 0) + 1 AS next_no FROM equipment');
 
     const [result] = await pool.query(
       `INSERT INTO equipment
-        (equipment_no, name, model, manufacturer, serial_number, category, location, status, status_note, remarks)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-      [next_no, name, model || null, manufacturer || null, serial_number, category || null, location || null,
-        status || 'active', status_note || null, remarks || null]
+        (equipment_no, name, model, manufacturer, serial_number, category, location, location_category, status, status_note, remarks)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      [next_no, name, model || null, manufacturer || null, serial_number, category || null, location || location_category || null,
+        location_category || null, status || 'active', status_note || null, remarks || null]
     );
 
     const [rows] = await pool.query('SELECT * FROM equipment WHERE equipment_id = ?', [result.insertId]);

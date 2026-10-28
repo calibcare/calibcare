@@ -3,12 +3,11 @@ import { useParams, useNavigate, Link } from 'react-router-dom';
 import client from '../api/client';
 import { theme } from '../theme';
 import { useAuth } from '../context/AuthContext';
+import { LOCATION_SITES } from '../locations';
 import { PageHeader, Skeleton } from '../components/ui';
 import { PlusIcon, TrashIcon, ChevronDownIcon, AlertTriangleIcon } from '../components/icons';
 
 const STATUS_OPTIONS = ['active', 'under_maintenance', 'decommissioned', 'sent_for_calibration'];
-// The 7 real sites -- see database/add_location_category.sql.
-const LOCATION_CATEGORY_OPTIONS = ['Head office', 'Central', 'Chiang Mai Branch', 'Hat Yai Branch', 'KhonKaen Branch', 'QA Team', 'Workshop room'];
 const STATUS_META = {
   active: { label: 'Active', color: theme.good, bg: theme.goodBg },
   under_maintenance: { label: 'Under Maintenance', color: theme.warning, bg: theme.warningBg },
@@ -323,7 +322,7 @@ export function EquipmentDetailPage() {
                   style={{ ...fieldStyle, paddingRight: 32 }}
                 >
                   <option value="">Select a site…</option>
-                  {LOCATION_CATEGORY_OPTIONS.map((loc) => (
+                  {LOCATION_SITES.map((loc) => (
                     <option key={loc} value={loc}>
                       {loc}
                     </option>

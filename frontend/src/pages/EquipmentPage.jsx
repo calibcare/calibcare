@@ -3,6 +3,7 @@ import { Link, useSearchParams } from 'react-router-dom';
 import client from '../api/client';
 import { theme } from '../theme';
 import { useAuth } from '../context/AuthContext';
+import { LOCATION_SITES } from '../locations';
 import { SearchIcon, ChevronDownIcon } from '../components/icons';
 import { PageHeader, HeaderButton, FilterFeedback, Skeleton, SideDrawer } from '../components/ui';
 
@@ -32,7 +33,7 @@ const SAVED_VIEWS = [
   { label: 'Available to use', filters: { status: ['active', 'soon'] } },
 ];
 
-const emptyForm = { name: '', model: '', serial_number: '', location: '', status: 'active' };
+const emptyForm = { name: '', model: '', serial_number: '', location_category: '', location_detail: '', status: 'active' };
 const emptyFilters = () => ({ status: new Set(), type: new Set(), loc: new Set(), due: '' });
 
 // Local calendar date, not toISOString() (UTC) -- in Thailand (UTC+7) the
@@ -550,7 +551,11 @@ export function EquipmentPage() {
     setSaving(true);
     setError('');
     try {
-      await client.post('/api/equipment', form);
+      // Stored like the register's own entries: the site, plus the detail
+      // in brackets when one is given -- e.g. "Head office (Woravit)".
+      const { location_detail, ...rest } = form;
+      const detail = location_detail.trim();
+      await client.post('/api/equipment', { ...rest, location: detail ? `${form.location_category} (${detail})` : form.location_category });
       setShowForm(false);
       setForm(emptyForm);
       setToast('Equipment added');
@@ -607,7 +612,7 @@ export function EquipmentPage() {
       {showForm && (
         <form
           onSubmit={handleCreate}
-          className="grid grid-cols-1 md:grid-cols-2 gap-3 p-[18px] rounded-2xl bg-white"
+          className="grid grid-cols-1 md:grid-cols-2 items-start gap-3 p-[18px] rounded-2xl bg-white"
           style={{ border: `1px solid ${theme.border}`, boxShadow: theme.cardShadow }}
         >
           <input required placeholder="Name" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} className="input" />
@@ -619,7 +624,31 @@ export function EquipmentPage() {
             className="input"
           />
           <input placeholder="Model" value={form.model} onChange={(e) => setForm({ ...form, model: e.target.value })} className="input" />
-          <input placeholder="Location" value={form.location} onChange={(e) => setForm({ ...form, location: e.target.value })} className="input" />
+          <div className="flex flex-col gap-2">
+            <select
+              required
+              value={form.location_category}
+              onChange={(e) => setForm({ ...form, location_category: e.target.value })}
+              className="input"
+              style={{ color: form.location_category ? undefined : theme.textFaint }}
+              aria-label="Location"
+            >
+              <option value="" disabled>
+                Location (select a site)
+              </option>
+              {LOCATION_SITES.map((site) => (
+                <option key={site} value={site} style={{ color: theme.ink }}>
+                  {site}
+                </option>
+              ))}
+            </select>
+            <input
+              placeholder="Location detail, e.g. person's name (optional)"
+              value={form.location_detail}
+              onChange={(e) => setForm({ ...form, location_detail: e.target.value })}
+              className="input"
+            />
+          </div>
           <select value={form.status} onChange={(e) => setForm({ ...form, status: e.target.value })} className="input">
             {EDITABLE_STATUSES.map((s) => (
               <option key={s} value={s}>
