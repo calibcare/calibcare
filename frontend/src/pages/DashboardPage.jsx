@@ -284,16 +284,6 @@ function Donut({ segments, total }) {
   );
 }
 
-function DatePill({ dateStr }) {
-  const d = new Date(dateStr);
-  const label = d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
-  return (
-    <span className="text-[11.5px] font-bold rounded-full px-2.5 py-1" style={{ color: theme.warning, backgroundColor: theme.warningBg }}>
-      {label}
-    </span>
-  );
-}
-
 // How long until (or since) the due date, coloured by urgency, so the
 // queue reads as a to-do list: what to send now, what to get ready.
 function TimeLeftBadge({ days }) {
@@ -691,7 +681,6 @@ export function DashboardPage() {
   const pageCount = Math.max(1, Math.ceil(filteredQueue.length / pageSize));
   const currentPage = Math.min(page, pageCount - 1);
   const pageItems = filteredQueue.slice(currentPage * pageSize, currentPage * pageSize + pageSize);
-  const upcomingDueDates = summary.dueSoon.slice(0, 3);
 
   function showQueue(key) {
     setFilter(key);
@@ -786,42 +775,6 @@ export function DashboardPage() {
           </div>
 
           <CalendarCard dueDates={fullQueue} />
-
-          <div className="bg-white rounded-2xl p-[18px] flex-1 flex flex-col" style={{ border: `1px solid ${theme.border}`, boxShadow: theme.cardShadow }}>
-            <div className="text-sm font-bold mb-2.5" style={{ color: theme.ink }}>
-              Upcoming Due Dates
-            </div>
-            <div className="flex flex-col flex-1">
-              {upcomingDueDates.map((item, i) => (
-                <button
-                  key={item.equipment_id}
-                  type="button"
-                  onClick={() => setDevice(item)}
-                  title="Show details"
-                  className="flex items-center justify-between gap-3 py-2.5 px-2 -mx-2 rounded-lg text-left hover:bg-[#f6f7fb]"
-                  style={{ border: 'none', background: 'none', borderBottom: i < upcomingDueDates.length - 1 ? `1px solid ${theme.divider}` : 'none' }}
-                >
-                  <div className="flex flex-col gap-0.5 min-w-0">
-                    <span className="text-[12.5px] font-semibold truncate" style={{ color: theme.inkAlt }}>
-                      {item.name}
-                    </span>
-                    <span className="text-[11px] truncate" style={{ color: theme.textFaint }}>
-                      {item.model ? `${item.model} · ` : ''}S/N {item.serial_number}
-                    </span>
-                  </div>
-                  <span className="flex items-center gap-2 shrink-0">
-                    <DatePill dateStr={item.next_calibration_date} />
-                    <ChevronRightIcon color="#c7cbd8" />
-                  </span>
-                </button>
-              ))}
-              {upcomingDueDates.length === 0 && (
-                <div className="flex-1 flex items-center justify-center text-sm py-4" style={{ color: theme.textFaint }}>
-                  Nothing due soon
-                </div>
-              )}
-            </div>
-          </div>
         </div>
 
         <div className="flex-1 min-w-0 flex flex-col gap-[18px]">
@@ -830,7 +783,7 @@ export function DashboardPage() {
               inside is absolute so its rows can't stretch the row taller. */}
           <div ref={queueRef} className="flex-1 min-w-0 relative" style={{ minHeight: 420 }}>
             <div className="absolute inset-0 bg-white rounded-2xl flex flex-col overflow-hidden" style={{ border: `1px solid ${theme.border}`, boxShadow: theme.cardShadow }}>
-              <div className="px-5 pt-5 pb-3 flex flex-col gap-3">
+              <div className="px-5 pt-5 pb-2 flex flex-col gap-3">
                 <span className="text-[15.5px] font-bold" style={{ color: theme.ink }}>
                   Calibration queue
                 </span>
@@ -889,22 +842,28 @@ export function DashboardPage() {
                       const line = { borderBottom: i < pageItems.length - 1 ? `1px solid ${theme.divider}` : 'none' };
                       return (
                         <tr key={`${r.equipment_id}-${r.bucket}`}>
-                          <td className="py-[11px] pr-2" style={line}>
-                            <Link to={`/equipment/${r.equipment_id}`} className="block text-[13px] font-semibold hover:underline" style={{ color: theme.inkAlt }}>
+                          <td className="py-[7px] pr-2" style={line}>
+                            <button
+                              type="button"
+                              onClick={() => setDevice(r)}
+                              title="Show details"
+                              className="block text-left text-[13px] font-semibold hover:underline"
+                              style={{ color: theme.inkAlt, border: 'none', background: 'none', padding: 0 }}
+                            >
                               {r.name}
-                            </Link>
+                            </button>
                             <span className="block text-[11.5px]" style={{ color: theme.textFaint }}>
                               {r.model ? `${r.model} · ` : ''}S/N {r.serial_number}
                             </span>
                           </td>
-                          <td className="hidden sm:table-cell py-[11px] pr-2 text-[13px] whitespace-nowrap" style={{ ...line, color: theme.textMuted }}>
+                          <td className="hidden sm:table-cell py-[7px] pr-2 text-[13px] whitespace-nowrap" style={{ ...line, color: theme.textMuted }}>
                             {String(r.next_calibration_date).slice(0, 10)}
                           </td>
-                          <td className="py-[11px] pr-2" style={line}>
+                          <td className="py-[7px] pr-2" style={line}>
                             <TimeLeftBadge days={r.days_until_due} />
                           </td>
                           {canSend && (
-                            <td className="py-[11px] text-right" style={line}>
+                            <td className="py-[7px] text-right" style={line}>
                               <button
                                 type="button"
                                 onClick={() => sendForCalibration(r)}
