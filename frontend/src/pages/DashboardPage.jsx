@@ -7,9 +7,7 @@ import { PageHeader, Section, Skeleton, SideDrawer } from '../components/ui';
 import {
   ChevronLeftIcon,
   ChevronRightIcon,
-  ChevronDownIcon,
   ArrowUpRightIcon,
-  FilterIcon,
   AlertTriangleIcon,
   LayersIcon,
   CheckCircleIcon,
@@ -296,17 +294,20 @@ function DatePill({ dateStr }) {
   );
 }
 
-function StatusBadge({ bucket }) {
-  const isOverdue = bucket === 'overdue';
+// How long until (or since) the due date, coloured by urgency, so the
+// queue reads as a to-do list: what to send now, what to get ready.
+function TimeLeftBadge({ days }) {
+  const overdue = days < 0;
+  const urgent = !overdue && days <= 7;
   return (
     <span
-      className="text-[11.5px] font-bold rounded-full px-[11px] py-1 inline-block"
+      className="text-[11.5px] font-bold rounded-full px-[11px] py-1 inline-block whitespace-nowrap"
       style={{
-        color: isOverdue ? theme.criticalStrong : theme.warning,
-        backgroundColor: isOverdue ? theme.criticalBgStrong : theme.warningBg,
+        color: overdue ? theme.criticalStrong : urgent ? '#9a3412' : theme.warning,
+        backgroundColor: overdue ? theme.criticalBgStrong : urgent ? '#ffedd5' : theme.warningBg,
       }}
     >
-      {isOverdue ? 'Overdue' : 'Due Soon'}
+      {dueText(days)}
     </span>
   );
 }
@@ -552,7 +553,12 @@ export function DashboardPage() {
   const navigate = useNavigate();
   const [summary, setSummary] = useState(null);
   const [error, setError] = useState('');
-  const [filter, setFilter] = useState('all');
+  const { user } = useAuth();
+  const canSend = Boolean(user?.can_edit);
+  // The queue opens on the devices to get ready next (due within 30 days).
+  const [filter, setFilter] = useState('due_soon');
+  const [sendingId, setSendingId] = useState(null);
+  const [notice, setNotice] = useState('');
   const [page, setPage] = useState(0);
   const [alertDismissed, setAlertDismissed] = useState(false);
   const [drawer, setDrawer] = useState(null);
@@ -579,12 +585,31 @@ export function DashboardPage() {
     return () => ro.disconnect();
   }, [summary]);
 
-  useEffect(() => {
-    client
+  function loadSummary() {
+    return client
       .get('/api/dashboard/summary')
       .then(({ data }) => setSummary(data))
       .catch((err) => setError(err.response?.data?.error || 'Failed to load dashboard'));
+  }
+
+  useEffect(() => {
+    loadSummary();
   }, []);
+
+  async function sendForCalibration(item) {
+    if (!confirm(`Mark ${item.name} (S/N ${item.serial_number}) as sent for calibration?`)) return;
+    setSendingId(item.equipment_id);
+    setNotice('');
+    try {
+      await client.put(`/api/equipment/${item.equipment_id}`, { status: 'sent_for_calibration' });
+      setNotice(`${item.name} (S/N ${item.serial_number}) is now marked as sent for calibration.`);
+      await loadSummary();
+    } catch (err) {
+      setNotice(err.response?.data?.error || 'Could not update the status');
+    } finally {
+      setSendingId(null);
+    }
+  }
 
   const header = <PageHeader title="Dashboard" />;
 
@@ -668,10 +693,15 @@ export function DashboardPage() {
   const pageItems = filteredQueue.slice(currentPage * pageSize, currentPage * pageSize + pageSize);
   const upcomingDueDates = summary.dueSoon.slice(0, 3);
 
-  function handleFilterChange(e) {
-    setFilter(e.target.value);
+  function showQueue(key) {
+    setFilter(key);
     setPage(0);
   }
+  const queueTabs = [
+    { key: 'due_soon', label: 'Due soon · prepare to send', count: summary.dueSoon.length },
+    { key: 'overdue', label: 'Overdue · send now', count: summary.overdue.length },
+    { key: 'all', label: 'All', count: fullQueue.length },
+  ];
 
   function handleViewOverdue() {
     setDrawer('overdue');
@@ -800,35 +830,53 @@ export function DashboardPage() {
               inside is absolute so its rows can't stretch the row taller. */}
           <div ref={queueRef} className="flex-1 min-w-0 relative" style={{ minHeight: 420 }}>
             <div className="absolute inset-0 bg-white rounded-2xl flex flex-col overflow-hidden" style={{ border: `1px solid ${theme.border}`, boxShadow: theme.cardShadow }}>
-              <div className="flex items-center justify-between px-5 pt-5 pb-4">
+              <div className="px-5 pt-5 pb-3 flex flex-col gap-3">
                 <span className="text-[15.5px] font-bold" style={{ color: theme.ink }}>
                   Calibration queue
                 </span>
-                <div className="relative">
-                  <select
-                    value={filter}
-                    onChange={handleFilterChange}
-                    className="appearance-none rounded-[9px] pl-3 pr-8 py-[7px] text-[12.5px] font-semibold"
-                    style={{ backgroundColor: theme.chipBg, border: `1px solid ${theme.borderStrong}`, color: '#38415a' }}
-                  >
-                    <option value="all">All statuses</option>
-                    <option value="overdue">Overdue</option>
-                    <option value="due_soon">Due Soon</option>
-                  </select>
-                  <span className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none">
-                    <ChevronDownIcon color="#38415a" />
-                  </span>
+                <div role="tablist" aria-label="Calibration queue" className="flex gap-1.5 flex-wrap">
+                  {queueTabs.map((t) => {
+                    const active = filter === t.key;
+                    return (
+                      <button
+                        key={t.key}
+                        type="button"
+                        role="tab"
+                        aria-selected={active}
+                        onClick={() => showQueue(t.key)}
+                        className="flex items-center gap-2 rounded-[9px] px-3 py-[7px] text-[12.5px] font-semibold"
+                        style={{
+                          backgroundColor: active ? theme.brand : theme.chipBg,
+                          color: active ? '#fff' : '#38415a',
+                          border: `1px solid ${active ? theme.brand : theme.borderStrong}`,
+                        }}
+                      >
+                        {t.label}
+                        <span
+                          className="rounded-full px-[7px] text-[11px] font-bold"
+                          style={{ backgroundColor: active ? 'rgba(255,255,255,.22)' : '#fff', color: active ? '#fff' : theme.textMuted }}
+                        >
+                          {t.count}
+                        </span>
+                      </button>
+                    );
+                  })}
                 </div>
+                {notice && (
+                  <div className="rounded-[9px] px-3 py-2 text-[12.5px]" style={{ backgroundColor: theme.goodBg, color: '#0a7a45' }}>
+                    {notice}
+                  </div>
+                )}
               </div>
 
               <div ref={queueBodyRef} className="flex-1 min-h-0 overflow-hidden px-5">
                 <table className="w-full border-collapse">
                   <thead>
                     <tr>
-                      {['Equipment', 'Model', 'Serial Number', 'Next Due', 'Status'].map((h) => (
+                      {['Equipment', 'Next due', 'Time left', ...(canSend ? [''] : [])].map((h) => (
                         <th
                           key={h}
-                          className={`text-left text-[10.5px] font-bold uppercase tracking-wide pb-2.5 pr-2 ${h === 'Model' || h === 'Serial Number' ? 'hidden sm:table-cell' : ''}`}
+                          className={`text-left text-[10.5px] font-bold uppercase tracking-wide pb-2.5 pr-2 ${h === 'Next due' ? 'hidden sm:table-cell' : ''}`}
                           style={{ color: theme.textFaint, borderBottom: `1px solid ${theme.border}` }}
                         >
                           {h}
@@ -837,31 +885,44 @@ export function DashboardPage() {
                     </tr>
                   </thead>
                   <tbody>
-                    {pageItems.map((r, i) => (
-                      <tr key={`${r.equipment_id}-${r.bucket}`}>
-                        <td className="py-[13px] text-[13px] font-semibold" style={{ color: theme.inkAlt, borderBottom: i < pageItems.length - 1 ? `1px solid ${theme.divider}` : 'none' }}>
-                          <Link to={`/equipment/${r.equipment_id}`} className="hover:underline">
-                            {r.name}
-                          </Link>
-                        </td>
-                        <td className="hidden sm:table-cell py-[13px] text-[13px]" style={{ color: theme.textMuted, borderBottom: i < pageItems.length - 1 ? `1px solid ${theme.divider}` : 'none' }}>
-                          {r.model || '—'}
-                        </td>
-                        <td className="hidden sm:table-cell py-[13px] text-[13px]" style={{ color: theme.textMuted, borderBottom: i < pageItems.length - 1 ? `1px solid ${theme.divider}` : 'none' }}>
-                          {r.serial_number}
-                        </td>
-                        <td className="py-[13px] text-[13px]" style={{ color: theme.textMuted, borderBottom: i < pageItems.length - 1 ? `1px solid ${theme.divider}` : 'none' }}>
-                          {String(r.next_calibration_date).slice(0, 10)}
-                        </td>
-                        <td className="py-[13px]" style={{ borderBottom: i < pageItems.length - 1 ? `1px solid ${theme.divider}` : 'none' }}>
-                          <StatusBadge bucket={r.bucket} />
-                        </td>
-                      </tr>
-                    ))}
+                    {pageItems.map((r, i) => {
+                      const line = { borderBottom: i < pageItems.length - 1 ? `1px solid ${theme.divider}` : 'none' };
+                      return (
+                        <tr key={`${r.equipment_id}-${r.bucket}`}>
+                          <td className="py-[11px] pr-2" style={line}>
+                            <Link to={`/equipment/${r.equipment_id}`} className="block text-[13px] font-semibold hover:underline" style={{ color: theme.inkAlt }}>
+                              {r.name}
+                            </Link>
+                            <span className="block text-[11.5px]" style={{ color: theme.textFaint }}>
+                              {r.model ? `${r.model} · ` : ''}S/N {r.serial_number}
+                            </span>
+                          </td>
+                          <td className="hidden sm:table-cell py-[11px] pr-2 text-[13px] whitespace-nowrap" style={{ ...line, color: theme.textMuted }}>
+                            {String(r.next_calibration_date).slice(0, 10)}
+                          </td>
+                          <td className="py-[11px] pr-2" style={line}>
+                            <TimeLeftBadge days={r.days_until_due} />
+                          </td>
+                          {canSend && (
+                            <td className="py-[11px] text-right" style={line}>
+                              <button
+                                type="button"
+                                onClick={() => sendForCalibration(r)}
+                                disabled={sendingId === r.equipment_id}
+                                className="rounded-lg px-3 py-1.5 text-[12px] font-semibold whitespace-nowrap disabled:opacity-50 hover:bg-[#eaf0ff]"
+                                style={{ color: theme.brand, border: '1px solid #cddaf9', backgroundColor: '#fff' }}
+                              >
+                                {sendingId === r.equipment_id ? 'Sending…' : 'Send for calibration'}
+                              </button>
+                            </td>
+                          )}
+                        </tr>
+                      );
+                    })}
                     {pageItems.length === 0 && (
                       <tr>
-                        <td colSpan={5} className="text-center py-8 text-sm" style={{ color: theme.textFaint }}>
-                          Nothing due right now
+                        <td colSpan={4} className="text-center py-8 text-sm" style={{ color: theme.textFaint }}>
+                          {filter === 'due_soon' ? 'Nothing due in the next 30 days' : filter === 'overdue' ? 'Nothing overdue' : 'Nothing due right now'}
                         </td>
                       </tr>
                     )}
