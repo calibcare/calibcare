@@ -257,3 +257,26 @@ export function MenuIcon({ color = 'currentColor' }) {
     </svg>
   );
 }
+
+export function WrenchIcon({ color = 'currentColor' }) {
+  return (
+    <svg {...nav}>
+      <path
+        d="M14.7 6.3a4 4 0 0 0 5 5L21 12.6a6 6 0 0 1-7.6 1.7L6.5 21.2a2 2 0 0 1-2.8-2.8l6.9-6.9A6 6 0 0 1 12.3 3.9l1.3 1.3a4 4 0 0 0 1.1 1.1z"
+        stroke={color}
+        strokeWidth="1.8"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        fill="none"
+      />
+    </svg>
+  );
+}
+
+export function ArchiveIcon({ color = 'currentColor' }) {
+  return (
+    <svg {...nav}>
+      <path d="M3.5 5h17v4h-17zM5 9v10h14V9M10 13h4" stroke={color} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" fill="none" />
+    </svg>
+  );
+}

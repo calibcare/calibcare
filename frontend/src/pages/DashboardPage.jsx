@@ -15,6 +15,8 @@ import {
   CheckCircleIcon,
   SendIcon,
   ClockIcon,
+  WrenchIcon,
+  ArchiveIcon,
 } from '../components/icons';
 
 // Fallback row count for the Calibration Queue before it has been
@@ -28,25 +30,23 @@ function KpiCard({ label, value, hint, Icon, iconColor, iconBg, onClick }) {
   return (
     <div
       onClick={onClick}
-      className="bg-white rounded-2xl p-[18px] flex flex-col gap-3"
+      className="bg-white rounded-2xl p-4 flex flex-col gap-2.5 min-w-0"
       style={{ border: `1px solid ${theme.border}`, boxShadow: theme.cardShadow, cursor: onClick ? 'pointer' : 'default' }}
     >
       <div className="flex items-center justify-between">
-        <div className="flex items-center gap-2.5">
-          <div className="w-8 h-8 rounded-[9px] flex items-center justify-center" style={{ backgroundColor: iconBg, color: iconColor }}>
-            <Icon color={iconColor} />
-          </div>
-          <span className="text-[11.5px] font-bold uppercase tracking-wide" style={{ color: '#7a8296' }}>
-            {label}
-          </span>
+        <div className="w-8 h-8 rounded-[9px] flex items-center justify-center" style={{ backgroundColor: iconBg, color: iconColor }}>
+          <Icon color={iconColor} />
         </div>
         <ArrowUpRightIcon color="#c7cbd8" />
       </div>
+      <span className="text-[11px] font-bold uppercase tracking-wide leading-tight" style={{ color: '#7a8296' }}>
+        {label}
+      </span>
       <div className="text-[27px] font-bold leading-none" style={{ color: theme.ink }}>
         {value}
       </div>
       {hint && (
-        <div className="text-[12px] -mt-1" style={{ color: theme.textFaint }}>
+        <div className="text-[12px] leading-snug" style={{ color: theme.textFaint }}>
           {hint}
         </div>
       )}
@@ -57,9 +57,9 @@ function KpiCard({ label, value, hint, Icon, iconColor, iconBg, onClick }) {
 function DashboardSkeleton() {
   return (
     <div className="flex flex-col gap-6">
-      <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-5 gap-3 md:gap-[18px]">
-        {[0, 1, 2, 3, 4].map((i) => (
-          <Skeleton key={i} style={{ height: 116, borderRadius: 16 }} />
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-7 gap-3 md:gap-4">
+        {[0, 1, 2, 3, 4, 5, 6].map((i) => (
+          <Skeleton key={i} style={{ height: 150, borderRadius: 16 }} />
         ))}
       </div>
       <div className="flex flex-col lg:flex-row gap-5">
@@ -607,21 +607,57 @@ export function DashboardPage() {
 
   const statusCount = (status) => summary.byStatus.find((s) => s.status === status)?.count || 0;
 
-  // Mutually-exclusive breakdown for the donut + KPI row: "available" is
-  // active equipment that is NOT currently overdue, so the four slices sum
-  // exactly to totalEquipment instead of double-counting active-and-overdue
-  // equipment under two different labels.
+  // Six mutually-exclusive groups, so every instrument is counted exactly
+  // once and the groups add up to the total: an active instrument is either
+  // overdue, due within 30 days, or simply available; the other statuses
+  // are their own groups. The KPI cards, the donut and the sum line all use
+  // this one list.
   const overdueCount = summary.overdueCount;
-  const availableCount = Math.max(0, statusCount('active') - overdueCount);
-  const sentCount = statusCount('sent_for_calibration');
-  const unavailableCount = statusCount('decommissioned') + statusCount('under_maintenance');
-
-  const donutSegments = [
-    { key: 'available', value: availableCount, color: theme.good },
-    { key: 'overdue', value: overdueCount, color: theme.critical },
-    { key: 'sent', value: sentCount, color: theme.warning },
-    { key: 'unavailable', value: unavailableCount, color: theme.neutralMuted },
+  const categories = [
+    {
+      key: 'available',
+      label: 'Available',
+      value: Math.max(0, statusCount('active') - overdueCount - summary.dueSoonCount),
+      hint: 'In service, not due soon',
+      color: theme.good,
+      Icon: CheckCircleIcon,
+      iconBg: theme.goodBg,
+      onClick: () => navigate('/equipment?status=active'),
+    },
+    { key: 'due_soon', label: 'Due soon', value: summary.dueSoonCount, hint: 'Within the next 30 days', color: theme.warning, Icon: ClockIcon, iconBg: theme.warningBg, onClick: () => setDrawer('due_soon') },
+    { key: 'overdue', label: 'Overdue', value: overdueCount, hint: 'Past the due date', color: theme.critical, Icon: AlertTriangleIcon, iconBg: theme.criticalBg, onClick: () => setDrawer('overdue') },
+    {
+      key: 'sent',
+      label: 'Sent out',
+      value: statusCount('sent_for_calibration'),
+      hint: 'At the calibration lab',
+      color: '#1d4ed8',
+      Icon: SendIcon,
+      iconBg: '#e8edfd',
+      onClick: () => navigate('/equipment?status=sent_for_calibration'),
+    },
+    {
+      key: 'maintenance',
+      label: 'Maintenance',
+      value: statusCount('under_maintenance'),
+      hint: 'Damaged or being repaired',
+      color: '#7c3aed',
+      Icon: WrenchIcon,
+      iconBg: '#f3e8ff',
+      onClick: () => navigate('/equipment?status=under_maintenance'),
+    },
+    {
+      key: 'decommissioned',
+      label: 'Decommissioned',
+      value: statusCount('decommissioned'),
+      hint: 'No longer in use',
+      color: theme.neutralMuted,
+      Icon: ArchiveIcon,
+      iconBg: theme.chipBg,
+      onClick: () => navigate('/equipment?status=decommissioned'),
+    },
   ];
+  const donutSegments = categories.map(({ key, value, color }) => ({ key, value, color }));
 
   const fullQueue = [...summary.overdue, ...summary.dueSoon].map((r) => ({
     ...r,
@@ -662,37 +698,24 @@ export function DashboardPage() {
       {header}
 
       <Section title="Overview" hint="Every instrument, counted once" to="/equipment" actionLabel="View all equipment">
-        <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-5 gap-3 md:gap-[18px]">
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-7 gap-3 md:gap-4">
           <KpiCard label="Total" value={summary.totalEquipment} hint="All instruments" Icon={LayersIcon} iconColor={theme.brand} iconBg="#eaf0ff" onClick={() => navigate('/equipment')} />
-          <KpiCard
-            label="Available"
-            value={availableCount}
-            hint="In service, not overdue"
-            Icon={CheckCircleIcon}
-            iconColor={theme.good}
-            iconBg={theme.goodBg}
-            onClick={() => navigate('/equipment?status=active&view=available')}
-          />
-          <KpiCard
-            label="Due soon"
-            value={summary.dueSoonCount}
-            hint="Within the next 30 days"
-            Icon={ClockIcon}
-            iconColor={theme.warning}
-            iconBg={theme.warningBg}
-            onClick={() => setDrawer('due_soon')}
-          />
-          <KpiCard label="Overdue" value={overdueCount} hint="Past the due date" Icon={AlertTriangleIcon} iconColor={theme.critical} iconBg={theme.criticalBg} onClick={() => setDrawer('overdue')} />
-          <KpiCard
-            label="Sent out"
-            value={sentCount}
-            hint="At the calibration lab"
-            Icon={SendIcon}
-            iconColor="#1d4ed8"
-            iconBg="#e8edfd"
-            onClick={() => navigate('/equipment?status=sent_for_calibration')}
-          />
+          {categories.map((c) => (
+            <KpiCard key={c.key} label={c.label} value={c.value} hint={c.hint} Icon={c.Icon} iconColor={c.color} iconBg={c.iconBg} onClick={c.onClick} />
+          ))}
         </div>
+        <p className="flex items-center gap-x-2 gap-y-1 flex-wrap text-[12.5px]" style={{ color: theme.textMuted }}>
+          {categories.map((c, i) => (
+            <span key={c.key} className="inline-flex items-center gap-1.5">
+              {i > 0 && <span style={{ color: theme.textFaint }}>+</span>}
+              <span className="w-2 h-2 rounded-full inline-block" style={{ backgroundColor: c.color }} />
+              <b style={{ color: theme.ink }}>{c.value}</b> {c.label.toLowerCase()}
+            </span>
+          ))}
+          <span>
+            = <b style={{ color: theme.ink }}>{categories.reduce((sum, c) => sum + c.value, 0)}</b> instruments
+          </span>
+        </p>
       </Section>
 
       {!alertDismissed && overdueCount > 0 && (
@@ -730,12 +753,7 @@ export function DashboardPage() {
             <div className="flex items-center gap-5">
               <Donut segments={donutSegments} total={summary.totalEquipment} />
               <div className="flex flex-col gap-2.5 flex-1">
-                {[
-                  { label: 'Available', value: availableCount, color: theme.good },
-                  { label: 'Overdue', value: overdueCount, color: theme.critical },
-                  { label: 'Sent out', value: sentCount, color: theme.warning },
-                  { label: 'Unavailable', value: unavailableCount, color: theme.neutralMuted },
-                ].map((row) => (
+                {categories.map((row) => (
                   <div key={row.label} className="flex items-center justify-between text-[12.5px]">
                     <span className="flex items-center gap-[7px]" style={{ color: '#4a5268' }}>
                       <span className="w-2 h-2 rounded-full inline-block" style={{ backgroundColor: row.color }} />
