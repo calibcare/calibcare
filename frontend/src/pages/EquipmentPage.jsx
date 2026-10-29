@@ -335,6 +335,7 @@ export function EquipmentPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [toast, setToast] = useState('');
+  const [downloading, setDownloading] = useState(false);
   const [q, setQ] = useState(searchParams.get('q') || '');
   const [filters, setFilters] = useState(() => filtersFromParams(searchParams));
   const [grouped, setGrouped] = useState(false);
@@ -504,6 +505,28 @@ export function EquipmentPage() {
     setSelected(allVisibleSelected ? new Set() : new Set(rows.map((r) => r.equipment_id)));
   }
 
+  // The register as an Excel file in the FP-ENG-05-01 layout, built by the
+  // server from the live data, so it always has the latest calibrations.
+  async function downloadRegister() {
+    setDownloading(true);
+    setError('');
+    try {
+      const { data, headers } = await client.get('/api/equipment/register.xlsx', { responseType: 'blob' });
+      const name = /filename="([^"]+)"/.exec(headers['content-disposition'] || '')?.[1] || 'FP-ENG-05-01_CalibCare.xlsx';
+      const url = URL.createObjectURL(data);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = name;
+      a.click();
+      URL.revokeObjectURL(url);
+      setToast(`Downloaded ${name}`);
+    } catch {
+      setError('Could not download the Excel file');
+    } finally {
+      setDownloading(false);
+    }
+  }
+
   async function updateStatus(ids, status, message) {
     setError('');
     try {
@@ -598,7 +621,14 @@ export function EquipmentPage() {
             active: onlyStatus === 'sent_for_calibration',
           },
         ]}
-        actions={canManage && <HeaderButton onClick={() => setShowForm((v) => !v)}>{showForm ? 'Cancel' : '+ Add equipment'}</HeaderButton>}
+        actions={
+          <div className="flex gap-2 flex-wrap">
+            <HeaderButton onClick={downloadRegister} disabled={downloading} title="The register in the FP-ENG-05-01 layout, with today's data">
+              {downloading ? 'Preparing…' : '↓ Download Excel'}
+            </HeaderButton>
+            {canManage && <HeaderButton onClick={() => setShowForm((v) => !v)}>{showForm ? 'Cancel' : '+ Add equipment'}</HeaderButton>}
+          </div>
+        }
       >
         {pills.length > 0 && <FilterFeedback pills={pills} onRemove={removePill} onClear={clearAll} summary={`Showing ${rows.length} of ${items.length} devices`} />}
       </PageHeader>

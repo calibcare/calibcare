@@ -2,6 +2,7 @@ import { Router } from 'express';
 import multer from 'multer';
 import { pool } from '../db.js';
 import { requireCapability } from '../middleware/auth.js';
+import { buildRegisterWorkbook } from '../services/registerExport.js';
 
 export const equipmentRouter = Router();
 
@@ -114,6 +115,21 @@ equipmentRouter.get('/', async (req, res, next) => {
 
 // GET /api/equipment/:id -- one equipment record with its capabilities and
 // most recent calibration record.
+// GET /api/equipment/register.xlsx -- the register as an Excel file in the
+// FP-ENG-05-01 layout, built from the live data. Read-only like the list,
+// so open to every logged-in user. Must be declared before '/:id'.
+equipmentRouter.get('/register.xlsx', async (req, res, next) => {
+  try {
+    const { workbook, filename } = await buildRegisterWorkbook(pool);
+    res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+    res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
+    await workbook.xlsx.write(res);
+    res.end();
+  } catch (err) {
+    next(err);
+  }
+});
+
 equipmentRouter.get('/:id', async (req, res, next) => {
   try {
     const [equipmentRows] = await pool.query('SELECT * FROM equipment WHERE equipment_id = ?', [req.params.id]);
