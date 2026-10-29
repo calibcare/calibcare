@@ -73,7 +73,7 @@ export function ConnectLineCard({ summary, style }) {
       </div>
 
       {isConnected ? (
-        <div className="rounded-xl p-3.5" style={{ backgroundColor: '#fafbfd', border: `1px solid ${theme.border}` }}>
+        <div className="rounded-xl p-3.5 flex-1" style={{ backgroundColor: '#fafbfd', border: `1px solid ${theme.border}` }}>
           <div className="text-[13.5px] font-semibold" style={{ color: theme.inkAlt }}>
             Your account is linked
           </div>
@@ -84,7 +84,7 @@ export function ConnectLineCard({ summary, style }) {
           </div>
         </div>
       ) : (
-        <div className="rounded-xl p-3.5 flex flex-col gap-2.5" style={{ backgroundColor: '#fafbfd', border: `1px solid ${theme.border}` }}>
+        <div className="rounded-xl p-3.5 flex flex-col gap-2.5 flex-1" style={{ backgroundColor: '#fafbfd', border: `1px solid ${theme.border}` }}>
           {!link ? (
             <>
               <p className="text-[13px]" style={{ color: theme.textMuted, lineHeight: 1.5 }}>

@@ -10,7 +10,7 @@ import { KeyIcon, MailIcon } from '../components/icons';
 function EmailCard({ email }) {
   return (
     <div
-      className="bg-white rounded-2xl p-[22px_24px] flex flex-col gap-3.5"
+      className="bg-white rounded-2xl p-[22px_24px] flex flex-col gap-3.5 h-full"
       style={{ border: `1px solid ${theme.border}`, boxShadow: theme.cardShadow }}
     >
       <div className="flex items-center justify-between gap-3">
@@ -26,7 +26,7 @@ function EmailCard({ email }) {
           On
         </span>
       </div>
-      <div className="rounded-xl p-3.5" style={{ backgroundColor: '#fafbfd', border: `1px solid ${theme.border}` }}>
+      <div className="rounded-xl p-3.5 flex-1" style={{ backgroundColor: '#fafbfd', border: `1px solid ${theme.border}` }}>
         <div className="text-[13.5px] font-semibold break-all" style={{ color: theme.inkAlt }}>
           {email}
         </div>
@@ -46,7 +46,7 @@ export function SettingsPage() {
     <div className="flex flex-col gap-5">
       <PageHeader title="Profile" />
 
-      <div className="max-w-[960px] w-full flex flex-col gap-5">
+      <div className="w-full flex flex-col gap-5">
         <div
           className="bg-white rounded-2xl p-5 md:p-6 flex flex-col md:flex-row md:items-center gap-5"
           style={{ border: `1px solid ${theme.border}`, boxShadow: theme.cardShadow }}
@@ -87,9 +87,9 @@ export function SettingsPage() {
           <h3 className="text-[14px] font-bold" style={{ color: theme.ink }}>
             Where your reminders go
           </h3>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-5 items-start">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-5 items-stretch">
             <EmailCard email={user?.email} />
-            <ConnectLineCard />
+            <ConnectLineCard style={{ height: '100%' }} />
           </div>
         </div>
       </div>
