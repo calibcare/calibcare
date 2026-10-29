@@ -210,6 +210,15 @@ export function KeyIcon({ color = 'currentColor', size = 18 }) {
   );
 }
 
+export function MailIcon({ color = 'currentColor', size = 18 }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+      <rect x="3" y="5" width="18" height="14" rx="2.5" stroke={color} strokeWidth="1.8" fill="none" />
+      <path d="m4 7 8 6 8-6" stroke={color} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" fill="none" />
+    </svg>
+  );
+}
+
 export function PlusIcon({ color = 'currentColor', size = 14 }) {
   return (
     <svg width={size} height={size} viewBox="0 0 24 24" fill="none">

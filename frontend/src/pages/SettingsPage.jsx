@@ -1,50 +1,97 @@
 import { Link } from 'react-router-dom';
+import { theme } from '../theme';
 import { useAuth } from '../context/AuthContext';
 import { PageHeader } from '../components/ui';
 import { ConnectLineCard } from '../components/ConnectLineCard';
+import { KeyIcon, MailIcon } from '../components/icons';
 
-const INK = '#0F172A';
-const MUTED = '#64748B';
-const BORDER = '#E2E8F0';
-
-function Row({ label, value }) {
+// Every account that can log in has a verified email, and the daily job
+// emails every verified account -- so email reminders are always on.
+function EmailCard({ email }) {
   return (
-    <div className="flex items-center justify-between py-3" style={{ borderBottom: `1px solid ${BORDER}` }}>
-      <span className="text-sm font-medium" style={{ color: MUTED }}>
-        {label}
-      </span>
-      <span className="text-sm font-semibold" style={{ color: INK }}>
-        {value}
-      </span>
+    <div
+      className="bg-white rounded-2xl p-[22px_24px] flex flex-col gap-3.5"
+      style={{ border: `1px solid ${theme.border}`, boxShadow: theme.cardShadow }}
+    >
+      <div className="flex items-center justify-between gap-3">
+        <div className="flex items-center gap-2.5">
+          <div className="w-[34px] h-[34px] rounded-[10px] flex items-center justify-center shrink-0" style={{ backgroundColor: theme.goodBg }}>
+            <MailIcon size={17} color={theme.good} />
+          </div>
+          <span className="text-[15px] font-bold" style={{ color: theme.ink }}>
+            Email notifications
+          </span>
+        </div>
+        <span className="text-[11.5px] font-bold rounded-full px-3 py-1 whitespace-nowrap" style={{ color: theme.good, backgroundColor: theme.goodBg }}>
+          On
+        </span>
+      </div>
+      <div className="rounded-xl p-3.5" style={{ backgroundColor: '#fafbfd', border: `1px solid ${theme.border}` }}>
+        <div className="text-[13.5px] font-semibold break-all" style={{ color: theme.inkAlt }}>
+          {email}
+        </div>
+        <div className="text-[12px] mt-[2px]" style={{ color: theme.textFaint }}>
+          You receive calibration reminders by email 30, 7 and 1 day before a due date.
+        </div>
+      </div>
     </div>
   );
 }
 
 export function SettingsPage() {
   const { user } = useAuth();
+  const initial = (user?.full_name || '?').trim().charAt(0).toUpperCase();
 
   return (
-    <div className="flex flex-col gap-6">
+    <div className="flex flex-col gap-5">
       <PageHeader title="Profile" />
 
-      <div className="flex flex-col lg:flex-row gap-5 items-start">
-        <div className="bg-white rounded-2xl p-5 w-full max-w-md" style={{ border: `1.5px solid ${BORDER}` }}>
-          <Row label="Name" value={user?.full_name} />
-          <Row label="Email" value={user?.email} />
-          <Row label="Position" value={user?.position_label} />
-          <Row label="Access level" value={user?.position_rank ? user.position_count ? `${user.position_rank} of ${user.position_count}` : String(user.position_rank) : '—'} />
-          <Row label="Can edit records" value={user?.can_edit ? 'Yes' : 'No — view only'} />
-          <div className="pt-4">
-            <Link
-              to="/change-password"
-              className="inline-block rounded-[9px] px-4 py-2 text-[13px] font-semibold text-white"
-              style={{ backgroundColor: '#182448' }}
+      <div className="max-w-[960px] w-full flex flex-col gap-5">
+        <div
+          className="bg-white rounded-2xl p-5 md:p-6 flex flex-col md:flex-row md:items-center gap-5"
+          style={{ border: `1px solid ${theme.border}`, boxShadow: theme.cardShadow }}
+        >
+          <div className="flex items-center gap-4 md:gap-5 flex-1 min-w-0">
+            <span
+              className="w-16 h-16 md:w-[72px] md:h-[72px] rounded-full flex items-center justify-center text-[26px] md:text-[28px] font-bold text-white shrink-0"
+              style={{ backgroundColor: theme.brandDark }}
             >
-              Change password
-            </Link>
+              {initial}
+            </span>
+            <div className="min-w-0 flex flex-col gap-1.5">
+              <h2 className="text-[20px] md:text-[22px] font-bold leading-tight truncate" style={{ color: theme.ink }}>
+                {user?.full_name}
+              </h2>
+              <span
+                className="self-start text-[12px] font-bold rounded-full px-3 py-1"
+                style={{ color: theme.brand, backgroundColor: '#eaf0ff' }}
+              >
+                {user?.position_label}
+              </span>
+              <span className="text-[13.5px] break-all" style={{ color: theme.textMuted }}>
+                {user?.email}
+              </span>
+            </div>
+          </div>
+          <Link
+            to="/change-password"
+            className="self-start md:self-center flex items-center gap-2 rounded-[10px] px-4 py-2.5 text-[13px] font-semibold whitespace-nowrap hover:bg-[#f6f7fb]"
+            style={{ border: `1px solid ${theme.borderStrong}`, color: theme.ink }}
+          >
+            <KeyIcon size={16} color={theme.inkAlt} />
+            Change password
+          </Link>
+        </div>
+
+        <div className="flex flex-col gap-3">
+          <h3 className="text-[14px] font-bold" style={{ color: theme.ink }}>
+            Where your reminders go
+          </h3>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-5 items-start">
+            <EmailCard email={user?.email} />
+            <ConnectLineCard />
           </div>
         </div>
-        <ConnectLineCard style={{ width: '100%', maxWidth: 448 }} />
       </div>
     </div>
   );
