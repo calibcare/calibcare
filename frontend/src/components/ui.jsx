@@ -155,7 +155,7 @@ export function Skeleton({ className = '', style }) {
 }
 
 // Right-hand drawer for a quick look without leaving the page.
-export function SideDrawer({ title, description, onClose, footer, children, label }) {
+export function SideDrawer({ title, description, onClose, footer, children, label, width = 420 }) {
   useEffect(() => {
     function onKey(e) {
       if (e.key === 'Escape') onClose();
@@ -170,7 +170,7 @@ export function SideDrawer({ title, description, onClose, footer, children, labe
       <aside
         aria-label={label || title}
         className="fixed top-0 right-0 bottom-0 z-50 bg-white flex flex-col"
-        style={{ width: 'min(420px, 100%)', boxShadow: '-8px 0 30px rgba(16,24,40,.18)' }}
+        style={{ width: `min(${width}px, 100%)`, boxShadow: '-8px 0 30px rgba(16,24,40,.18)' }}
       >
         <div className="px-6 pt-6 pb-5" style={{ borderBottom: `1px solid ${theme.divider}` }}>
           <div className="flex items-start justify-between gap-3">

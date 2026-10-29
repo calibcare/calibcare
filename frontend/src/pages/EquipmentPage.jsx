@@ -1014,14 +1014,62 @@ function EquipmentRow({ item, canManage, checked, onCheck, onOpen, onSend, onDec
   );
 }
 
+// Thai headings copied from the FP-ENG-05-01 register, same as the
+// capabilities table on the equipment page.
+const CAPABILITY_FIELDS = [
+  ['measurement_range', 'ช่วงในการวัดของเครื่องมือวัด'],
+  ['instrument_accuracy', 'ค่าผิดพลาดของเครื่องมือวัด'],
+  ['product_operating_range', 'ช่วงในการใช้งานของผลิตภัณฑ์'],
+  ['acceptance_criteria', 'เกณฑ์การยอมรับของผลิตภัณฑ์'],
+];
+
+function DrawerHeading({ children }) {
+  return (
+    <div className="text-[13px] font-bold mt-6 mb-2" style={{ color: theme.ink }}>
+      {children}
+    </div>
+  );
+}
+
 function Drawer({ item, canManage, onClose, onSend }) {
   const canSend = canManage && item.status !== 'sent_for_calibration' && item.status !== 'decommissioned';
+  const id = item.equipment_id;
+  // Capabilities and history aren't in the list rows, so the drawer fetches
+  // them itself -- everything is readable here without opening the page.
+  const [detail, setDetail] = useState(null);
+  const [error, setError] = useState('');
+
+  useEffect(() => {
+    setDetail(null);
+    setError('');
+    Promise.all([client.get(`/api/equipment/${id}`), client.get(`/api/equipment/${id}/calibrations`)])
+      .then(([{ data: equipment }, { data: calibrations }]) => setDetail({ capabilities: equipment.capabilities, calibrations }))
+      .catch((err) => setError(err.response?.data?.error || 'Failed to load this device'));
+  }, [id]);
+
+  async function downloadCertificate(c) {
+    try {
+      const { data } = await client.get(`/api/equipment/${id}/calibrations/${c.calibration_id}/certificate`, { responseType: 'blob' });
+      const url = URL.createObjectURL(data);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = c.certificate_filename || 'certificate.pdf';
+      a.click();
+      URL.revokeObjectURL(url);
+    } catch {
+      setError('Failed to download certificate');
+    }
+  }
+
+  const latest = detail?.calibrations[0];
   const fields = [
     ['Serial', item.serial_number],
     ['Model', item.model],
     ['Category', item.category],
     ['Site', item.location_category],
     ['Location', item.location],
+    ['Last calibrated', latest?.calibration_date],
+    ['Calibrated by', latest?.responsible_person],
     ['Next due', <DueText key="due" item={item} />],
     ['Note', item.status_note],
   ];
@@ -1032,6 +1080,7 @@ function Drawer({ item, canManage, onClose, onSend }) {
       title={item.name}
       description={<Badge statusKey={item.displayStatus} />}
       onClose={onClose}
+      width={480}
       footer={
         <>
           {canSend && (
@@ -1062,9 +1111,77 @@ function Drawer({ item, canManage, onClose, onSend }) {
           </div>
         ))}
       </dl>
-      <p className="text-[12.5px] mt-5" style={{ color: theme.textFaint }}>
-        Capabilities, calibration history and certificates are on the full page.
-      </p>
+
+      {error && (
+        <div className="rounded-[10px] px-4 py-2.5 text-sm mt-5" style={{ backgroundColor: theme.criticalBg, color: theme.criticalStrong }}>
+          {error}
+        </div>
+      )}
+      {!detail && !error && (
+        <div className="flex flex-col gap-3 mt-6">
+          {[0, 1, 2, 3, 4].map((i) => (
+            <Skeleton key={i} style={{ height: 14, width: `${90 - i * 9}%` }} />
+          ))}
+        </div>
+      )}
+      {detail && (
+        <>
+          <DrawerHeading>Capabilities ({detail.capabilities.length})</DrawerHeading>
+          {detail.capabilities.length === 0 ? (
+            <p className="text-[13px]" style={{ color: theme.textFaint }}>No measurement capabilities recorded.</p>
+          ) : (
+            <div className="flex flex-col gap-2">
+              {detail.capabilities.map((c) => (
+                <div key={c.capability_id} className="rounded-[10px] px-3.5 py-3" style={{ border: `1px solid ${theme.divider}` }}>
+                  <div className="text-[13.5px] font-semibold mb-1.5" style={{ color: theme.inkAlt }}>
+                    {c.measurement_purpose}
+                  </div>
+                  <dl className="grid gap-x-3 gap-y-1 text-[12.5px]" style={{ gridTemplateColumns: '170px 1fr' }}>
+                    {CAPABILITY_FIELDS.map(([key, label]) => (
+                      <div key={key} className="contents">
+                        <dt style={{ color: theme.textMuted }}>{label}</dt>
+                        <dd style={{ color: theme.ink }}>{c[key] || '—'}</dd>
+                      </div>
+                    ))}
+                  </dl>
+                </div>
+              ))}
+            </div>
+          )}
+
+          <DrawerHeading>Calibration history ({detail.calibrations.length})</DrawerHeading>
+          {detail.calibrations.length === 0 ? (
+            <p className="text-[13px]" style={{ color: theme.textFaint }}>No calibrations recorded yet.</p>
+          ) : (
+            <ul className="flex flex-col">
+              {detail.calibrations.map((c) => (
+                <li key={c.calibration_id} className="flex items-start justify-between gap-3 py-2.5" style={{ borderTop: `1px solid ${theme.divider}` }}>
+                  <div className="text-[13px]">
+                    <div className="font-semibold" style={{ color: theme.ink }}>{c.calibration_date}</div>
+                    <div className="text-[12.5px]" style={{ color: theme.textMuted }}>
+                      Next due {c.next_calibration_date || '—'}
+                      {c.responsible_person ? ` · ${c.responsible_person}` : ''}
+                    </div>
+                    {c.notes && <div className="text-[12.5px]" style={{ color: theme.textMuted }}>{c.notes}</div>}
+                  </div>
+                  {c.certificate_filename ? (
+                    <button
+                      type="button"
+                      onClick={() => downloadCertificate(c)}
+                      className="shrink-0 rounded-lg px-2.5 py-1 text-[12px] font-semibold"
+                      style={{ border: `1px solid ${theme.borderStrong}`, color: theme.brand, background: '#fff' }}
+                    >
+                      PDF ↓
+                    </button>
+                  ) : (
+                    <span className="shrink-0 text-[12px]" style={{ color: theme.textFaint }}>No certificate</span>
+                  )}
+                </li>
+              ))}
+            </ul>
+          )}
+        </>
+      )}
     </SideDrawer>
   );
 }
