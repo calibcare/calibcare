@@ -625,6 +625,11 @@ export function EquipmentDetailPage() {
                     <input value={calForm.notes} onChange={(e) => setCalForm({ ...calForm, notes: e.target.value })} style={smallFieldStyle} />
                   </div>
                 </div>
+                {equipment.status === 'sent_for_calibration' && (
+                  <p className="text-[12px]" style={{ color: theme.textMuted }}>
+                    This device is marked Sent for Calibration. Saving puts it back to Active.
+                  </p>
+                )}
                 <div className="flex items-center gap-3">
                   <button
                     disabled={savingCal}

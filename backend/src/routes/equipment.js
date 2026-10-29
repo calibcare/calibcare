@@ -363,6 +363,19 @@ equipmentRouter.post('/:id/calibrations', canManage, handleCertificateUpload, as
         cert ? cert.originalname : null, cert ? cert.mimetype : null, cert ? cert.size : null, cert ? cert.buffer : null]
     );
 
+    // A device that was sent out is back once its new calibration is
+    // recorded, so it returns to service automatically. Only when this is
+    // now the newest record -- back-filling an older certificate must not
+    // flip a device that is still away.
+    await pool.query(
+      `UPDATE equipment SET status = 'active'
+       WHERE equipment_id = ? AND status = 'sent_for_calibration'
+         AND NOT EXISTS (
+           SELECT 1 FROM calibration_history WHERE equipment_id = ? AND calibration_date > ?
+         )`,
+      [req.params.id, req.params.id, calibration_date]
+    );
+
     const [rows] = await pool.query(
       `SELECT calibration_id, equipment_id, responsible_person, calibration_frequency, calibration_date,
               next_calibration_date, notes, created_at, certificate_filename, certificate_mime_type, certificate_size
