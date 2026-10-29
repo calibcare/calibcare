@@ -1,6 +1,7 @@
 import { Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { PageHeader } from '../components/ui';
+import { ConnectLineCard } from '../components/ConnectLineCard';
 
 const INK = '#0F172A';
 const MUTED = '#64748B';
@@ -26,21 +27,24 @@ export function SettingsPage() {
     <div className="flex flex-col gap-6">
       <PageHeader title="Profile" />
 
-      <div className="bg-white rounded-2xl p-5 max-w-md" style={{ border: `1.5px solid ${BORDER}` }}>
-        <Row label="Name" value={user?.full_name} />
-        <Row label="Email" value={user?.email} />
-        <Row label="Position" value={user?.position_label} />
-        <Row label="Access level" value={user?.position_rank ? user.position_count ? `${user.position_rank} of ${user.position_count}` : String(user.position_rank) : '—'} />
-        <Row label="Can edit records" value={user?.can_edit ? 'Yes' : 'No — view only'} />
-        <div className="pt-4">
-          <Link
-            to="/change-password"
-            className="inline-block rounded-[9px] px-4 py-2 text-[13px] font-semibold text-white"
-            style={{ backgroundColor: '#182448' }}
-          >
-            Change password
-          </Link>
+      <div className="flex flex-col lg:flex-row gap-5 items-start">
+        <div className="bg-white rounded-2xl p-5 w-full max-w-md" style={{ border: `1.5px solid ${BORDER}` }}>
+          <Row label="Name" value={user?.full_name} />
+          <Row label="Email" value={user?.email} />
+          <Row label="Position" value={user?.position_label} />
+          <Row label="Access level" value={user?.position_rank ? user.position_count ? `${user.position_rank} of ${user.position_count}` : String(user.position_rank) : '—'} />
+          <Row label="Can edit records" value={user?.can_edit ? 'Yes' : 'No — view only'} />
+          <div className="pt-4">
+            <Link
+              to="/change-password"
+              className="inline-block rounded-[9px] px-4 py-2 text-[13px] font-semibold text-white"
+              style={{ backgroundColor: '#182448' }}
+            >
+              Change password
+            </Link>
+          </div>
         </div>
+        <ConnectLineCard style={{ width: '100%', maxWidth: 448 }} />
       </div>
     </div>
   );

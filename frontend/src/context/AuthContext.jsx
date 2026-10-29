@@ -9,19 +9,21 @@ export function AuthProvider({ children }) {
     return raw ? JSON.parse(raw) : null;
   });
 
+  // Re-reads the logged-in user from the server (position, LINE link).
+  const refreshUser = useCallback(async () => {
+    const { data } = await client.get('/api/users/me');
+    localStorage.setItem('mcems_user', JSON.stringify(data));
+    setUser(data);
+    return data;
+  }, []);
+
   // Refresh the cached user on load: a Deputy Manager can change someone's
   // position at any time, and the copy in localStorage was written when
   // that person last logged in -- which with 30-day tokens can be weeks ago.
   useEffect(() => {
     if (!localStorage.getItem('mcems_token')) return;
-    client
-      .get('/api/users/me')
-      .then(({ data }) => {
-        localStorage.setItem('mcems_user', JSON.stringify(data));
-        setUser(data);
-      })
-      .catch(() => {}); // stale/invalid token is handled by ProtectedRoute on the next request
-  }, []);
+    refreshUser().catch(() => {}); // stale/invalid token is handled by ProtectedRoute on the next request
+  }, [refreshUser]);
 
   const persist = (data) => {
     localStorage.setItem('mcems_token', data.token);
@@ -79,7 +81,7 @@ export function AuthProvider({ children }) {
   }, []);
 
   return (
-    <AuthContext.Provider value={{ user, login, register, verifyEmail, resendOtp, forgotPassword, resetPassword, changePassword, logout }}>
+    <AuthContext.Provider value={{ user, refreshUser, login, register, verifyEmail, resendOtp, forgotPassword, resetPassword, changePassword, logout }}>
       {children}
     </AuthContext.Provider>
   );
