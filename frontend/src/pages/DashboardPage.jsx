@@ -306,7 +306,18 @@ function formatDateKey(year, month, day) {
   return `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
 }
 
-function CalendarCard({ dueDates }) {
+const THAI_DATE = new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Bangkok' });
+
+// What a device due on a calendar day means right now: overdue / coming up
+// for active devices, otherwise its status (already sent out, in repair).
+function dayItemState(item) {
+  if (item.status === 'sent_for_calibration') return { label: 'Sent for calibration', color: '#1d4ed8', bg: '#e8edfd' };
+  if (item.status === 'under_maintenance') return { label: 'Under maintenance', color: theme.textMuted, bg: theme.chipBg };
+  if (item.days_until_due < 0) return { label: dueText(item.days_until_due), color: theme.criticalStrong, bg: theme.criticalBgStrong, overdue: true };
+  return { label: dueText(item.days_until_due), color: theme.warning, bg: theme.warningBg };
+}
+
+function CalendarCard({ onOpenDevice }) {
   const { user } = useAuth();
   const canManage = Boolean(user?.can_edit);
 
@@ -315,6 +326,7 @@ function CalendarCard({ dueDates }) {
     return new Date(now.getFullYear(), now.getMonth(), 1);
   });
   const [notes, setNotes] = useState({});
+  const [devices, setDevices] = useState([]);
   const [selectedDate, setSelectedDate] = useState(null);
   const [noteDraft, setNoteDraft] = useState('');
   const [noteError, setNoteError] = useState('');
@@ -331,21 +343,26 @@ function CalendarCard({ dueDates }) {
         setNotes(map);
       })
       .catch(() => {}); // non-critical widget data -- the calendar still works without notes
+    // Every device's next due date (not only the 30-day queue), so any month
+    // can be browsed. Decommissioned devices are never calibrated again.
+    client
+      .get('/api/equipment', { params: { limit: 200 } })
+      .then(({ data }) => setDevices(data.equipment.filter((e) => e.next_calibration_date && e.status !== 'decommissioned')))
+      .catch(() => {});
   }, []);
 
-  // Marks any day that has a queue-eligible calibration date on record --
-  // whether that date is still ahead (due soon) or already past (overdue),
-  // both are real dates pulled from calibration_history, not estimates.
-  const dueDaysInMonth = useMemo(() => {
-    const set = new Set();
-    for (const item of dueDates) {
-      const d = new Date(item.next_calibration_date);
-      if (d.getFullYear() === viewedMonth.getFullYear() && d.getMonth() === viewedMonth.getMonth()) {
-        set.add(d.getDate());
-      }
+  // dateKey -> devices due that day, each with days_until_due from the Thai date.
+  const dueByDate = useMemo(() => {
+    const todayMs = Date.parse(THAI_DATE.format(new Date()));
+    const map = {};
+    for (const e of devices) {
+      const key = String(e.next_calibration_date).slice(0, 10);
+      const item = { ...e, days_until_due: Math.round((Date.parse(key) - todayMs) / 86400000) };
+      (map[key] ||= []).push(item);
     }
-    return set;
-  }, [dueDates, viewedMonth]);
+    for (const list of Object.values(map)) list.sort((a, b) => a.name.localeCompare(b.name));
+    return map;
+  }, [devices]);
 
   const year = viewedMonth.getFullYear();
   const month = viewedMonth.getMonth();
@@ -360,10 +377,12 @@ function CalendarCard({ dueDates }) {
 
   function handleDayClick(day) {
     const dateKey = formatDateKey(year, month, day);
-    const existing = notes[dateKey];
-    if (!canManage && !existing) return; // nothing to show a read-only role for an empty day
+    if (dateKey === selectedDate) {
+      setSelectedDate(null);
+      return;
+    }
     setSelectedDate(dateKey);
-    setNoteDraft(existing || '');
+    setNoteDraft(notes[dateKey] || '');
     setNoteError('');
   }
 
@@ -373,7 +392,6 @@ function CalendarCard({ dueDates }) {
     try {
       await client.put(`/api/calendar-notes/${selectedDate}`, { note_text: noteDraft });
       setNotes((prev) => ({ ...prev, [selectedDate]: noteDraft.trim() }));
-      setSelectedDate(null);
     } catch (err) {
       setNoteError(err.response?.data?.error || 'Failed to save note');
     } finally {
@@ -391,13 +409,16 @@ function CalendarCard({ dueDates }) {
         delete next[selectedDate];
         return next;
       });
-      setSelectedDate(null);
+      setNoteDraft('');
     } catch (err) {
       setNoteError(err.response?.data?.error || 'Failed to delete note');
     } finally {
       setSaving(false);
     }
   }
+
+  const selectedItems = selectedDate ? dueByDate[selectedDate] || [] : [];
+  const noteChanged = noteDraft.trim() !== (notes[selectedDate] || '');
 
   return (
     <div className="bg-white rounded-2xl p-[18px]" style={{ border: `1px solid ${theme.border}`, boxShadow: theme.cardShadow }}>
@@ -408,6 +429,7 @@ function CalendarCard({ dueDates }) {
         <div className="flex gap-1.5">
           <button
             onClick={() => shiftMonth(-1)}
+            aria-label="Previous month"
             className="w-[22px] h-[22px] rounded-[7px] flex items-center justify-center"
             style={{ border: `1px solid ${theme.borderStrong}`, color: theme.textFaint }}
           >
@@ -415,6 +437,7 @@ function CalendarCard({ dueDates }) {
           </button>
           <button
             onClick={() => shiftMonth(1)}
+            aria-label="Next month"
             className="w-[22px] h-[22px] rounded-[7px] flex items-center justify-center"
             style={{ border: `1px solid ${theme.borderStrong}`, color: theme.textFaint }}
           >
@@ -433,31 +456,47 @@ function CalendarCard({ dueDates }) {
       <div className="grid grid-cols-7 gap-[3px]" style={{ gridAutoRows: '24px' }}>
         {cells.map((day, i) => {
           if (day === null) return <span key={i} />;
-          const isDue = dueDaysInMonth.has(day);
+          const dateKey = formatDateKey(year, month, day);
+          const due = dueByDate[dateKey] || [];
+          const isOverdue = due.some((item) => dayItemState(item).overdue);
           const isToday = isCurrentMonth && day === today.getDate();
-          const hasNote = Boolean(notes[formatDateKey(year, month, day)]);
+          const isSelected = dateKey === selectedDate;
+          const hasNote = Boolean(notes[dateKey]);
+          const hint = [due.length && `${due.length} device${due.length === 1 ? '' : 's'} due`, hasNote && 'note'].filter(Boolean).join(' · ');
+          let color = '#38415a';
+          let bg = 'transparent';
+          if (due.length) {
+            color = isOverdue ? theme.criticalStrong : theme.warning;
+            bg = isOverdue ? theme.criticalBgStrong : theme.warningBg;
+          }
+          if (isSelected) {
+            color = '#fff';
+            bg = theme.brand;
+          }
           return (
             <button
               key={i}
               type="button"
               onClick={() => handleDayClick(day)}
-              className="relative flex items-center justify-center text-[11.5px] rounded-[7px]"
+              title={hint || undefined}
+              aria-pressed={isSelected}
+              className="relative flex items-center justify-center text-[11.5px] rounded-[7px] hover:brightness-95"
               style={{
-                fontWeight: isDue || isToday ? 700 : 400,
-                color: isDue ? theme.warning : isToday ? theme.brand : '#38415a',
-                backgroundColor: isDue ? theme.warningBg : 'transparent',
-                boxShadow: isToday ? `inset 0 0 0 1.5px ${theme.brand}` : 'none',
+                fontWeight: due.length || isToday || isSelected ? 700 : 400,
+                color: !due.length && !isSelected && isToday ? theme.brand : color,
+                backgroundColor: bg,
+                boxShadow: isToday && !isSelected ? `inset 0 0 0 1.5px ${theme.brand}` : 'none',
                 border: 'none',
                 padding: 0,
                 fontFamily: 'inherit',
-                cursor: canManage || hasNote ? 'pointer' : 'default',
+                cursor: 'pointer',
               }}
             >
               {day}
               {hasNote && (
                 <span
                   className="absolute bottom-[2px] w-[4px] h-[4px] rounded-full"
-                  style={{ backgroundColor: theme.brand }}
+                  style={{ backgroundColor: isSelected ? '#fff' : theme.brand }}
                 />
               )}
             </button>
@@ -465,10 +504,14 @@ function CalendarCard({ dueDates }) {
         })}
       </div>
 
-      <div className="flex items-center gap-4 mt-3 pt-3" style={{ borderTop: `1px solid ${theme.divider}` }}>
+      <div className="flex flex-wrap items-center gap-x-4 gap-y-1.5 mt-3 pt-3" style={{ borderTop: `1px solid ${theme.divider}` }}>
         <span className="flex items-center gap-1.5 text-[11px]" style={{ color: '#7a8296' }}>
           <span className="w-[9px] h-[9px] rounded-[3px] inline-block" style={{ backgroundColor: theme.warningBg, border: `1px solid ${theme.warningBorderSoft}` }} />
           Calibration due
+        </span>
+        <span className="flex items-center gap-1.5 text-[11px]" style={{ color: '#7a8296' }}>
+          <span className="w-[9px] h-[9px] rounded-[3px] inline-block" style={{ backgroundColor: theme.criticalBgStrong, border: `1px solid ${theme.criticalStrong}` }} />
+          Overdue
         </span>
         <span className="flex items-center gap-1.5 text-[11px]" style={{ color: '#7a8296' }}>
           <span className="w-[9px] h-[9px] rounded-[3px] inline-block" style={{ border: `1.5px solid ${theme.brand}` }} />
@@ -479,16 +522,61 @@ function CalendarCard({ dueDates }) {
           Has note
         </span>
       </div>
+      {!selectedDate && (
+        <p className="text-[11px] mt-2" style={{ color: theme.textFaint }}>
+          Click a date to see what is due and its note.
+        </p>
+      )}
 
       {selectedDate && (
         <div className="mt-3 pt-3" style={{ borderTop: `1px solid ${theme.divider}` }}>
-          <div className="flex items-center justify-between mb-2">
-            <span className="text-[12px] font-bold" style={{ color: theme.ink }}>
-              {new Date(`${selectedDate}T00:00:00`).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
+          <div className="flex items-center justify-between mb-2.5">
+            <span className="text-[13px] font-bold" style={{ color: theme.ink }}>
+              {new Date(`${selectedDate}T00:00:00`).toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}
             </span>
             <button type="button" onClick={() => setSelectedDate(null)} className="text-[11px]" style={{ color: theme.textFaint, border: 'none', background: 'none' }}>
               Close
             </button>
+          </div>
+
+          <div className="text-[11.5px] font-bold mb-1.5" style={{ color: theme.textMuted }}>
+            Calibration due ({selectedItems.length})
+          </div>
+          {selectedItems.length === 0 ? (
+            <p className="text-[12px] mb-3" style={{ color: theme.textFaint }}>
+              No calibrations due on this day.
+            </p>
+          ) : (
+            <ul className="flex flex-col mb-3">
+              {selectedItems.map((item) => {
+                const state = dayItemState(item);
+                return (
+                  <li key={item.equipment_id} className="flex items-center justify-between gap-2 py-1.5" style={{ borderTop: `1px solid ${theme.divider}` }}>
+                    <button
+                      type="button"
+                      onClick={() => onOpenDevice(item)}
+                      title="Show details"
+                      className="min-w-0 text-left"
+                      style={{ border: 'none', background: 'none', padding: 0 }}
+                    >
+                      <span className="block text-[12.5px] font-semibold truncate hover:underline" style={{ color: theme.inkAlt }}>
+                        {item.name}
+                      </span>
+                      <span className="block text-[11px] truncate" style={{ color: theme.textFaint }}>
+                        {[item.model, item.serial_number && `S/N ${item.serial_number}`, item.location_category].filter(Boolean).join(' · ')}
+                      </span>
+                    </button>
+                    <span className="shrink-0 text-[11px] font-bold rounded-full px-2 py-0.5" style={{ color: state.color, backgroundColor: state.bg }}>
+                      {state.label}
+                    </span>
+                  </li>
+                );
+              })}
+            </ul>
+          )}
+
+          <div className="text-[11.5px] font-bold mb-1.5" style={{ color: theme.textMuted }}>
+            Note
           </div>
           {canManage ? (
             <>
@@ -509,11 +597,11 @@ function CalendarCard({ dueDates }) {
                 <button
                   type="button"
                   onClick={handleSaveNote}
-                  disabled={saving || !noteDraft.trim()}
+                  disabled={saving || !noteDraft.trim() || !noteChanged}
                   className="text-[11.5px] font-bold rounded-[8px] px-3 py-1.5"
-                  style={{ backgroundColor: theme.brand, color: '#fff', border: 'none', opacity: saving || !noteDraft.trim() ? 0.6 : 1 }}
+                  style={{ backgroundColor: theme.brand, color: '#fff', border: 'none', opacity: saving || !noteDraft.trim() || !noteChanged ? 0.6 : 1 }}
                 >
-                  Save
+                  {notes[selectedDate] && !noteChanged ? 'Saved' : 'Save'}
                 </button>
                 {notes[selectedDate] && (
                   <button
@@ -529,8 +617,8 @@ function CalendarCard({ dueDates }) {
               </div>
             </>
           ) : (
-            <p className="text-[12px]" style={{ color: theme.textMuted }}>
-              {notes[selectedDate]}
+            <p className="text-[12px] whitespace-pre-wrap" style={{ color: notes[selectedDate] ? theme.ink : theme.textFaint }}>
+              {notes[selectedDate] || 'No note for this day.'}
             </p>
           )}
         </div>
@@ -774,7 +862,7 @@ export function DashboardPage() {
             </div>
           </div>
 
-          <CalendarCard dueDates={fullQueue} />
+          <CalendarCard onOpenDevice={setDevice} />
         </div>
 
         <div className="flex-1 min-w-0 flex flex-col gap-[18px]">
