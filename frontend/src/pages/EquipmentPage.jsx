@@ -134,6 +134,97 @@ function useDismiss(ref, active, onClose) {
   }, [ref, active, onClose]);
 }
 
+const THAI_DAY = new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Bangkok' });
+
+// "↓ Download Excel": the register as an Excel file in the FP-ENG-05-01
+// layout, built by the server from the live data, so it always has the
+// latest calibrations. A small box lets the user rename the file first.
+function DownloadExcelButton({ onDone, onError }) {
+  const [open, setOpen] = useState(false);
+  const [name, setName] = useState('');
+  const [downloading, setDownloading] = useState(false);
+  const boxRef = useRef(null);
+  const close = useCallback(() => setOpen(false), []);
+  useDismiss(boxRef, open, close);
+
+  const defaultName = `FP-ENG-05-01_CalibCare_${THAI_DAY.format(new Date())}`;
+
+  function toggle() {
+    if (!open) setName(defaultName);
+    setOpen((v) => !v);
+  }
+
+  async function download(e) {
+    e.preventDefault();
+    // Characters Windows and macOS don't allow in file names become "-".
+    const base = name.trim().replace(/\.xlsx$/i, '').replace(/[\\/:*?"<>|]+/g, '-').trim() || defaultName;
+    const filename = `${base}.xlsx`;
+    setDownloading(true);
+    onError('');
+    try {
+      const { data } = await client.get('/api/equipment/register.xlsx', { responseType: 'blob' });
+      const url = URL.createObjectURL(data);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = filename;
+      a.click();
+      URL.revokeObjectURL(url);
+      setOpen(false);
+      onDone(`Downloaded ${filename}`);
+    } catch {
+      onError('Could not download the Excel file');
+    } finally {
+      setDownloading(false);
+    }
+  }
+
+  return (
+    <div ref={boxRef} className="relative">
+      <HeaderButton onClick={toggle} aria-expanded={open} title="The register in the FP-ENG-05-01 layout, with today's data">
+        ↓ Download Excel
+      </HeaderButton>
+      {open && (
+        <form
+          onSubmit={download}
+          className="absolute z-30 mt-2 left-0 md:left-auto md:right-0 w-[340px] max-w-[calc(100vw-32px)] bg-white rounded-xl p-4 flex flex-col gap-3"
+          style={{ border: `1px solid ${theme.border}`, boxShadow: '0 12px 32px rgba(16,24,40,.18)' }}
+        >
+          <label className="flex flex-col gap-1.5 text-[12.5px] font-semibold" style={{ color: theme.textMuted }}>
+            File name
+            <div className="flex items-center gap-1.5">
+              <input
+                autoFocus
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                onFocus={(e) => e.target.select()}
+                className="input flex-1 min-w-0"
+                aria-label="File name"
+              />
+              <span className="text-[13px] font-normal" style={{ color: theme.textFaint }}>.xlsx</span>
+            </div>
+          </label>
+          <p className="text-[11.5px]" style={{ color: theme.textFaint }}>
+            Register layout (FP-ENG-05-01) with today&apos;s data.
+          </p>
+          <div className="flex items-center gap-2">
+            <button
+              type="submit"
+              disabled={downloading}
+              className="rounded-[9px] px-4 py-2 text-[13px] font-semibold text-white disabled:opacity-60"
+              style={{ backgroundColor: theme.brand, border: 'none' }}
+            >
+              {downloading ? 'Preparing…' : 'Download'}
+            </button>
+            <button type="button" onClick={close} className="text-[13px] font-semibold" style={{ color: theme.textFaint, border: 'none', background: 'none' }}>
+              Cancel
+            </button>
+          </div>
+        </form>
+      )}
+    </div>
+  );
+}
+
 const chipBase = 'flex items-center gap-1.5 rounded-[10px] px-[13px] py-[8px] text-[13px] font-semibold whitespace-nowrap';
 function chipStyle(active) {
   return active
@@ -335,7 +426,6 @@ export function EquipmentPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [toast, setToast] = useState('');
-  const [downloading, setDownloading] = useState(false);
   const [q, setQ] = useState(searchParams.get('q') || '');
   const [filters, setFilters] = useState(() => filtersFromParams(searchParams));
   const [grouped, setGrouped] = useState(false);
@@ -505,28 +595,6 @@ export function EquipmentPage() {
     setSelected(allVisibleSelected ? new Set() : new Set(rows.map((r) => r.equipment_id)));
   }
 
-  // The register as an Excel file in the FP-ENG-05-01 layout, built by the
-  // server from the live data, so it always has the latest calibrations.
-  async function downloadRegister() {
-    setDownloading(true);
-    setError('');
-    try {
-      const { data, headers } = await client.get('/api/equipment/register.xlsx', { responseType: 'blob' });
-      const name = /filename="([^"]+)"/.exec(headers['content-disposition'] || '')?.[1] || 'FP-ENG-05-01_CalibCare.xlsx';
-      const url = URL.createObjectURL(data);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = name;
-      a.click();
-      URL.revokeObjectURL(url);
-      setToast(`Downloaded ${name}`);
-    } catch {
-      setError('Could not download the Excel file');
-    } finally {
-      setDownloading(false);
-    }
-  }
-
   async function updateStatus(ids, status, message) {
     setError('');
     try {
@@ -623,9 +691,7 @@ export function EquipmentPage() {
         ]}
         actions={
           <div className="flex gap-2 flex-wrap">
-            <HeaderButton onClick={downloadRegister} disabled={downloading} title="The register in the FP-ENG-05-01 layout, with today's data">
-              {downloading ? 'Preparing…' : '↓ Download Excel'}
-            </HeaderButton>
+            <DownloadExcelButton onDone={setToast} onError={setError} />
             {canManage && <HeaderButton onClick={() => setShowForm((v) => !v)}>{showForm ? 'Cancel' : '+ Add equipment'}</HeaderButton>}
           </div>
         }
