@@ -226,6 +226,13 @@ equipmentRouter.put('/:id', canManage, async (req, res, next) => {
       return res.status(400).json({ error: 'no editable fields provided' });
     }
 
+    // The note is the original free-text status ("ส่งสอบเทียบ Aug 2026"), so
+    // it describes the old status once the status changes -- clear it unless
+    // the caller sent a new one.
+    if (req.body.status !== undefined && req.body.status !== existing[0].status && req.body.status_note === undefined) {
+      updates.push('status_note = NULL');
+    }
+
     params.push(req.params.id);
     await pool.query(`UPDATE equipment SET ${updates.join(', ')} WHERE equipment_id = ?`, params);
 
@@ -382,9 +389,10 @@ equipmentRouter.post('/:id/calibrations', canManage, handleCertificateUpload, as
     // A device that was sent out is back once its new calibration is
     // recorded, so it returns to service automatically. Only when this is
     // now the newest record -- back-filling an older certificate must not
-    // flip a device that is still away.
+    // flip a device that is still away. Its "ส่งสอบเทียบ ..." note no longer
+    // applies, so it is cleared too.
     await pool.query(
-      `UPDATE equipment SET status = 'active'
+      `UPDATE equipment SET status = 'active', status_note = NULL
        WHERE equipment_id = ? AND status = 'sent_for_calibration'
          AND NOT EXISTS (
            SELECT 1 FROM calibration_history WHERE equipment_id = ? AND calibration_date > ?
