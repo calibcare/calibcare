@@ -29,6 +29,7 @@ DROP TABLE IF EXISTS equipment_capability;
 DROP TABLE IF EXISTS equipment;
 DROP TABLE IF EXISTS calendar_note;
 DROP TABLE IF EXISTS reminder_rule;
+DROP TABLE IF EXISTS email_recipient;
 DROP TABLE IF EXISTS users;
 
 -- ---------------------------------------------------------------------
@@ -160,6 +161,22 @@ INSERT INTO reminder_rule (bucket, enabled, send_line, send_email) VALUES
     ('30_days', 1, 1, 0),
     ('7_days',  1, 1, 0),
     ('1_day',   1, 1, 0);
+
+-- ---------------------------------------------------------------------
+-- email_recipient: people who get reminder emails without an account
+-- (managed from the Reminders page; see database/add_email_recipients.sql)
+-- ---------------------------------------------------------------------
+CREATE TABLE email_recipient (
+    recipient_id  INT UNSIGNED  AUTO_INCREMENT PRIMARY KEY,
+    full_name     VARCHAR(150)  NULL,
+    email         VARCHAR(150)  NOT NULL,
+    added_by      INT UNSIGNED  NULL COMMENT 'user who added this address',
+    created_at    TIMESTAMP     NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE KEY uq_email_recipient_email (email),
+    CONSTRAINT fk_email_recipient_user
+        FOREIGN KEY (added_by) REFERENCES users(user_id)
+        ON DELETE SET NULL
+) ENGINE=InnoDB;
 
 -- ---------------------------------------------------------------------
 -- notification_log: record of reminders sent via LINE OA

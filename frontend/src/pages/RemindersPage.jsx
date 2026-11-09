@@ -5,7 +5,7 @@ import { theme } from '../theme';
 import { useAuth } from '../context/AuthContext';
 import { PageHeader } from '../components/ui';
 import { ConnectLineCard } from '../components/ConnectLineCard';
-import { AlertTriangleIcon, ClockIcon, ChevronDownIcon } from '../components/icons';
+import { AlertTriangleIcon, ClockIcon, ChevronDownIcon, MailIcon, PlusIcon, TrashIcon } from '../components/icons';
 
 const CHANNEL_META = {
   LINE: { label: 'LINE', color: theme.brand, bg: '#eef1f8' },
@@ -266,6 +266,130 @@ function RulesCard({ rules, canAssign, onToggle }) {
   );
 }
 
+// People who get the reminder emails without a CalibCare account -- only a
+// few staff use the website, the rest of the team just needs the emails.
+function EmailOnlyCard({ rules, onChange }) {
+  const [recipients, setRecipients] = useState([]);
+  const [fullName, setFullName] = useState('');
+  const [email, setEmail] = useState('');
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState('');
+
+  const load = useCallback(async () => {
+    try {
+      const { data } = await client.get('/api/reminders/email-recipients');
+      setRecipients(data);
+    } catch (err) {
+      setError(err.response?.data?.error || 'Failed to load email recipients');
+    }
+  }, []);
+
+  useEffect(() => {
+    load();
+  }, [load]);
+
+  async function handleAdd(e) {
+    e.preventDefault();
+    setSaving(true);
+    setError('');
+    try {
+      await client.post('/api/reminders/email-recipients', { full_name: fullName, email });
+      setFullName('');
+      setEmail('');
+      await load();
+      onChange();
+    } catch (err) {
+      setError(err.response?.data?.error || 'Failed to add email recipient');
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  async function handleRemove(recipient) {
+    if (!window.confirm(`Stop sending reminder emails to ${recipient.email}?`)) return;
+    setError('');
+    try {
+      await client.delete(`/api/reminders/email-recipients/${recipient.recipient_id}`);
+      await load();
+      onChange();
+    } catch (err) {
+      setError(err.response?.data?.error || 'Failed to remove email recipient');
+    }
+  }
+
+  const emailOff = rules.length > 0 && !rules.some((r) => r.enabled && r.send_email);
+
+  return (
+    <Card>
+      <CardHeader icon={<MailIcon size={17} color={theme.brand} />} iconBg="#eef1f8" title="Email-only recipients" />
+      <span className="text-[12.5px]" style={{ color: theme.textMuted, lineHeight: 1.5 }}>
+        These people get the calibration reminder emails without a CalibCare account. Add or remove someone at any time.
+      </span>
+
+      <form onSubmit={handleAdd} className="flex flex-col md:flex-row gap-2.5">
+        <input className="input md:flex-1" placeholder="Name (optional)" value={fullName} onChange={(e) => setFullName(e.target.value)} />
+        <input
+          className="input md:flex-[1.4]"
+          type="email"
+          placeholder="Company email address"
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+          required
+        />
+        <button
+          type="submit"
+          disabled={saving}
+          className="rounded-[9px] px-[18px] py-2 text-[13px] font-semibold shrink-0 inline-flex items-center justify-center gap-1.5"
+          style={{ backgroundColor: '#182448', color: '#fff', border: 'none', opacity: saving ? 0.7 : 1 }}
+        >
+          <PlusIcon size={13} color="#fff" />
+          {saving ? 'Adding…' : 'Add'}
+        </button>
+      </form>
+
+      {error && <div className="text-[12.5px]" style={{ color: theme.criticalStrong }}>{error}</div>}
+
+      <div className="rounded-xl overflow-hidden" style={{ border: `1px solid ${theme.border}` }}>
+        {recipients.length === 0 && (
+          <div className="px-4 py-5 text-center text-[13px]" style={{ color: theme.textFaint }}>
+            No email-only recipients yet
+          </div>
+        )}
+        {recipients.map((r, i) => (
+          <div
+            key={r.recipient_id}
+            className="flex items-center gap-3 px-4 py-3"
+            style={{ borderTop: i === 0 ? 'none' : `1px solid ${theme.divider}` }}
+          >
+            <div className="flex-1 min-w-0">
+              <div className="text-[13.5px] font-semibold truncate" style={{ color: theme.inkAlt }}>
+                {r.full_name || r.email}
+              </div>
+              {r.full_name && (
+                <div className="text-[12px] truncate" style={{ color: theme.textFaint }}>
+                  {r.email}
+                </div>
+              )}
+            </div>
+            <button
+              type="button"
+              onClick={() => handleRemove(r)}
+              className="rounded-[8px] p-2 shrink-0"
+              style={{ border: `1px solid ${theme.border}`, background: '#fff' }}
+              aria-label={`Remove ${r.email}`}
+              title="Remove"
+            >
+              <TrashIcon size={14} color={theme.criticalStrong} />
+            </button>
+          </div>
+        ))}
+      </div>
+
+      {emailOff && <Hint>Email is turned off in every reminder rule above, so nobody on this list gets an email until a rule sends by email.</Hint>}
+    </Card>
+  );
+}
+
 function HistoryCard() {
   const [days, setDays] = useState(7);
   const [history, setHistory] = useState([]);
@@ -438,6 +562,8 @@ export function RemindersPage() {
       </div>
 
       <RulesCard rules={rules} canAssign={canAssign} onToggle={handleToggle} />
+
+      <EmailOnlyCard rules={rules} onChange={loadSummary} />
 
       <HistoryCard />
     </div>

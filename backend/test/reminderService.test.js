@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { pickBucket, checkAndSendReminders, buildReminderMessage } from '../src/services/reminderService.js';
+import { pickBucket, checkAndSendReminders, buildReminderMessage, mergeEmailRecipients } from '../src/services/reminderService.js';
 
 test('pickBucket picks the most urgent applicable threshold', () => {
   assert.equal(pickBucket(-5), 'overdue');
@@ -34,7 +34,7 @@ const DEFAULT_RULES = ['30_days', '7_days', '1_day'].map((bucket) => ({
 // filter the real SQL uses, driven by whether the production query string
 // actually contains "status = 'sent'" -- so a test can't pass just because
 // the mock assumed the right behavior independently of the real query.
-function makeFakeDb({ dueRows, recipients = [], emailRecipients = [], rules = DEFAULT_RULES, seedLog = [] }) {
+function makeFakeDb({ dueRows, recipients = [], emailRecipients = [], emailOnlyRecipients = [], rules = DEFAULT_RULES, seedLog = [] }) {
   const log = [...seedLog]; // { calibration_id, user_id, notification_type, channel, status }
   const inserts = [];
   const db = {
@@ -50,6 +50,12 @@ function makeFakeDb({ dueRows, recipients = [], emailRecipients = [], rules = DE
       }
       if (sql.includes('FROM users WHERE email_verified')) {
         return [emailRecipients];
+      }
+      if (sql.includes('FROM email_recipient')) {
+        if (emailOnlyRecipients === 'missing-table') {
+          throw Object.assign(new Error("Table 'mcems.email_recipient' doesn't exist"), { code: 'ER_NO_SUCH_TABLE' });
+        }
+        return [emailOnlyRecipients];
       }
       if (sql.includes('FROM notification_log WHERE calibration_id')) {
         const [calibrationId, bucket, channel] = params;
@@ -382,4 +388,50 @@ test('dry-run LINE client never makes a real send but still gets called', async 
   // Dry-run must NOT write to notification_log -- otherwise the dedup check
   // would permanently block the real reminder once LINE is configured for real.
   assert.equal(inserts.length, 0);
+});
+
+const EMAIL_DUE_ROW = {
+  calibration_id: 21,
+  equipment_id: 30,
+  next_calibration_date: '2026-12-10',
+  name: 'Electrical Safety Analyzer',
+  model: 'ESA615',
+  serial_number: '4701005',
+  days_until_due: 7,
+};
+const EMAIL_ON_RULES = DEFAULT_RULES.map((r) => ({ ...r, send_line: 0, send_email: 1 }));
+
+test('email-only recipients get the reminder email without an account, logged with no user', async () => {
+  const emailRecipients = [{ user_id: 1, email: 'owner@idsmed.com' }];
+  const emailOnlyRecipients = [{ email: 'engineer1@idsmed.com' }, { email: 'engineer2@idsmed.com' }];
+  const { db, inserts } = makeFakeDb({ dueRows: [EMAIL_DUE_ROW], emailRecipients, emailOnlyRecipients, rules: EMAIL_ON_RULES });
+  const email = fakeEmailClient();
+
+  const results = await checkAndSendReminders(db, fakeLineClient(), email);
+
+  assert.equal(results[0].channels[0].notified, 3);
+  assert.deepEqual(email.calls.map((c) => c.to), ['owner@idsmed.com', 'engineer1@idsmed.com', 'engineer2@idsmed.com']);
+  assert.deepEqual(inserts.map((i) => i[1]), [1, null, null]); // user_id column
+});
+
+test('an email-only address that is also an account email is sent to once', () => {
+  const merged = mergeEmailRecipients(
+    [{ user_id: 1, email: 'Owner@idsmed.com' }],
+    [{ email: 'owner@idsmed.com ' }, { email: 'engineer1@idsmed.com' }]
+  );
+  assert.deepEqual(merged, [
+    { user_id: 1, email: 'Owner@idsmed.com' },
+    { user_id: null, email: 'engineer1@idsmed.com' },
+  ]);
+});
+
+test('a missing email_recipient table does not stop the reminder check', async () => {
+  const emailRecipients = [{ user_id: 1, email: 'owner@idsmed.com' }];
+  const { db } = makeFakeDb({ dueRows: [EMAIL_DUE_ROW], emailRecipients, emailOnlyRecipients: 'missing-table', rules: EMAIL_ON_RULES });
+  const email = fakeEmailClient();
+
+  const results = await checkAndSendReminders(db, fakeLineClient(), email);
+
+  assert.equal(results[0].channels[0].status, 'sent');
+  assert.deepEqual(email.calls.map((c) => c.to), ['owner@idsmed.com']);
 });

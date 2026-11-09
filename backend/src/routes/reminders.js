@@ -5,6 +5,7 @@ import { createLineClient } from '../services/lineClient.js';
 import { createEmailClient, emailDryRun } from '../services/emailService.js';
 import { checkAndSendReminders, RULE_LABEL, LEGACY_RULE_LABEL } from '../services/reminderService.js';
 import { requireCapability } from '../middleware/auth.js';
+import { isAllowedDomain } from '../services/emailDomain.js';
 
 export const remindersRouter = Router();
 
@@ -90,6 +91,67 @@ remindersRouter.patch('/rules/:bucket', requireCapability('canRunReminders'), as
   }
 });
 
+// Email-only recipients: people who get the reminder emails without a
+// CalibCare account. Managing the list is reminder tooling, so it needs
+// canRunReminders (System Owner + Deputy Manager), same as the rules above.
+const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+// GET /api/reminders/email-recipients
+remindersRouter.get('/email-recipients', requireCapability('canRunReminders'), async (req, res, next) => {
+  try {
+    const [rows] = await pool.query(
+      'SELECT recipient_id, full_name, email FROM email_recipient ORDER BY full_name IS NULL, full_name, email'
+    );
+    res.json(rows);
+  } catch (err) {
+    next(err);
+  }
+});
+
+// POST /api/reminders/email-recipients -- body { full_name?, email }
+remindersRouter.post('/email-recipients', requireCapability('canRunReminders'), async (req, res, next) => {
+  try {
+    const email = String(req.body.email || '').trim().toLowerCase();
+    const fullName = String(req.body.full_name || '').trim() || null;
+    if (!EMAIL_PATTERN.test(email)) {
+      return res.status(400).json({ error: 'a valid email address is required' });
+    }
+    if (!isAllowedDomain(email)) {
+      return res.status(403).json({ error: `only @${process.env.ALLOWED_EMAIL_DOMAIN} email addresses can be added` });
+    }
+
+    const [accounts] = await pool.query('SELECT 1 FROM users WHERE LOWER(email) = ? AND email_verified = 1', [email]);
+    if (accounts.length > 0) {
+      return res.status(409).json({ error: 'this person already gets reminder emails through their CalibCare account' });
+    }
+    const [existing] = await pool.query('SELECT 1 FROM email_recipient WHERE email = ?', [email]);
+    if (existing.length > 0) {
+      return res.status(409).json({ error: 'this email address is already on the list' });
+    }
+
+    const [result] = await pool.query(
+      'INSERT INTO email_recipient (full_name, email, added_by) VALUES (?, ?, ?)',
+      [fullName, email, req.user.user_id]
+    );
+    res.status(201).json({ recipient_id: result.insertId, full_name: fullName, email });
+  } catch (err) {
+    next(err);
+  }
+});
+
+// DELETE /api/reminders/email-recipients/:id
+remindersRouter.delete('/email-recipients/:id', requireCapability('canRunReminders'), async (req, res, next) => {
+  try {
+    const [result] = await pool.query('DELETE FROM email_recipient WHERE recipient_id = ?', [req.params.id]);
+    if (result.affectedRows === 0) {
+      return res.status(404).json({ error: 'recipient not found' });
+    }
+    res.status(204).end();
+  } catch (err) {
+    next(err);
+  }
+});
+
 // sent_at is a TIMESTAMP, which (with dateStrings) comes back as a bare
 // "YYYY-MM-DD HH:MM:SS" in the database server's own timezone -- UTC on
 // Railway, Bangkok on the local Mac -- so the browser can't tell which and
@@ -116,8 +178,9 @@ remindersRouter.get('/summary', async (req, res, next) => {
       'SELECT COUNT(*) AS lineRecipientCount FROM users WHERE line_user_id IS NOT NULL AND line_user_id != ""'
     );
     const [[{ emailRecipientCount }]] = await pool.query('SELECT COUNT(*) AS emailRecipientCount FROM users WHERE email_verified = 1');
+    const [[{ emailOnlyRecipientCount }]] = await pool.query('SELECT COUNT(*) AS emailOnlyRecipientCount FROM email_recipient');
 
-    res.json({ lastSentAt, sentLast24h, lineRecipientCount, emailRecipientCount, emailDryRun });
+    res.json({ lastSentAt, sentLast24h, lineRecipientCount, emailRecipientCount, emailOnlyRecipientCount, emailDryRun });
   } catch (err) {
     next(err);
   }

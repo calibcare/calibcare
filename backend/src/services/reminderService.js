@@ -152,6 +152,35 @@ async function sendEmailChannel(db, row, bucket, equipment, recipients, emailCli
   return { channel: 'EMAIL', status: anyFailed ? 'failed' : 'sent', notified: recipients.length, dryRun: Boolean(emailClient.dryRun) };
 }
 
+// People who get reminder emails without a CalibCare account (the
+// email_recipient table, managed on the Reminders page). A missing table is
+// treated as an empty list, so the daily cron job keeps working if the
+// backend is deployed before database/add_email_recipients.sql is applied.
+async function loadEmailOnlyRecipients(db) {
+  try {
+    const [rows] = await db.query('SELECT email FROM email_recipient');
+    return rows;
+  } catch (err) {
+    if (err.code === 'ER_NO_SUCH_TABLE') return [];
+    throw err;
+  }
+}
+
+// Account holders first; an email-only address that also belongs to a
+// verified account is dropped, so nobody gets the same reminder twice.
+// Email-only rows carry user_id null, which notification_log allows.
+export function mergeEmailRecipients(accountRecipients, emailOnlyRecipients) {
+  const seen = new Set(accountRecipients.map((r) => r.email.trim().toLowerCase()));
+  const merged = [...accountRecipients];
+  for (const { email } of emailOnlyRecipients) {
+    const key = email.trim().toLowerCase();
+    if (seen.has(key)) continue;
+    seen.add(key);
+    merged.push({ user_id: null, email });
+  }
+  return merged;
+}
+
 /**
  * db: an object with an async query(sql, params) method (mysql2 pool-shaped).
  * lineClient: from createLineClient() -- real or dry-run.
@@ -188,7 +217,8 @@ export async function checkAndSendReminders(db, lineClient, emailClient = NOOP_E
   const [lineRecipients] = await db.query(
     'SELECT user_id, line_user_id FROM users WHERE line_user_id IS NOT NULL AND line_user_id != ""'
   );
-  const [emailRecipients] = await db.query('SELECT user_id, email FROM users WHERE email_verified = 1');
+  const [accountEmailRecipients] = await db.query('SELECT user_id, email FROM users WHERE email_verified = 1');
+  const emailRecipients = mergeEmailRecipients(accountEmailRecipients, await loadEmailOnlyRecipients(db));
 
   const results = [];
 

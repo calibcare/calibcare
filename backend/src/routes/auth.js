@@ -5,6 +5,7 @@ import { createOtp, verifyOtp } from '../services/otpStore.js';
 import { sendOtpEmail } from '../services/emailService.js';
 import { POSITIONS, getPosition, DEFAULT_POSITION_KEY } from '../services/positions.js';
 import { requireAuth } from '../middleware/auth.js';
+import { isAllowedDomain } from '../services/emailDomain.js';
 
 export const authRouter = Router();
 
@@ -34,12 +35,6 @@ export const MIN_PASSWORD_LENGTH = 8;
 // existed before this feature are grandfathered in (see
 // database/add_email_verification.sql) and can keep logging in regardless
 // of their email's domain.
-function isAllowedDomain(email) {
-  const domain = process.env.ALLOWED_EMAIL_DOMAIN;
-  if (!domain) return true; // unset = no restriction
-  return String(email).trim().toLowerCase().endsWith(`@${domain.toLowerCase()}`);
-}
-
 authRouter.post('/register', async (req, res, next) => {
   try {
     const { full_name, email, password, line_user_id } = req.body;
