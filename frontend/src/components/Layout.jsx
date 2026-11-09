@@ -14,7 +14,9 @@ const MAIN_NAV_ITEMS = [
 // Reminders (rules, history, manual run, and every account's own LINE
 // connection) and Team (assigning positions) are both Deputy Manager
 // tooling -- confirmed with the user everyone else should see only
-// Dashboard/Equipment.
+// Dashboard/Equipment. The one exception: a Senior Specialist also gets
+// Reminders, limited to the read-only rules and the email-only recipient
+// list (see RemindersPage).
 const REMINDERS_NAV_ITEM = { to: '/reminders', label: 'Reminders', Icon: BellIcon };
 const TEAM_NAV_ITEM = { to: '/access-levels', label: 'Team', Icon: UsersIcon };
 // Admin (account help + database backup) is for both editing positions.
@@ -174,7 +176,11 @@ function ProfileMenu() {
 // the page from the ☰ button and closes on a tap outside it.
 function Sidebar({ overlay, onClose }) {
   const { user } = useAuth();
-  const manageItems = [...(user?.can_run_reminders ? [REMINDERS_NAV_ITEM, TEAM_NAV_ITEM] : []), ...(user?.can_edit ? [ADMIN_NAV_ITEM] : [])];
+  const manageItems = [
+    ...(user?.can_run_reminders || user?.can_edit ? [REMINDERS_NAV_ITEM] : []),
+    ...(user?.can_run_reminders ? [TEAM_NAV_ITEM] : []),
+    ...(user?.can_edit ? [ADMIN_NAV_ITEM] : []),
+  ];
 
   return (
     <>
@@ -264,7 +270,7 @@ function TopBar({ fullPage, isDesktop, onMenu }) {
           style={{ backgroundColor: theme.chipBg, color: theme.ink }}
         />
       </form>
-      {user?.can_run_reminders && (
+      {(user?.can_run_reminders || user?.can_edit) && (
         <NavLink to="/reminders" title="Reminders" className="w-9 h-9 rounded-[10px] flex items-center justify-center shrink-0" style={{ backgroundColor: theme.chipBg }}>
           <BellIcon color={theme.textMuted} />
         </NavLink>

@@ -92,12 +92,14 @@ remindersRouter.patch('/rules/:bucket', requireCapability('canRunReminders'), as
 });
 
 // Email-only recipients: people who get the reminder emails without a
-// CalibCare account. Managing the list is reminder tooling, so it needs
-// canRunReminders (System Owner + Deputy Manager), same as the rules above.
+// CalibCare account. Managed by the editing positions (canEdit: System
+// Owner, Deputy Manager, Senior Specialist) -- the Senior Specialist knows
+// which engineers need the emails, but still can't change the rules above
+// or run a check.
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 // GET /api/reminders/email-recipients
-remindersRouter.get('/email-recipients', requireCapability('canRunReminders'), async (req, res, next) => {
+remindersRouter.get('/email-recipients', requireCapability('canEdit'), async (req, res, next) => {
   try {
     const [rows] = await pool.query(
       'SELECT recipient_id, full_name, email FROM email_recipient ORDER BY full_name IS NULL, full_name, email'
@@ -109,7 +111,7 @@ remindersRouter.get('/email-recipients', requireCapability('canRunReminders'), a
 });
 
 // POST /api/reminders/email-recipients -- body { full_name?, email }
-remindersRouter.post('/email-recipients', requireCapability('canRunReminders'), async (req, res, next) => {
+remindersRouter.post('/email-recipients', requireCapability('canEdit'), async (req, res, next) => {
   try {
     const email = String(req.body.email || '').trim().toLowerCase();
     const fullName = String(req.body.full_name || '').trim() || null;
@@ -140,7 +142,7 @@ remindersRouter.post('/email-recipients', requireCapability('canRunReminders'), 
 });
 
 // DELETE /api/reminders/email-recipients/:id
-remindersRouter.delete('/email-recipients/:id', requireCapability('canRunReminders'), async (req, res, next) => {
+remindersRouter.delete('/email-recipients/:id', requireCapability('canEdit'), async (req, res, next) => {
   try {
     const [result] = await pool.query('DELETE FROM email_recipient WHERE recipient_id = ?', [req.params.id]);
     if (result.affectedRows === 0) {

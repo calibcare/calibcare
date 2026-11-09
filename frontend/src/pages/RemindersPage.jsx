@@ -502,6 +502,9 @@ function HistoryCard() {
 export function RemindersPage() {
   const { user } = useAuth();
   const canAssign = Boolean(user?.can_run_reminders);
+  // A Senior Specialist (canEdit without canRunReminders) gets a reduced
+  // page: the rules read-only, plus the email-only recipient list.
+  const canEditList = Boolean(user?.can_edit);
 
   const [summary, setSummary] = useState(null);
   const [rules, setRules] = useState([]);
@@ -522,10 +525,10 @@ export function RemindersPage() {
   }, []);
 
   useEffect(() => {
-    if (!canAssign) return;
+    if (!canAssign && !canEditList) return;
     loadSummary();
     loadRules();
-  }, [canAssign, loadSummary, loadRules]);
+  }, [canAssign, canEditList, loadSummary, loadRules]);
 
   async function handleToggle(bucket, patch) {
     setError('');
@@ -542,8 +545,23 @@ export function RemindersPage() {
   // hidden for everyone else; this guards against navigating here directly
   // by URL. Placed after every hook above, not before, so this early
   // return never changes the number of hooks called on a given render.
-  if (user && !canAssign) {
+  if (user && !canAssign && !canEditList) {
     return <Navigate to="/dashboard" replace />;
+  }
+
+  if (!canAssign) {
+    return (
+      <div className="flex flex-col gap-5">
+        <PageHeader title="Calibration Reminders" />
+        {error && (
+          <div className="rounded-[10px] px-4 py-2.5 text-sm" style={{ backgroundColor: theme.criticalBg, color: theme.criticalStrong }}>
+            {error}
+          </div>
+        )}
+        <RulesCard rules={rules} canAssign={false} onToggle={handleToggle} />
+        <EmailOnlyCard rules={rules} onChange={loadSummary} />
+      </div>
+    );
   }
 
   return (
