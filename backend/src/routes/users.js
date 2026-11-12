@@ -40,17 +40,18 @@ usersRouter.get('/', async (req, res, next) => {
   }
 });
 
-// PATCH /api/users/:id/position -- promote or demote someone (System Owner
-// and Deputy Manager, the positions that carry canRunReminders; only the
-// Owner can touch the Owner position -- see canAssignPosition()).
+// PATCH /api/users/:id/position -- promote or demote someone (System Owner,
+// Service Admin, Deputy Manager and Senior Specialist, the positions that
+// carry canRunReminders; only the Owner can touch the Owner position -- see
+// canAssignPosition()).
 usersRouter.patch('/:id/position', requireCapability('canRunReminders'), async (req, res, next) => {
   try {
     const { position } = req.body;
     if (!getPosition(position)) {
       return res.status(400).json({ error: `position must be one of ${POSITIONS.map((p) => p.key).join(', ')}` });
     }
-    // Guard against the last Deputy Manager demoting themselves, which
-    // would leave nobody able to assign positions at all.
+    // Guard against the last person who can assign positions demoting
+    // themselves, which would leave nobody able to assign positions at all.
     if (Number(req.params.id) === req.user.user_id) {
       return res.status(403).json({ error: 'you cannot change your own position' });
     }

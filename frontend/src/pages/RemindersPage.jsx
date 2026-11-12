@@ -185,7 +185,7 @@ function DueDateCheckCard({ user, summary, onRun }) {
           {running ? 'Running…' : 'Run now'}
         </button>
       </div>
-      {!canRun && <Hint>Only the System Owner or a Deputy Manager can trigger a manual check — button stays visible but disabled for other roles.</Hint>}
+      {!canRun && <Hint>Only the System Owner, a Service Admin, a Deputy Manager or a Senior Specialist can trigger a manual check — button stays visible but disabled for other roles.</Hint>}
     </Card>
   );
 }
@@ -261,7 +261,7 @@ function RulesCard({ rules, canAssign, onToggle }) {
         ))}
       </div>
 
-      {!canAssign && <Hint>Only the System Owner or a Deputy Manager can change reminder rules — everyone else sees them read-only.</Hint>}
+      {!canAssign && <Hint>Only the System Owner, a Service Admin, a Deputy Manager or a Senior Specialist can change reminder rules — everyone else sees them read-only.</Hint>}
     </Card>
   );
 }
@@ -502,8 +502,9 @@ function HistoryCard() {
 export function RemindersPage() {
   const { user } = useAuth();
   const canAssign = Boolean(user?.can_run_reminders);
-  // A Senior Specialist (canEdit without canRunReminders) gets a reduced
-  // page: the rules read-only, plus the email-only recipient list.
+  // A position with canEdit but without canRunReminders would get a reduced
+  // page: the rules read-only, plus the email-only recipient list. (Today
+  // every editor also has canRunReminders, so editors see the full page.)
   const canEditList = Boolean(user?.can_edit);
 
   const [summary, setSummary] = useState(null);

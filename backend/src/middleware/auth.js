@@ -5,7 +5,7 @@ import { pool } from '../db.js';
 /**
  * Verifies the JWT, then loads the user's CURRENT position from the
  * database rather than trusting the role claim inside the token. Tokens
- * here last 30 days, so a position change by a Deputy Manager would
+ * here last 30 days, so a position change on the Team page would
  * otherwise not take effect until the affected person happened to log in
  * again -- and tokens issued before the position migration still carry
  * long-gone role strings.
